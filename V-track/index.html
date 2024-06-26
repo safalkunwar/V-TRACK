@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🚌 HOME page</div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search ........">
+                <button class="search-button">Search</button>
+            </div>
+            <div class="buttons">
+                <button onclick="findBusNearMe()">Find bus near me</button>
+                <button onclick="nearBusStop()">Near bus stop</button>
+            </div>
+        </div>
+        <nav class="notice" id="notice">
+            <h3>Notice</h3>
+            <p>No notices at this time.</p>
+        </nav>
+        <div class="content">
+            <div id="map"></div>
+            <div class="bus-details" id="bus-details">
+                <h3>🚌 BUS DETAILS</h3>
+                <p>Loading bus details...</p>
+            </div>
+            <div class="bus-info" id="bus-info">
+                <h3>Bus Info</h3>
+                <p>Select a bus to see details.</p>
+            </div>
+        </div>
+    </div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3gKPNzsaXWfZp-Rblp__mv1RzOsl90ws&libraries=geometry&callback=initMap" async defer></script>
+    <script src="script.js"></script>
+</body>
+</html>
