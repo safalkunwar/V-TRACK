@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | for admin side</title>
-    <style>
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login | for admin side</title>
+        <style>
         * {
             margin: 0;
             padding: 0;
@@ -97,32 +97,34 @@
             color: white;
         }
     </style>
-</head>
+    </head>
 
-<body>
-    <div class="container">
-        <form action="" id="loginForm">
-            <div class="alert">Invalid userid or password</div>
+    <body>
+        <div class="container">
+            <form action id="loginForm">
+                <div class="alert">Invalid user id or password</div>
 
-            <div class="inputBox">
-                <input type="text" id="name" placeholder="Your name...." />
-            </div>
+                <div class="inputBox">
+                    <input type="text" id="name" placeholder="Your name...." />
+                </div>
 
-            <div class="inputBox">
-                <input type="number" id="userid" placeholder="Your User ID....." />
-            </div>
+                <div class="inputBox">
+                    <input type="number" id="userid"
+                        placeholder="Your User ID....." />
+                </div>
 
-            <div class="inputBox">
-                <input type="password" id="password" placeholder="Your Password....." />
-            </div>
+                <div class="inputBox">
+                    <input type="password" id="password"
+                        placeholder="Your Password....." />
+                </div>
 
-            <div class="inputBox">
-                <button type="submit">Login</button>
-            </div>
-        </form>
-    </div>
+                <div class="inputBox">
+                    <button type="submit">Login</button>
+                </div>
+            </form>
+        </div>
 
-    <script>
+        <script>
         document.getElementById("loginForm").addEventListener("submit", submitForm);
 
         function submitForm(e) {
@@ -156,6 +158,6 @@
         };
     </script>
 
-</body>
+    </body>
 
 </html>
