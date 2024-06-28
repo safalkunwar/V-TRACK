@@ -56,7 +56,9 @@ function showBusInfo(bus) {
         <p>Phone number: ${bus.phone}</p>
     `;
 }
-
+function feedback() {
+    window.location.href = "./feedback.html";
+  }
 function findBusNearMe() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {

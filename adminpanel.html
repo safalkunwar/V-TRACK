@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Management | Firebase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 80%;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            background: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .inputBox {
+            margin: 10px 0;
+        }
+
+        .inputBox input, .inputBox textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .inputBox button {
+            width: 100%;
+            padding: 10px;
+            background: #4CAF50;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .inputBox button:hover {
+            background: #45a049;
+        }
+
+        .navbar {
+            width: 100%;
+            background: #333;
+            overflow: auto;
+            margin-bottom: 20px;
+        }
+
+        .navbar a {
+            float: left;
+            padding: 14px 20px;
+            text-decoration: none;
+            color: white;
+            font-size: 17px;
+        }
+
+        .navbar a:hover {
+            background: #ddd;
+            color: black;
+        }
+
+        .navbar img {
+            float: left;
+            padding: 5px 20px;
+            height: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <img src="your-logo-url-here.png" alt="Logo">
+        <a href="#writeNotice">Write Notices</a>
+        <a href="#addBusDetails">Add Bus Details</a>
+        <a href="#editBusDetails">Edit Bus Details</a>
+    </div>
+
+    <div class="container" id="writeNotice">
+        <h2>WRITE ANY NOTICES</h2>
+        <div class="inputBox">
+            <textarea id="noticeContent" placeholder="Write any notices here..."></textarea>
+        </div>
+        <div class="inputBox">
+            <button onclick="submitNotice()">SUBMIT</button>
+        </div>
+    </div>
+
+    <div class="container" id="addBusDetails">
+        <h2>ADD Bus Details</h2>
+        <div class="inputBox">
+            <input type="text" id="busName" placeholder="BUS NAME">
+        </div>
+        <div class="inputBox">
+            <input type="text" id="driverName" placeholder="DRIVER NAME">
+        </div>
+        <div class="inputBox">
+            <input type="text" id="busNumber" placeholder="BUS NUMBER">
+        </div>
+        <div class="inputBox">
+            <input type="text" id="driverNum" placeholder="DRIVER NUM">
+        </div>
+        <div class="inputBox">
+            <input type="text" id="busRoute" placeholder="BUS ROUTE">
+        </div>
+        <div class="inputBox">
+            <textarea id="additionalDetails" placeholder="ADDITIONAL DETAILS"></textarea>
+        </div>
+        <div class="inputBox">
+            <button onclick="addBusDetails()">SUBMIT</button>
+        </div>
+    </div>
+
+    <div class="container" id="editBusDetails">
+        <h2>EDIT Bus Details</h2>
+        <div class="inputBox">
+            <input type="text" id="prevBusName" placeholder="PREVIOUS BUS NAME">
+        </div>
+        <div class="inputBox">
+            <input type="text" id="newBusName" placeholder="CHANGE BUS NAME">
+        </div>
+        <div class="inputBox">
+            <input type="text" id="newDriverName" placeholder="NEW DRIVER NAME">
+        </div>
+        <div class="inputBox">
+            <input type="text" id="changeBusNumber" placeholder="CHANGE BUS NUMBER">
+        </div>
+        <div class="inputBox">
+            <input type="text" id="addDriverNum" placeholder="ADD DRIVER NUM">
+        </div>
+        <div class="inputBox">
+            <input type="text" id="changeBusRoute" placeholder="CHANGE BUS ROUTE">
+        </div>
+        <div class="inputBox">
+            <textarea id="newAdditionalDetails" placeholder="PROVIDE NEW ADDITIONAL DETAILS"></textarea>
+        </div>
+        <div class="inputBox">
+            <button onclick="editBusDetails()">SUBMIT</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
+            authDomain: "v-track-gu999.firebaseapp.com",
+            databaseURL: "https://v-track-gu999-default-rtdb.firebaseio.com",
+            projectId: "v-track-gu999",
+            storageBucket: "v-track-gu999.appspot.com",
+            messagingSenderId: "1046512747961",
+            appId: "1:1046512747961:web:80df40c48bca3159296268",
+            measurementId: "G-38X29VT1YT"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function submitNotice() {
+            const noticeContent = document.getElementById('noticeContent').value;
+            db.ref('notices').push().set({
+                content: noticeContent
+            }).then(() => {
+                alert('Notice submitted successfully!');
+                document.getElementById('noticeContent').value = '';
+            }).catch((error) => {
+                alert('Error submitting notice: ' + error.message);
+            });
+        }
+
+        function addBusDetails() {
+            const busName = document.getElementById('busName').value;
+            const driverName = document.getElementById('driverName').value;
+            const busNumber = document.getElementById('busNumber').value;
+            const driverNum = document.getElementById('driverNum').value;
+            const busRoute = document.getElementById('busRoute').value;
+            const additionalDetails = document.getElementById('additionalDetails').value;
+
+            db.ref('busDetails').push().set({
+                busName: busName,
+                driverName: driverName,
+                busNumber: busNumber,
+                driverNum: driverNum,
+                busRoute: busRoute,
+                additionalDetails: additionalDetails
+            }).then(() => {
+                alert('Bus details added successfully!');
+                document.getElementById('busName').value = '';
+                document.getElementById('driverName').value = '';
+                document.getElementById('busNumber').value = '';
+                document.getElementById('driverNum').value = '';
+                document.getElementById('busRoute').value = '';
+                document.getElementById('additionalDetails').value = '';
+            }).catch((error) => {
+                alert('Error adding bus details: ' + error.message);
+            });
+        }
+
+        function editBusDetails() {
+            const prevBusName = document.getElementById('prevBusName').value;
+            const newBusName = document.getElementById('newBusName').value;
+            const newDriverName = document.getElementById('newDriverName').value;
+            const changeBusNumber = document.getElementById('changeBusNumber').value;
+            const addDriverNum = document.getElementById('addDriverNum').value;
+            const changeBusRoute = document.getElementById('changeBusRoute').value;
+            const newAdditionalDetails = document.getElementById('newAdditionalDetails').value;
+
+            db.ref('busDetails').orderByChild('busName').equalTo(prevBusName).once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    const busKey = Object.keys(snapshot.val())[0];
+                    db.ref('busDetails/' + busKey).update({
+                        busName: newBusName,
+                        driverName: newDriverName,
+                        busNumber: changeBusNumber,
+                        driverNum: addDriverNum,
+                        busRoute: changeBusRoute,
+                        additionalDetails: newAdditionalDetails
+                    }).then(() => {
+                        alert('Bus details updated successfully!');
+                        document.getElementById('prevBusName').value = '';
+                        document.getElementById('newBusName').value = '';
+                        document.getElementById('newDriverName').value = '';
+                        document.getElementById('changeBusNumber').value = '';
+                        document.getElementById('addDriverNum').value = '';
+                        document.getElementById('changeBusRoute').value = '';
+                        document.getElementById('newAdditionalDetails').value = '';
+                    }).catch((error) => {
+                        alert('Error updating bus details: ' + error.message);
+                    });
+                } else {
+                    alert('No bus found with the given name.');
+                }
+            }).catch((error) => {
+                alert('Error searching bus details: ' + error.message);
+            });
+        }
+    </script>
+</body>
+</html>

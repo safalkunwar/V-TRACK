@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Messages | Firebase</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            height: 60vh;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0px 5px 25px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .container form {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .inputBox {
+            width: 100%;
+            margin: 10px 0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .inputBox input[type="text"],
+        .inputBox input[type="email"] {
+            width: 100%;
+            height: 50px;
+            border-radius: 5px;
+            border: none;
+            outline: none;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            padding: 0px 10px;
+            font-size: 16px;
+            color: #444;
+        }
+
+        .inputBox textarea {
+            width: 100%;
+            height: 120px;
+            border-radius: 5px;
+            border: none;
+            outline: none;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            padding: 0px 10px;
+            font-size: 16px;
+            color: #444;
+        }
+
+        .inputBox button {
+            width: 100%;
+            padding: 10px 20px;
+            border: none;
+            outline: none;
+            background: rgb(0, 119, 255);
+            color: #FFF;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .inputBox button:hover {
+            background: rgb(0, 17, 255);
+            transition: all 0.3s ease;
+        }
+
+        ::placeholder {
+            font-size: 16px;
+        }
+
+        .alert {
+            width: 100%;
+            background: rgb(0, 255, 106);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 900;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <form action="" id="contactForm">
+            <div class="alert">Your message was sent</div>
+
+            <div class="inputBox">
+                <input type="text" id="name" placeholder="Your name...." />
+            </div>
+
+            <div class="inputBox">
+                <input type="email" id="emailid" placeholder="Your Email....." />
+            </div>
+
+            <div class="inputBox">
+                <textarea id="msgContent" cols="30" rows="10" placeholder="Message"></textarea>
+            </div>
+
+            <div class="inputBox">
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.14.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+        apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
+        authDomain: "v-track-gu999.firebaseapp.com",
+        databaseURL: "https://v-track-gu999-default-rtdb.firebaseio.com",
+        projectId: "v-track-gu999",
+        storageBucket: "v-track-gu999.appspot.com",
+        messagingSenderId: "1046512747961",
+        appId: "1:1046512747961:web:80df40c48bca3159296268",
+        measurementId: "G-38X29VT1YT"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Reference your database
+        var contactFormDB = firebase.database().ref("contactForm");
+
+        document.getElementById("contactForm").addEventListener("submit", submitForm);
+
+        function submitForm(e) {
+            e.preventDefault();
+
+            var name = getElementVal("name");
+            var emailid = getElementVal("emailid");
+            var msgContent = getElementVal("msgContent");
+
+            saveMessages(name, emailid, msgContent);
+
+            // Enable alert
+            document.querySelector(".alert").style.display = "block";
+
+            // Remove the alert
+            setTimeout(() => {
+                document.querySelector(".alert").style.display = "none";
+            }, 3000);
+
+            // Reset the form
+            document.getElementById("contactForm").reset();
+        }
+
+        const saveMessages = (name, emailid, msgContent) => {
+            var newContactForm = contactFormDB.push();
+
+            newContactForm.set({
+                name: name,
+                emailid: emailid,
+                msgContent: msgContent,
+            });
+        };
+
+        const getElementVal = (id) => {
+            return document.getElementById(id).value;
+        };
+    </script>
+</body>
+
+</html>
