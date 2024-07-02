@@ -68,14 +68,15 @@ body, html {
 
 .notice {
     background-color: #4cc5d7;
-    padding: 5px;
-    margin: 5px;
+    padding: 1px;
+    margin: 1px;
     border: 2px solid #ff0000;
     color: #ffffff;
     font-weight: bold;
     overflow: hidden;
     white-space: nowrap;
     box-sizing: border-box;
+    height: 90px; 
 }
 
 @keyframes floatNotice {
@@ -90,7 +91,7 @@ body, html {
 .notice p {
     display:inline-block;
     padding-left: 100%;
-    animation: floatNotice 20s linear infinite;
+    animation: floatNotice 12s linear infinite;
 }
 
 .content {
@@ -116,6 +117,20 @@ body, html {
 
 h3 {
     margin-top: 0;
+}
+
+.additional-info-button {
+    margin-top: 10px;
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.additional-info-button:hover {
+    background-color: #0056b3;
 }
 
 @media (min-width: 768px) {

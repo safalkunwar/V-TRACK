@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bus Management | Firebase</title>
+    <title>Admin Panel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,7 +16,7 @@
         }
 
         .container {
-            width: 80%;
+            width: 60%;
             background: white;
             padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -82,6 +82,10 @@
             padding: 5px 20px;
             height: 40px;
         }
+
+        .feedback {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -90,6 +94,7 @@
         <a href="#writeNotice">Write Notices</a>
         <a href="#addBusDetails">Add Bus Details</a>
         <a href="#editBusDetails">Edit Bus Details</a>
+        <a href="../Html/backendfeedback.html" onclick="showFeedbackPage()">Feedback Page</a>
     </div>
 
     <div class="container" id="writeNotice">
@@ -155,18 +160,24 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js"></script>
+    <div class="container feedback" id="feedbackPage">
+        <h2>USER FEEDBACK</h2>
+        <div id="feedbackList"></div>
+    </div>
+
+    <!-- Include Firebase JavaScript SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
-            authDomain: "v-track-gu999.firebaseapp.com",
-            databaseURL: "https://v-track-gu999-default-rtdb.firebaseio.com",
-            projectId: "v-track-gu999",
-            storageBucket: "v-track-gu999.appspot.com",
-            messagingSenderId: "1046512747961",
-            appId: "1:1046512747961:web:80df40c48bca3159296268",
-            measurementId: "G-38X29VT1YT"
+        authDomain: "v-track-gu999.firebaseapp.com",
+        databaseURL: "https://v-track-gu999-default-rtdb.firebaseio.com",
+        projectId: "v-track-gu999",
+        storageBucket: "v-track-gu999.appspot.com",
+        messagingSenderId: "1046512747961",
+        appId: "1:1046512747961:web:80df40c48bca3159296268",
+        measurementId: "G-38X29VT1YT"
         };
 
         // Initialize Firebase
@@ -224,31 +235,58 @@
 
             db.ref('busDetails').orderByChild('busName').equalTo(prevBusName).once('value').then((snapshot) => {
                 if (snapshot.exists()) {
-                    const busKey = Object.keys(snapshot.val())[0];
-                    db.ref('busDetails/' + busKey).update({
-                        busName: newBusName,
-                        driverName: newDriverName,
-                        busNumber: changeBusNumber,
-                        driverNum: addDriverNum,
-                        busRoute: changeBusRoute,
-                        additionalDetails: newAdditionalDetails
-                    }).then(() => {
-                        alert('Bus details updated successfully!');
-                        document.getElementById('prevBusName').value = '';
-                        document.getElementById('newBusName').value = '';
-                        document.getElementById('newDriverName').value = '';
-                        document.getElementById('changeBusNumber').value = '';
-                        document.getElementById('addDriverNum').value = '';
-                        document.getElementById('changeBusRoute').value = '';
-                        document.getElementById('newAdditionalDetails').value = '';
-                    }).catch((error) => {
-                        alert('Error updating bus details: ' + error.message);
+                    snapshot.forEach((childSnapshot) => {
+                        const busKey = childSnapshot.key;
+                        db.ref('busDetails/' + busKey).update({
+                            busName: newBusName,
+                            driverName: newDriverName,
+                            busNumber: changeBusNumber,
+                            driverNum: addDriverNum,
+                            busRoute: changeBusRoute,
+                            additionalDetails: newAdditionalDetails
+                        }).then(() => {
+                            alert('Bus details updated successfully!');
+                            document.getElementById('prevBusName').value = '';
+                            document.getElementById('newBusName').value = '';
+                            document.getElementById('newDriverName').value = '';
+                            document.getElementById('changeBusNumber').value = '';
+                            document.getElementById('addDriverNum').value = '';
+                            document.getElementById('changeBusRoute').value = '';
+                            document.getElementById('newAdditionalDetails').value = '';
+                        }).catch((error) => {
+                            alert('Error updating bus details: ' + error.message);
+                        });
                     });
                 } else {
                     alert('No bus found with the given name.');
                 }
             }).catch((error) => {
                 alert('Error searching bus details: ' + error.message);
+            });
+        }
+
+        function showFeedbackPage() {
+            document.getElementById('writeNotice').style.display = 'none';
+            document.getElementById('addBusDetails').style.display = 'none';
+            document.getElementById('editBusDetails').style.display = 'none';
+            document.getElementById('feedbackPage').style.display = 'block';
+            fetchFeedback();
+        }
+
+        function fetchFeedback() {
+            const feedbackList = document.getElementById('feedbackList');
+            feedbackList.innerHTML = '';
+            db.ref('feedback').once('value').then((snapshot) => {
+                snapshot.forEach((childSnapshot) => {
+                    const feedback = childSnapshot.val();
+                    const feedbackDiv = document.createElement('div');
+                    feedbackDiv.style.borderBottom = '1px solid #ccc';
+                    feedbackDiv.style.padding = '10px';
+                    feedbackDiv.innerHTML = `<p><strong>${feedback.user}</strong>: ${feedback.message}</p>`;
+                    feedbackList.appendChild(feedbackDiv);
+                });
+            }).catch((error) => {
+                alert('Error fetching feedback: ' + error.message);
             });
         }
     </script>
