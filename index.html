@@ -1,46 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Bus Tracker</title>
-        <link rel="stylesheet" href="./css/styles.css">
-        <script src="./js/main.js"></script>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <div class="logo">🚌 HOME page</div>
-                <div class="search-bar">
-                    <input type="text" placeholder="Search ........">
-                    <button class="search-button">Search</button>
-                </div>
-                <div class="buttons">
-                    <button onclick="findBusNearMe()">Find bus near me</button>
-                    <button onclick="nearBusStop()">Near bus stop</button>
-                    <button onclick="feedback()">Feedback</button>
-                </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Tracker</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="../js/main.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🚌 HOME page</div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search ........">
+                <button class="search-button">Search</button>
             </div>
-            <nav class="notice" id="notice">
-                <h3>Notice</h3>
-                <p>No notices at this time.</p>
-            </nav>
-            <div class="content">
-                <div id="map"></div>
-                <div class="bus-details" id="bus-details">
-                    <h3>🚌 BUS DETAILS</h3>
-                    <p>Loading bus details...</p>
-                </div>
-                <div class="bus-info" id="bus-info">
-                    <h3>Bus Info</h3>
-                    <p>Select a bus to see details.</p>
-                </div>
+            <div class="buttons">
+                <button onclick="findBusNearMe()">Find bus near me</button>
+                <button onclick="nearBusStop()">Near bus stop</button>
+                <button onclick="feedback()">Feedback</button>
             </div>
         </div>
-        <script src="https://cdnjs.cloudflare.com/ajax/lib..." ></script>
-        <script
-            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3gKPNzsaXWfZp-Rblp__mv1RzOsl90ws&libraries=geometry&callback=initMap"
+        <nav class="notice" id="notice">
+            <h3>Notice</h3>
+            <p>No notices at this time.</p>
+        </nav>
+        <div class="content">
+            <div id="map"></div>
+            <div class="bus-details" id="bus-details">
+                <h3>🚌 BUS DETAILS</h3>
+                <p>Loading bus details...</p>
+            </div>
+            <div class="bus-info" id="bus-info">
+                <h3>Bus Info</h3>
+                <p>Select a bus to see details.</p>
+                <button class="additional-info-button" onclick="showAdditionalInfo()">Additional Info</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3gKPNzsaXWfZp-Rblp__mv1RzOsl90ws&libraries=geometry&callback=initMap"
             async defer></script>
-        <script src="./js/script.js"></script>
-    </body>
+            <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+            <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="../js/script.js"></script>
+</body>
 </html>
