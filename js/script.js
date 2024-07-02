@@ -54,11 +54,14 @@ function showBusInfo(bus) {
         <p>Driver name: ${bus.driver}</p>
         <p>Bus number: ${bus.number}</p>
         <p>Phone number: ${bus.phone}</p>
+        <button class="additional-info-button" onclick="showAdditionalInfo()">Additional Info</button>
     `;
 }
+
 function feedback() {
     window.location.href = "./feedback.html";
-  }
+}
+
 function findBusNearMe() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {
@@ -131,10 +134,58 @@ function nearBusStop() {
     // Implement the function to find nearby bus stops
 }
 
-function updateNotice() {
-    const notice = document.getElementById('notice');
-    notice.innerHTML = `
-        <h3>Notice</h3>
-        <p>Dhilo aais bhane Ghara farki talai kurne time xaina.</p>
-    `;
+
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
+    authDomain: "v-track-gu999.firebaseapp.com",
+    databaseURL: "https://v-track-gu999-default-rtdb.firebaseio.com",
+    projectId: "v-track-gu999",
+    storageBucket: "v-track-gu999.appspot.com",
+    messagingSenderId: "1046512747961",
+    appId: "1:1046512747961:web:80df40c48bca3159296268",
+    measurementId: "G-38X29VT1YT"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const dbRef = firebase.database().ref();
+
+// Function to fetch the latest notice from Firebase
+function fetchNotices() {
+    return dbRef.child("notices").orderByKey().limitToLast(1).once("value");
 }
+
+// Function to update the notice section on the page
+function updateNotice() {
+    fetchNotices().then((snapshot) => {
+        if (snapshot.exists()) {
+            const noticeData = snapshot.val();
+            const noticeId = Object.keys(noticeData)[0];
+            const noticeContent = noticeData[noticeId].content;
+            
+            const noticeElement = document.getElementById('notice');
+            noticeElement.innerHTML = `
+                <h3>Notice</h3>
+                <p>${noticeContent}</p>
+            `;
+        } else {
+            const noticeElement = document.getElementById('notice');
+            noticeElement.innerHTML = `
+                <h3>Notice</h3>
+                <p>No notices available.</p>
+            `;
+        }
+    }).catch((error) => {
+        console.error("Error fetching notices:", error);
+        const noticeElement = document.getElementById('notice');
+        noticeElement.innerHTML = `
+            <h3>Notice</h3>
+            <p>Failed to load notices.</p>
+        `;
+    });
+}
+
+// Call updateNotice to initially load notice on page load
+updateNotice();
+
