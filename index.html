@@ -4,45 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bus Tracker</title>
-    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../V-TRACK/css/styles.css">
     <script src="../js/main.js"></script>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div class="logo">🚌 HOME page</div>
-            <div class="search-bar">
-                <input type="text" placeholder="Search ........">
-                <button class="search-button">Search</button>
+        <nav>
+            <input type="checkbox" id="sidebar-active">
+            <label for="sidebar-active" class="open-sidebar-button">
+                <svg xmlns="http://www.w3.org/2000/svg" height="32" viewBox="0 -960 960 960" width="32"><path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/></svg>
+            </label>
+            <label id="overlay" for="sidebar-active"></label>
+            <div class="links-container">
+                <label for="sidebar-active" class="close-sidebar-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="32" viewBox="0 -960 960 960" width="32"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
+                </label>
+                <a class="home-link" href="index.html">Home</a> 
+                <div class="search-bar">
+                    <input type="text" placeholder="Search ........">
+                    <button class="search-button">Search</button>
+                </div>
+                <a onclick="nearBusStop()">Near bus stop</a> 
+                <a onclick="findBusNearMe()">Find bus near me</a>
+                <a href="../V-TRACK/Html/feedback.html">Feedback</a>
             </div>
-            <div class="buttons">
-                <button onclick="findBusNearMe()">Find bus near me</button>
-                <button onclick="nearBusStop()">Near bus stop</button>
-                <button onclick="feedback()">Feedback</button>
-            </div>
-        </div>
+        </nav>
         <nav class="notice" id="notice">
             <h3>Notice</h3>
             <p>No notices at this time.</p>
         </nav>
         <div class="content">
             <div id="map"></div>
-            <div class="bus-details" id="bus-details">
-                <h3>🚌 BUS DETAILS</h3>
-                <p>Loading bus details...</p>
-            </div>
-            <div class="bus-info" id="bus-info">
-                <h3>Bus Info</h3>
-                <p>Select a bus to see details.</p>
-                <button class="additional-info-button" onclick="showAdditionalInfo()">Additional Info</button>
+            <div class="details">
+                <div class="bus-details" id="bus-details">
+                    <h3>🚌 BUS DETAILS</h3>
+                    <p>Loading bus details...</p>
+                </div>
+                <div class="bus-info" id="bus-info">
+                    <h3>Bus Info</h3>
+                    <p>Select a bus to see details.</p>
+                    <button class="additional-info-button" onclick="showAdditionalInfo()">Additional Info</button>
+                </div>
             </div>
         </div>
     </div>
+    <button id="nav-button" onclick="toggleFullScreenMap()">Toggle Map</button>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3gKPNzsaXWfZp-Rblp__mv1RzOsl90ws&libraries=geometry&callback=initMap"
             async defer></script>
-            <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-            <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="../js/script.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="../V-TRACK/js/script.js"></script>
 </body>
 </html>
