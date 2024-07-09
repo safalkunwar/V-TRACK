@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
-    <style>
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Admin Panel</title>
+        <style>
         body {
             font-family: Arial, sans-serif;
             background: #f0f0f0;
@@ -87,88 +87,100 @@
             display: none;
         }
     </style>
-</head>
-<body>
-    <div class="navbar">
-        <img src="../img/logo7.jpeg" alt="Logo">
-        <a href="#writeNotice">Write Notices</a>
-        <a href="#addBusDetails">Add Bus Details</a>
-        <a href="#editBusDetails">Edit Bus Details</a>
-        <a href="../Html/backendfeedback.html" onclick="showFeedbackPage()">Feedback Page</a>
-    </div>
+    </head>
+    <body>
+        <div class="navbar">
+            <img src="../img/logo7.jpeg" alt="Logo">
+            <a href="#writeNotice">Write Notices</a>
+            <a href="#addBusDetails">Add Bus Details</a>
+            <a href="#editBusDetails">Edit Bus Details</a>
+            <a href="../html/backendfeedback.html"
+                onclick="showFeedbackPage()">Feedback Page</a>
+        </div>
 
-    <div class="container" id="writeNotice">
-        <h2>WRITE ANY NOTICES</h2>
-        <div class="inputBox">
-            <textarea id="noticeContent" placeholder="Write any notices here..."></textarea>
+        <div class="container" id="writeNotice">
+            <h2>WRITE ANY NOTICES</h2>
+            <div class="inputBox">
+                <textarea id="noticeContent"
+                    placeholder="Write any notices here..."></textarea>
+            </div>
+            <div class="inputBox">
+                <button onclick="submitNotice()">SUBMIT</button>
+            </div>
         </div>
-        <div class="inputBox">
-            <button onclick="submitNotice()">SUBMIT</button>
-        </div>
-    </div>
 
-    <div class="container" id="addBusDetails">
-        <h2>ADD Bus Details</h2>
-        <div class="inputBox">
-            <input type="text" id="busName" placeholder="BUS NAME">
+        <div class="container" id="addBusDetails">
+            <h2>ADD Bus Details</h2>
+            <div class="inputBox">
+                <input type="text" id="busName" placeholder="BUS NAME">
+            </div>
+            <div class="inputBox">
+                <input type="text" id="driverName" placeholder="DRIVER NAME">
+            </div>
+            <div class="inputBox">
+                <input type="text" id="busNumber" placeholder="BUS NUMBER">
+            </div>
+            <div class="inputBox">
+                <input type="text" id="driverNum" placeholder="DRIVER NUM">
+            </div>
+            <div class="inputBox">
+                <input type="text" id="busRoute" placeholder="BUS ROUTE">
+            </div>
+            <div class="inputBox">
+                <textarea id="additionalDetails"
+                    placeholder="ADDITIONAL DETAILS"></textarea>
+            </div>
+            <div class="inputBox">
+                <button onclick="addBusDetails()">SUBMIT</button>
+            </div>
         </div>
-        <div class="inputBox">
-            <input type="text" id="driverName" placeholder="DRIVER NAME">
-        </div>
-        <div class="inputBox">
-            <input type="text" id="busNumber" placeholder="BUS NUMBER">
-        </div>
-        <div class="inputBox">
-            <input type="text" id="driverNum" placeholder="DRIVER NUM">
-        </div>
-        <div class="inputBox">
-            <input type="text" id="busRoute" placeholder="BUS ROUTE">
-        </div>
-        <div class="inputBox">
-            <textarea id="additionalDetails" placeholder="ADDITIONAL DETAILS"></textarea>
-        </div>
-        <div class="inputBox">
-            <button onclick="addBusDetails()">SUBMIT</button>
-        </div>
-    </div>
 
-    <div class="container" id="editBusDetails">
-        <h2>EDIT Bus Details</h2>
-        <div class="inputBox">
-            <input type="text" id="prevBusName" placeholder="PREVIOUS BUS NAME">
+        <div class="container" id="editBusDetails">
+            <h2>EDIT Bus Details</h2>
+            <div class="inputBox">
+                <input type="text" id="prevBusName"
+                    placeholder="PREVIOUS BUS NAME">
+            </div>
+            <div class="inputBox">
+                <input type="text" id="newBusName"
+                    placeholder="CHANGE BUS NAME">
+            </div>
+            <div class="inputBox">
+                <input type="text" id="newDriverName"
+                    placeholder="NEW DRIVER NAME">
+            </div>
+            <div class="inputBox">
+                <input type="text" id="changeBusNumber"
+                    placeholder="CHANGE BUS NUMBER">
+            </div>
+            <div class="inputBox">
+                <input type="text" id="addDriverNum"
+                    placeholder="ADD DRIVER NUM">
+            </div>
+            <div class="inputBox">
+                <input type="text" id="changeBusRoute"
+                    placeholder="CHANGE BUS ROUTE">
+            </div>
+            <div class="inputBox">
+                <textarea id="newAdditionalDetails"
+                    placeholder="PROVIDE NEW ADDITIONAL DETAILS"></textarea>
+            </div>
+            <div class="inputBox">
+                <button onclick="editBusDetails()">SUBMIT</button>
+            </div>
         </div>
-        <div class="inputBox">
-            <input type="text" id="newBusName" placeholder="CHANGE BUS NAME">
-        </div>
-        <div class="inputBox">
-            <input type="text" id="newDriverName" placeholder="NEW DRIVER NAME">
-        </div>
-        <div class="inputBox">
-            <input type="text" id="changeBusNumber" placeholder="CHANGE BUS NUMBER">
-        </div>
-        <div class="inputBox">
-            <input type="text" id="addDriverNum" placeholder="ADD DRIVER NUM">
-        </div>
-        <div class="inputBox">
-            <input type="text" id="changeBusRoute" placeholder="CHANGE BUS ROUTE">
-        </div>
-        <div class="inputBox">
-            <textarea id="newAdditionalDetails" placeholder="PROVIDE NEW ADDITIONAL DETAILS"></textarea>
-        </div>
-        <div class="inputBox">
-            <button onclick="editBusDetails()">SUBMIT</button>
-        </div>
-    </div>
 
-    <div class="container feedback" id="feedbackPage">
-        <h2>USER FEEDBACK</h2>
-        <div id="feedbackList"></div>
-    </div>
+        <div class="container feedback" id="feedbackPage">
+            <h2>USER FEEDBACK</h2>
+            <div id="feedbackList"></div>
+        </div>
 
-    <!-- Include Firebase JavaScript SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script>
+        <!-- Include Firebase JavaScript SDK -->
+        <script
+            src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+        <script
+            src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+        <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
         authDomain: "v-track-gu999.firebaseapp.com",
@@ -290,5 +302,5 @@
             });
         }
     </script>
-</body>
+    </body>
 </html>
