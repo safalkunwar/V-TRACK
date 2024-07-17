@@ -2,7 +2,9 @@ body, html {
   height: 100%;
   margin: 0;
   font-family: Arial, sans-serif;
+  background-color: rgb(183, 215, 244);
 }
+
 
 .container {
   display: flex;
@@ -11,16 +13,23 @@ body, html {
 }
 
 .notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+width: 80%;
+  text-align: center;
   background-color: rgb(158, 221, 255);
-  padding: 1px;
-  margin: 1px;
-  border: 2px solid #ff0000;
-  color: #ffffff;
+  padding: 0 10px;
+  margin: 0 auto;
+  color: #571010;
   font-weight: bold;
   overflow: hidden;
   white-space: nowrap;
   box-sizing: border-box;
   height: 40px;
+  box-shadow: 0px 5px 25px rgba(0, 0, 0, 0.4);
+  border-radius: 16px;
 }
 
 @keyframes floatNotice {
@@ -37,7 +46,6 @@ body, html {
   padding-right: 50%;
   animation: floatNotice 10s linear infinite;
 }
-
 .content {
   display: flex;
   flex: 1;
@@ -55,23 +63,29 @@ body, html {
   display: flex;
   flex-direction: column;
   flex: 1;
-  background-color: #f0f0f0;
   border-radius: 4px;
-  border: 1px solid #ccc;
+
 }
 
 .bus-details, .bus-info {
-  padding: 10px;
+  padding: 20px;
+  border-radius: 20px;
+  margin: 10px;
+  border: 3px solid rgb(43, 43, 41);
 }
 
 .bus-details {
-  background-color: #e0f7fa;
-  border-bottom: 1px solid #00bcd4;
+
+  background-color: #f1e6d6;
+  backdrop-filter: blur(0px);
+  box-shadow: 0px 5px 25px rgba(0, 0, 0, 0.6);
+
 }
 
 .bus-info {
-  background-color: #ffe0b2;
+  background-color: #f2eade;
   border-top: 1px solid #ff9800;
+  box-shadow: 0px 5px 25px rgba(0, 0, 0, 0.6);
 }
 
 h3 {
@@ -86,10 +100,13 @@ h3 {
   border: none;
   cursor: pointer;
   border-radius: 4px;
+  box-shadow: 0px 5px 25px rgba(0, 0, 0, 0.6);
 }
 
 .additional-info-button:hover {
   background-color: #0056b3;
+
+
 }
 
 @media (min-width: 768px) {
@@ -101,6 +118,7 @@ h3 {
     height: auto;
     margin-bottom: 0;
     flex: 0 0 65%;
+    border-radius: 20px;
   }
 
   .details {
@@ -117,7 +135,7 @@ h3 {
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap');
 :root{
-  --color-1: rgb(127, 188, 210);
+  --color-1: rgb(27 115 146);
   --text-color: #f0f0f0;
   --accent-color: #006aff;
 }
