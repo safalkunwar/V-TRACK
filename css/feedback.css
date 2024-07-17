@@ -11,6 +11,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: rgb(183, 215, 244);
 }
 
 .container {
@@ -18,11 +19,12 @@ body {
     height: 80vh;
     padding: 20px;
     border-radius: 20px;
-    box-shadow: 0px 5px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0px 5px 25px rgba(0, 0, 0, 0.6);
     display: flex;
     justify-content: space-evenly;
     align-items: center;
     flex-direction: column;
+    background-color: #FFF;
 }
 
 .container form {
