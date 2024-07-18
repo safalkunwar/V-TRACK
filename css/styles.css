@@ -5,8 +5,8 @@ body, html {
   background-color: rgb(183, 215, 244);
 }
 .logo {
-  width: 32px; 
-  height: 32px; 
+  width: 37px; 
+  height: 37px; 
   border-radius: 50%; 
   object-fit: cover; 
 }
@@ -181,10 +181,11 @@ nav a {
   align-items: center;
   text-decoration: none;
   color: var(--text-color);
+  
 }
 
 nav a:hover {
-  background-color: var(--accent-color);
+  background: var(--accent-color);
 }
 
 nav .home-link {
@@ -227,6 +228,7 @@ nav svg {
 
 .search-button:hover {
   background-color: #0056b3;
+  background: #571010;
 }
 
 @media (max-width: 649px) {

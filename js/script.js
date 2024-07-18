@@ -185,18 +185,3 @@ function updateNotice() {
         `;
     });
 }
-
-// Call updateNotice to initially load notice on page load
-updateNotice();
-function toggleFullScreenMap() {
-    const map = document.getElementById('map');
-    const navButton = document.getElementById('nav-button');
-    if (map.classList.contains('fullscreen')) {
-        map.classList.remove('fullscreen');
-        navButton.classList.remove('visible');
-    } else {
-        map.classList.add('fullscreen');
-        navButton.classList.add('visible');
-    }
-}
-
