@@ -34,3 +34,19 @@ Documentation for the VTrack project is divided into the following sections:
 2. Backend Development
 3. Database Management
 4. Hardware Development, Integration, and Testing
+
+## Frontend Development
+
+The frontend development of VTrack will focus on creating a user-friendly web application that provides real-time vehicle tracking and monitoring capabilities. The application will feature an interactive map interface that displays the location of vehicles in real-time, allowing users to track their movements and receive updates on arrival times. The frontend will be designed using modern web technologies such as HTML, CSS, and JavaScript, with a focus on responsive design and cross-browser compatibility. The frontend will also include features such as search functionality, user authentication, and notifications to enhance the user experience.
+
+## Backend Development
+
+The backend development of VTrack will involve creating a server-side application that handles data processing, storage, and retrieval. The backend will be responsible for managing user requests, updating vehicle locations, and sending notifications to users. The backend will be developed using Google Firebase Cloud Functions, a serverless platform that allows developers to build and deploy backend services without managing servers. Firebase Cloud Functions will provide the scalability and reliability needed to support real-time vehicle tracking and monitoring.
+
+## Database Management
+
+The database management of VTrack will focus on storing and retrieving data related to vehicles, drivers, and users. The database will be designed to handle real-time updates and queries, ensuring that users receive accurate and up-to-date information. The database will be powered by Google Firebase Realtime Database, a cloud-hosted NoSQL database that provides low-latency access to data. Firebase Realtime Database will support the storage and retrieval of vehicle locations, user profiles, and other relevant information needed for the VTrack application.
+
+## Hardware Development, Integration, and Testing
+
+There has been almost no development of hardware side yet. This would be problematic if not ready till defense.
