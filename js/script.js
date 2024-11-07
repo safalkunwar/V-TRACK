@@ -4,7 +4,7 @@ let nearestBusMarker;
 let directionsService;
 let directionsRenderer;
 const busData = [
-    { id: 'a', lat: 28.2116, lng: 83.9756, distance: 5, driver: 'Raju Yadav', number: 'GAA 00 26', phone: '9800000001' },
+    { id: 'a', lat: 28.267001999999998, lng: 83.74717223885155, distance: 5, driver: 'Raju Yadav', number: 'GAA 00 26', phone: '9800000001' },
     { id: 'b', lat: 28.2216, lng: 83.9856, distance: 2, driver: 'Sandesh Dahal', number: 'GAA 00 27', phone: '9800000002' },
     { id: 'c', lat: 28.2016, lng: 83.9956, distance: 3, driver: 'Nirajan Dhakal', number: 'GAA 00 28', phone: '9800000003' }
 ];
