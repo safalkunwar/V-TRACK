@@ -157,7 +157,7 @@ function showBusInfo(busName) {
 function redirectToAdditionalInfo() {
     window.location.href = "../html/businfo.html";
 }
-
+window.redirectToAdditionalInfo = redirectToAdditionalInfo;
 // Function to find and show distances to buses from the user's location
 // Find and show distances to buses from user's location
 function findBusNearMe() {
