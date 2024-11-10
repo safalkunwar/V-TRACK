@@ -53,3 +53,7 @@
             return document.getElementById(id).value;
         };
  
+
+        document.getElementById("go-back").addEventListener("click", function() {
+            history.back();
+        });

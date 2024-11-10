@@ -1,141 +1,4 @@
-let map;
-let userMarker;
-let nearestBusMarker;
-let directionsService;
-let directionsRenderer;
-const busData = [
-    { id: 'a', lat: 28.2116, lng: 83.9756, distance: 5, driver: 'Raju Yadav', number: 'GAA 00 26', phone: '9800000001' },
-    { id: 'b', lat: 28.2216, lng: 83.9856, distance: 2, driver: 'Sandesh Dahal', number: 'GAA 00 27', phone: '9800000002' },
-    { id: 'c', lat: 28.2016, lng: 83.9956, distance: 3, driver: 'Nirajan Dhakal', number: 'GAA 00 28', phone: '9800000003' }
-];
-
-function initMap() {
-    const centerCoords = { lat: 28.2096, lng: 83.9856 };
-    map = new google.maps.Map(document.getElementById("map"), {
-        center: centerCoords,
-        zoom: 13
-    });
-    
-    directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer();
-    directionsRenderer.setMap(map);
-    
-    busData.forEach(bus => {
-        const marker = new google.maps.Marker({
-            position: { lat: bus.lat, lng: bus.lng },
-            map: map,
-            title: `Bus ${bus.id.toUpperCase()} 🚌`,
-            icon: 'https://img.icons8.com/emoji/48/000000/bus-emoji.png'
-        });
-
-        marker.addListener('click', () => {
-            showBusInfo(bus);
-        });
-    });
-
-    updateBusDetails();
-    updateNotice();
-}
-
-function updateBusDetails() {
-    const busDetails = document.getElementById('bus-details');
-    busDetails.innerHTML = '<h3>🚌 BUS DETAILS</h3>';
-    busData.forEach(bus => {
-        const detail = document.createElement('p');
-        detail.textContent = `Bus ${bus.id.toUpperCase()} is ${bus.distance} km far from you 🚌`;
-        busDetails.appendChild(detail);
-    });
-}
-
-function showBusInfo(bus) {
-    const busInfo = document.getElementById('bus-info');
-    busInfo.innerHTML = `
-        <h3>Bus ${bus.id.toUpperCase()}</h3>
-        <p>Driver name: ${bus.driver}</p>
-        <p>Bus number: ${bus.number}</p>
-        <p>Phone number: ${bus.phone}</p>
-        <button class="additional-info-button" onclick="showAdditionalInfo()">Additional Info</button>
-    `;
-}
-
-function feedback() {
-    window.location.href = "./html/feedback.html";
-}
-
-function findBusNearMe() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-            const userLat = position.coords.latitude;
-            const userLng = position.coords.longitude;
-            const userLocation = new google.maps.LatLng(userLat, userLng);
-
-            if (userMarker) userMarker.setMap(null);
-            userMarker = new google.maps.Marker({
-                position: userLocation,
-                map: map,
-                title: "Your Location",
-                icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-            });
-
-            let nearestBus = null;
-            let minDistance = Number.MAX_VALUE;
-
-            busData.forEach(bus => {
-                const busLocation = new google.maps.LatLng(bus.lat, bus.lng);
-                const distance = google.maps.geometry.spherical.computeDistanceBetween(userLocation, busLocation);
-
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearestBus = bus;
-                }
-            });
-
-            if (nearestBus) {
-                showBusInfo(nearestBus);
-                displayRoute(userLocation, nearestBus);
-
-                if (nearestBusMarker) nearestBusMarker.setMap(null);
-                nearestBusMarker = new google.maps.Marker({
-                    position: { lat: nearestBus.lat, lng: nearestBus.lng },
-                    map: map,
-                    title: `Nearest Bus ${nearestBus.id.toUpperCase()} 🚌`,
-                    icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
-                });
-
-                const bounds = new google.maps.LatLngBounds();
-                bounds.extend(userLocation);
-                bounds.extend(new google.maps.LatLng(nearestBus.lat, nearestBus.lng));
-                map.fitBounds(bounds);
-            }
-        });
-    } else {
-        alert("Geolocation is not supported by this browser.");
-    }
-}
-
-function displayRoute(origin, destination) {
-    const request = {
-        origin: origin,
-        destination: new google.maps.LatLng(destination.lat, destination.lng),
-        travelMode: google.maps.TravelMode.DRIVING
-    };
-
-    directionsService.route(request, (result, status) => {
-        if (status === google.maps.DirectionsStatus.OK) {
-            directionsRenderer.setDirections(result);
-        } else {
-            alert("Could not display directions due to: " + status);
-        }
-    });
-}
-
-function nearBusStop() {
-    alert("Near bus stop function triggered");
-    // Implement the function to find nearby bus stops
-}
-
-
-// Firebase configuration
+// Firebase Configuration - Replace with your actual Firebase credentials
 const firebaseConfig = {
     apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
     authDomain: "v-track-gu999.firebaseapp.com",
@@ -146,42 +9,246 @@ const firebaseConfig = {
     appId: "1:1046512747961:web:80df40c48bca3159296268",
     measurementId: "G-38X29VT1YT"
 };
-
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const dbRef = firebase.database().ref();
 
-// Function to fetch the latest notice from Firebase
-function fetchNotices() {
-    return dbRef.child("notices").orderByKey().limitToLast(1).once("value");
+// Map, marker cluster, and marker management
+let map;
+let userMarker;
+const busMarkers = {};
+let markerCluster;
+
+// Initialize the map, cluster, and event listeners
+function initMap() {
+    map = L.map('map').setView([28.2096, 83.9856], 13);
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // Ensure that markerCluster is properly initialized
+    if (!markerCluster) {
+        markerCluster = L.markerClusterGroup({
+            iconCreateFunction: cluster => {
+                return L.divIcon({
+                    html: '<h1>🚌</h1>',
+                    className: 'custom-cluster-icon'
+                });
+            }
+        });
+        map.addLayer(markerCluster);
+    }
+
+    // Fetch and display bus locations from Firebase
+    dbRef.child("BusLocation").on("value", snapshot => {
+        if (markerCluster) markerCluster.clearLayers(); // Clear previous markers on data update
+        snapshot.forEach(childSnapshot => {
+            const bus = childSnapshot.val();
+            const busId = childSnapshot.key;
+            updateBusMarker(bus, busId);
+        });
+        displayAvailableBuses(); // Show available buses by default
+    });
+
+    updateNotice(); // Load the latest notice
+
+    // Search button event listener for location search
+    document.querySelector(".search-button").addEventListener("click", searchLocation);
 }
 
-// Function to update the notice section on the page
-function updateNotice() {
-    fetchNotices().then((snapshot) => {
-        if (snapshot.exists()) {
-            const noticeData = snapshot.val();
-            const noticeId = Object.keys(noticeData)[0];
-            const noticeContent = noticeData[noticeId].content;
-            
-            const noticeElement = document.getElementById('notice');
-            noticeElement.innerHTML = `
-                <h3>Notice</h3>
-                <p>${noticeContent}</p>
-            `;
-        } else {
-            const noticeElement = document.getElementById('notice');
-            noticeElement.innerHTML = `
-                <h3>Notice</h3>
-                <p>No notices available.</p>
-            `;
-        }
-    }).catch((error) => {
-        console.error("Error fetching notices:", error);
-        const noticeElement = document.getElementById('notice');
-        noticeElement.innerHTML = `
-            <h3>Notice</h3>
-            <p>Failed to load notices.</p>
-        `;
+// Function to update or create a bus marker
+function updateBusMarker(bus, busId) {
+    const { latitude, longitude, timestamp } = bus;
+
+    if (latitude === undefined || longitude === undefined) {
+        console.warn("Incomplete bus data:", bus);
+        return;
+    }
+
+    if (busMarkers[busId]) {
+        // Update marker position if it already exists
+        busMarkers[busId].setLatLng([latitude, longitude]);
+    } else {
+        // Create a new marker if it doesn't exist
+        const marker = L.marker([latitude, longitude], {
+            title: `Bus ${busId.toUpperCase()} 🚌`
+        });
+
+        marker.busData = { id: busId, timestamp };
+        busMarkers[busId] = marker;
+
+        // Show bus info when marker is clicked
+        marker.on('click', () => showBusInfo(busId)); // Pass bus ID to fetch details
+        if (markerCluster) markerCluster.addLayer(marker);
+    }
+}
+
+// Display only available bus names in `bus-details` div by default
+function displayAvailableBuses() {
+    dbRef.child("busDetails").once("value").then(snapshot => {
+        const busDetailsElement = document.getElementById('bus-details');
+        busDetailsElement.innerHTML = "<h3>🚌 Available Buses</h3>";
+        snapshot.forEach(childSnapshot => {
+            const bus = childSnapshot.val();
+            busDetailsElement.innerHTML += `<p style="margin:9px">➥🚍 ${bus.busName.toUpperCase() || "No data"}</p>`;
+        });
     });
 }
+
+// Function to display full bus info in `bus-info` div when a marker is clicked
+function showBusInfo(busName) {
+    const busInfo = document.getElementById('bus-info');
+    busInfo.innerHTML = `<h3>Bus ${busName} Details</h3>`;
+
+    console.log("Fetching details for Bus Name:", busName);  // Log the busName to verify it's being passed correctly
+
+    dbRef.child("busDetails").orderByChild("busName").equalTo(busName).once("value").then(snapshot => {
+        if (snapshot.exists()) {
+            const details = snapshot.val();
+            console.log("Bus details found:", details);  // Log the details fetched from Firebase
+
+            const busData = Object.values(details)[0]; // Extract the bus data (should be a single entry)
+            const busNumber = busData.busNumber || "Unavailable";
+            const busRoute = busData.busRoute || "Unavailable";
+            const driverName = busData.driverName || "Unavailable";
+            const driverNum = busData.driverNum || "Unavailable";
+            const additionalDetails = busData.additionalDetails || "No additional details available";
+
+            busInfo.innerHTML += `
+                <p><strong>Bus Name:</strong> ${busName}</p>
+                <p><strong>Bus Number:</strong> ${busNumber}</p>
+                <p><strong>Route:</strong> ${busRoute}</p>
+                <p><strong>Driver's Name:</strong> ${driverName}</p>
+                <p><strong>Driver's Phone:</strong> ${driverNum}</p>
+                <p><strong>Additional Details:</strong> ${additionalDetails}</p>
+                <button class="additional-info-button" onclick="redirectToAdditionalInfo()">Additional Info</button>
+            `;
+        } else {
+            console.warn("No details available for this bus Name:", busName);
+            busInfo.innerHTML += "<p>No additional info available for this bus.</p>";
+        }
+    }).catch(error => {
+        console.error("Error fetching bus details:", error);
+        busInfo.innerHTML += "<p>Failed to load bus details.</p>";
+    });
+}
+
+
+
+// Function to redirect to the additional info page
+function redirectToAdditionalInfo() {
+    window.location.href = "../html/businfo.html";
+}
+
+// Function to find and show distances to buses from the user's location
+function findBusNearMe() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+
+            if (userMarker) userMarker.remove();
+            userMarker = L.marker([userLat, userLng], {
+                title: "Your Location",
+                icon: L.icon({
+                    iconUrl: 'https://img.icons8.com/emoji/48/000000/blue-circle-emoji.png',
+                    iconSize: [30, 30]
+                })
+            }).addTo(map);
+
+            // Center the map on user's location
+            map.setView([userLat, userLng], 15);
+
+            // Calculate distances and find nearby buses
+            const nearbyBuses = Object.values(busMarkers).filter(marker => {
+                const distance = map.distance(userMarker.getLatLng(), marker.getLatLng());
+                return distance <= 30; // Buses within 30 meters
+            });
+
+            displayNearbyBuses(nearbyBuses); // Display nearby buses
+            showBusDistances(); // Show distances in bus details section
+        });
+    } else {
+        alert("Geolocation is not supported by this browser.");
+    }
+}
+function displayNearbyBuses(nearbyBuses) {
+    const alertBox = document.getElementById('alert-box');
+    if (!alertBox) {
+        console.error("Alert box element not found!");
+        return;
+    }
+    
+    if (nearbyBuses.length > 0) {
+        const busIds = nearbyBuses.map(marker => marker.busData.id).join(", ");
+        alertBox.innerHTML = `
+        <h1 style="color:red">Alert!!</h1>
+            <h2 style="text:bold">Buses are nearby you</h2>
+            <p>${nearbyBuses.length} bus(es) near you: ${busIds}</p>
+     
+            <h3 style="color:red">click on additional info for more details.</h3><h1>↘</h1>
+                   <span class="close-btn" onclick="closeAlertBox()">❌</span>
+        `;
+        alertBox.style.display = "block";
+    } else {
+        alertBox.style.display = "none";
+    }
+}
+
+// Close the alert box
+function closeAlertBox() {
+    const alertBox = document.getElementById('alert-box');
+    if (alertBox) {
+        alertBox.style.display = "none";
+    }
+}
+
+// Function to display bus distances in `bus-details` div
+function showBusDistances() {
+    const busDetailsElement = document.getElementById('bus-details');
+    busDetailsElement.innerHTML = "<h3>Distance to Buses</h3>";
+    Object.values(busMarkers).forEach(marker => {
+        const distance = map.distance(userMarker.getLatLng(), marker.getLatLng()).toFixed(2);
+        const timestamp = new Date(marker.busData.timestamp).toLocaleTimeString();
+        busDetailsElement.innerHTML += `<p>Bus ${marker.busData.id}: ${distance} meters away at ${timestamp}</p>`;
+    });
+}
+// Updated Search location on the map based on input
+function searchLocation() {
+    const searchInput = document.querySelector(".search-bar input").value;
+    if (!searchInput) return alert("Please enter a location to search.");
+
+    // Ensure Geocoder is loaded
+    if (!L.Control.Geocoder) {
+        alert("Geocoder library is not loaded.");
+        return;
+    }
+
+    L.Control.Geocoder.nominatim().geocode(searchInput, results => {
+        if (results.length > 0) {
+            const { lat, lng } = results[0].center; // Updated property name to `center`
+            map.setView([lat, lng], 15);
+        } else {
+            alert("Location not found.");
+        }
+    });
+}
+
+// Function to load and display notice from Firebase
+function updateNotice() {
+    dbRef.child("notices").once("value").then(snapshot => {
+        const noticeContainer = document.getElementById('notice');
+        if (snapshot.exists()) {
+            const noticeData = snapshot.val();
+            const latestNotice = Object.values(noticeData).pop();
+            noticeContainer.innerHTML = `<p>${latestNotice.content}</p>`;
+        } else {
+            noticeContainer.innerHTML = "<p>No notices available.</p>";
+        }
+    }).catch(error => console.error("Error loading notices:", error));
+}
+
+// Initialize the map and Firebase data loading on page load
+window.addEventListener("load", initMap);

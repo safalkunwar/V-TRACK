@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback Page</title>
-    <link rel="stylesheet" href="../css/backfeedback.css">
+    <title>Bus Additional Details</title>
     <link rel="stylesheet" href="../css/adminpanel.css">
-
+    <link rel="stylesheet" href="../css/bus.css">
 </head>
 <body>
     <nav>
@@ -31,23 +30,29 @@
         </div>
     </nav>
     <div class="container">
-        <h2>USER FEEDBACK</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Message</th>
-                </tr>
-            </thead>
-            <tbody id="feedbackList"></tbody>
-        </table>
-    </div>
+        <h2>Bus Additional Details</h2>
+        <div class="table-container">
+            <table id="busDetailsTable">
+                <thead>
+                    <tr>
 
-    <!-- Include Firebase JavaScript SDK -->
+                        <th>Bus Name</th>
+                        <th>Bus Number</th>
+                        <th>Bus Route</th>
+                        <th>Driver Name</th>
+                        <th>Driver Number</th>
+                        <th>Additional Details</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data rows will be added here dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="../js/backfeedback.js"></script>
+    <script src="../js/fetchBusDetails.js"></script>
 </body>
 </html>
