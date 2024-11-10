@@ -1,4 +1,3 @@
-// Firebase Configuration
 // Firebase Configuration - Replace with your actual Firebase credentials
 const firebaseConfig = {
     apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
@@ -11,7 +10,7 @@ const firebaseConfig = {
     measurementId: "G-38X29VT1YT"
 };
 firebase.initializeApp(firebaseConfig);
-const dbRef = firebase.database().ref();
+const dbRef = firebase.database().ref(); 
 
 
 // Elements
@@ -46,6 +45,11 @@ async function login() {
     const password = document.getElementById("login-password").value;
 
     if (!email.endsWith("@gandakiuniversity.edu.np")) {
+        alert("Please use your university email.");
+        return;
+    }
+    
+    if (email === "nirajan.60222@gandakiuniversity.edu.np") {
         alert("Please use your university email.");
         return;
     }

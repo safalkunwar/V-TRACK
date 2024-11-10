@@ -1,3 +1,4 @@
+
 // Firebase Configuration - Replace with your actual Firebase credentials
 const firebaseConfig = {
     apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
@@ -11,6 +12,21 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const dbRef = firebase.database().ref();
+const auth = firebase.auth();
+const database = firebase.database();
+
+// Initialize Firebase only if it hasn't been initialized already
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+} else {
+    firebase.app(); // Use the default app
+}
+firebase.auth().onAuthStateChanged(function(user) {
+    if (!user) {
+        // If no user is logged in, redirect to the login page
+        window.location.href = '/index.html'; 
+    }
+});
 
 // Map, marker cluster, and marker management
 let map;
@@ -143,12 +159,14 @@ function redirectToAdditionalInfo() {
 }
 
 // Function to find and show distances to buses from the user's location
+// Find and show distances to buses from user's location
 function findBusNearMe() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {
             const userLat = position.coords.latitude;
             const userLng = position.coords.longitude;
 
+            // Create or update the user's location marker
             if (userMarker) userMarker.remove();
             userMarker = L.marker([userLat, userLng], {
                 title: "Your Location",
@@ -161,7 +179,7 @@ function findBusNearMe() {
             // Center the map on user's location
             map.setView([userLat, userLng], 15);
 
-            // Calculate distances and find nearby buses
+            // Calculate distances and find nearby buses (within 30 meters)
             const nearbyBuses = Object.values(busMarkers).filter(marker => {
                 const distance = map.distance(userMarker.getLatLng(), marker.getLatLng());
                 return distance <= 30; // Buses within 30 meters
@@ -174,6 +192,8 @@ function findBusNearMe() {
         alert("Geolocation is not supported by this browser.");
     }
 }
+
+// Function to display nearby buses in the alert box
 function displayNearbyBuses(nearbyBuses) {
     const alertBox = document.getElementById('alert-box');
     if (!alertBox) {
@@ -185,25 +205,25 @@ function displayNearbyBuses(nearbyBuses) {
         const busIds = nearbyBuses.map(marker => marker.busData.id).join(", ");
         alertBox.innerHTML = `
         <h1 style="color:red">Alert!!</h1>
-            <h2 style="text:bold">Buses are nearby you</h2>
+            <h2 style="font-weight: bold">Buses are nearby you</h2>
             <p>${nearbyBuses.length} bus(es) near you: ${busIds}</p>
-     
-            <h3 style="color:red">click on additional info for more details.</h3><h1>↘</h1>
-                   <span class="close-btn" onclick="closeAlertBox()">❌</span>
+            <h3 style="color:red">Click on additional info for more details.</h3><h1>↘</h1>
+            <span class="close-btn" onclick="closeAlertBox()">❌</span>
         `;
         alertBox.style.display = "block";
     } else {
-        alertBox.style.display = "none";
+        alertBox.style.display = "none"; // Hide if no buses are nearby
     }
 }
 
-// Close the alert box
+// Function to close the alert box
 function closeAlertBox() {
     const alertBox = document.getElementById('alert-box');
     if (alertBox) {
         alertBox.style.display = "none";
     }
 }
+
 
 // Function to display bus distances in `bus-details` div
 function showBusDistances() {
