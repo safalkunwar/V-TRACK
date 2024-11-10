@@ -192,7 +192,7 @@ function findBusNearMe() {
         alert("Geolocation is not supported by this browser.");
     }
 }
-
+window.findBusNearMe = findBusNearMe;
 // Function to display nearby buses in the alert box
 function displayNearbyBuses(nearbyBuses) {
     const alertBox = document.getElementById('alert-box');
