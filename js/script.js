@@ -24,7 +24,7 @@ if (!firebase.apps.length) {
 firebase.auth().onAuthStateChanged(function(user) {
     if (!user) {
         // If no user is logged in, redirect to the login page
-        window.location.href = 'index.html'; 
+        window.location.href = '/V-TRACK/index.html'; 
     }
 });
 
