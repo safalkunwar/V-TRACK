@@ -1,46 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Login</title>
-    <link rel="stylesheet" href="./css/login.css">
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Student Login</title>
+        <link rel="stylesheet" href="./css/login.css">
+    </head>
+    <body>
 
-    <div class="container">
-        <div id="login-form" class="form-card">
-            <h2>Login</h2>
-            <input type="email" id="login-email" placeholder="University Email" required>
-            <input type="password" id="login-password" placeholder="Password" required>
-            <button onclick="login()">Login</button>
-            <p><a href="#" onclick="showForgotPassword()">Forgot Password?</a></p>
-            <p><a href="#" onclick="showSignUp()">Sign Up</a></p>
-        </div>
-
-        <div id="signup-form" class="form-card hidden">
-            <h2>Sign Up</h2>
-            <input type="email" id="signup-email" placeholder="University Email" required>
-            <input type="password" id="signup-password" placeholder="Password" required>
-            <button onclick="signUp()">Sign Up</button>
-            <p><a href="#" onclick="showLogin()">Back to Login</a></p>
-        </div>
-
-        <div id="forgot-password-form" class="form-card hidden">
-            <h2>Forgot Password</h2>
-            <input type="email" id="forgot-email" placeholder="University Email" required>
-            <button onclick="sendOTP()">Send OTP</button>
-            <div id="otp-section" class="hidden">
-                <input type="text" id="otp-input" placeholder="Enter OTP">
-                <input type="password" id="new-password" placeholder="New Password">
-                <button onclick="resetPassword()">Reset Password</button>
+        <div class="container">
+            <div id="login-form" class="form-card">
+                <div class="logo-img">
+                    <img src="img/vlogo.png" alt="logo">
+                </div>
+                <h2>Login</h2>
+                <input type="email" id="login-email"
+                    placeholder="University Email" required>
+                <input type="password" id="login-password"
+                    placeholder="Password" required>
+                <button onclick="login()">Login</button>
+                <p><a href="#" onclick="showForgotPassword()">Forgot
+                        Password? Click Here</a></p>
+                <p><a href="#" onclick="showSignUp()">Sign Up</a></p>
             </div>
-            <p><a href="#" onclick="showLogin()">Back to Login</a></p>
-        </div>
-    </div><script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
-    
-    <script src="./js/login.js"></script>
-</body>
+
+            <div id="signup-form" class="form-card hidden">
+                <h2>Sign Up</h2>
+                <input type="email" id="signup-email"
+                    placeholder="University Email" required>
+                <input type="password" id="signup-password"
+                    placeholder="Password" required>
+                <button onclick="signUp()">Sign Up</button>
+                <p><a href="#" onclick="showLogin()">Back to Login</a></p>
+            </div>
+
+            <div id="forgot-password-form" class="form-card hidden">
+                <h2>Forgot Password</h2>
+                <input type="email" id="forgot-email"
+                    placeholder="University Email" required>
+                <button onclick="sendOTP()">Send OTP</button>
+                <div id="otp-section" class="hidden">
+                    <input type="text" id="otp-input" placeholder="Enter OTP">
+                    <input type="password" id="new-password"
+                        placeholder="New Password">
+                    <button onclick="resetPassword()">Reset Password</button>
+                </div>
+                <p><a href="#" onclick="showLogin()">Back to Login</a></p>
+            </div>
+        </div><script
+            src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+        <script
+            src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+        <script
+            src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+
+        <script src="./js/login.js"></script>
+    </body>
 </html>
