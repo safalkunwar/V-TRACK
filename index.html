@@ -11,13 +11,16 @@
         <div class="container">
             <div id="login-form" class="form-card">
                 <div class="logo-img">
-                    <img src="img/vlogo.png" alt="logo">
+                    <img id="vlogo" src="img/vlogo.png" alt="logo">
                 </div>
                 <h2>Login</h2>
                 <input type="email" id="login-email"
-                    placeholder="University Email" required>
+                    placeholder="University Email" required
+                    onkeypress="handleKeyPress(event)">
                 <input type="password" id="login-password"
-                    placeholder="Password" required>
+                    placeholder="Password" required
+                    onkeypress="handleKeyPress(event)">
+                <!-- Added this line for password input -->
                 <button onclick="login()">Login</button>
                 <p><a href="#" onclick="showForgotPassword()">Forgot
                         Password? Click Here</a></p>
@@ -27,9 +30,12 @@
             <div id="signup-form" class="form-card hidden">
                 <h2>Sign Up</h2>
                 <input type="email" id="signup-email"
-                    placeholder="University Email" required>
+                    placeholder="University Email" required
+                    onkeypress="handleKeyPress(event)">
                 <input type="password" id="signup-password"
-                    placeholder="Password" required>
+                    placeholder="Password" required
+                    onkeypress="handleKeyPress(event)">
+                <!-- Added this line for password input -->
                 <button onclick="signUp()">Sign Up</button>
                 <p><a href="#" onclick="showLogin()">Back to Login</a></p>
             </div>
@@ -37,7 +43,8 @@
             <div id="forgot-password-form" class="form-card hidden">
                 <h2>Forgot Password</h2>
                 <input type="email" id="forgot-email"
-                    placeholder="University Email" required>
+                    placeholder="University Email" required
+                    onkeypress="handleKeyPress(event)">
                 <button onclick="sendOTP()">Send OTP</button>
                 <div id="otp-section" class="hidden">
                     <input type="text" id="otp-input" placeholder="Enter OTP">
@@ -47,7 +54,9 @@
                 </div>
                 <p><a href="#" onclick="showLogin()">Back to Login</a></p>
             </div>
-        </div><script
+        </div>
+
+        <script
             src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
         <script
             src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
@@ -55,5 +64,15 @@
             src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
 
         <script src="./js/login.js"></script>
+
+        <script>
+            vlogo = document.getElementById("vlogo")
+            
+            //change image value from the list below to change the logo. If last two images are repeated, change the display image to the other one.
+            imageList = ['logo1.png', 'logo2.png', 'logo3.png', 'logo4.png', 'logo5.png', 'logo6.png', 'logo7.png','vlogo.png']
+            lastImage = imageList[imageList.length - 1]
+            displayImage = Math.floor(Math.random(Math.random) * imageList.length)
+            vlogo.src = "img/" + imageList[displayImage]
+        </script>
     </body>
 </html>

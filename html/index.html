@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Bus Tracker</title>
+        <link rel="stylesheet" href="../css/styles.css">
+        <!-- Leaflet CSS for map rendering -->
+        <link rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+        <!-- MarkerCluster CSS for clustering markers -->
+        <link rel="stylesheet"
+            href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+        <link rel="stylesheet"
+            href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    </head>
+    <body>
+        <div class="container">
+            <nav>
+                <input type="checkbox" id="sidebar-active">
+                <label for="sidebar-active" class="open-sidebar-button">
+                    <!-- SVG for menu icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" height="32"
+                        viewBox="0 -960 960 960" width="32">
+                        <path
+                            d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z" />
+                    </svg>
+                </label>
+                <label id="overlay" for="sidebar-active"></label>
+                <div class="links-container">
+                    <label for="sidebar-active" class="close-sidebar-button">
+                        <!-- SVG for close icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" height="32"
+                            viewBox="0 -960 960 960" width="32">
+                            <path
+                                d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+                        </svg>
+                    </label>
+                    <a class="home-link" href="../html/index.html">
+                        <img src="../img/vlogo.png" alt="Logo"
+                            class="logo">
+                    </a>
+                    <div class="search-bar">
+                        <input type="text" placeholder="Search location..."
+                            id="location-input">
+                        <button class="search-button">Search</button>
+                    </div>
+                    <a onclick="nearBusStop()">Near Bus Stop</a>
+                    <a onclick="findBusNearMe()">Find Bus Near Me</a>
+                    <a href="../html/feedback.html">Feedback</a>
+                </div>
+            </nav>
+            <nav class="notice" id="notice">
+                <h3>Notice</h3>
+                <p>No notices at this time.</p>
+            </nav>
+            <div class="content">
+                <div id="map" style="height: 500px; width: 100%;"></div>
+                <div id="alert-box"
+                    style="display: none; border: 1px solid #ccc; padding: 10px; margin: 10px 0; background-color: #f9f9f9;"></div>
+                <div class="details">
+                    <div class="bus-details" id="bus-details">
+                        <h3>🚌 BUS DETAILS</h3>
+                        <p>Loading bus details...</p>
+                    </div>
+                    <div class="bus-info" id="bus-info">
+                        <h3>Bus Info</h3>
+                        <p>Select a bus to see details.</p>
+                        <button class="additional-info-button"
+                            onclick="redirectToAdditionalInfo()">Additional
+                            Info</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <script type="module" src="../js/script.js"></script>
+        <!-- Firebase JS SDKs -->
+        <script
+            src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+        <script
+            src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+        <script
+            src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+        <!-- Leaflet.js for map handling -->
+        <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+        <!-- Leaflet MarkerCluster plugin -->
+        <script
+            src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+        <!-- Leaflet Control Geocoder plugin for searching locations -->
+        <script
+            src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
+
+        <!-- Custom JavaScript -->
+        <script>
+            //change image value from the list below to change the logo. If last two images are repeated, change the display image to the other one.
+            imageList = ['logo1.png', 'logo2.png', 'logo3.png', 'logo4.png', 'logo5.png', 'logo6.png', 'logo7.png','vlogo.png']
+            lastImage = imageList[imageList.length - 1]
+            displayImage = Math.floor(Math.random(Math.random) * imageList.length)
+
+            document.getElementsByClassName("logo").src = "img/" + imageList[displayImage]
+        </script>
+    </body>
+</html>
