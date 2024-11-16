@@ -50,7 +50,7 @@ async function login() {
     }
     
     if (email === "nirajan.60222@gandakiuniversity.edu.np") {
-        alert("Please use your university email.");
+        alert("Nirajan is Gay");
         return;
     }
 
