@@ -53,7 +53,7 @@ async function login () {
   try {
     // Authenticate user
     await firebase.auth ().signInWithEmailAndPassword (email, password);
-    window.location.href = '../html/index.html';
+    window.location.href = '/VTRACK/html/index.html';
   } catch (error) {
     console.error ('Login error:', error);
     alert ('Login failed. Check your credentials.');
