@@ -56,50 +56,115 @@ function initMap() {
         });
         map.addLayer(markerCluster);
     }
-
-    // Fetch and display bus locations from Firebase
     dbRef.child("BusLocation").on("value", snapshot => {
-        if (markerCluster) markerCluster.clearLayers(); // Clear previous markers on data update
+        if (markerCluster) markerCluster.clearLayers(); // Clear old markers
         snapshot.forEach(childSnapshot => {
-            const bus = childSnapshot.val();
+            const busData = childSnapshot.val();
             const busId = childSnapshot.key;
-            updateBusMarker(bus, busId);
+    
+            // Pass full busData to the updateBusMarker function
+            updateBusMarker(busData, busId);
         });
-        displayAvailableBuses(); // Show available buses by default
+        displayAvailableBuses(); // Refresh the bus list
     });
-
+    
     updateNotice(); // Load the latest notice
 
     // Search button event listener for location search
     document.querySelector(".search-button").addEventListener("click", searchLocation);
 }
 
-// Function to update or create a bus marker
-function updateBusMarker(bus, busId) {
-    const { latitude, longitude, timestamp } = bus;
+function updateBusMarker(busData, busId) {
+    // Extract the latest timestamp entry
+    const latestEntryKey = Object.keys(busData).sort((a, b) => b - a)[0];
+    const { latitude, longitude, timestamp } = busData[latestEntryKey];
 
-    if (latitude === undefined || longitude === undefined) {
-        console.warn("Incomplete bus data:", bus);
+    if (!latitude || !longitude) {
+        console.warn(`Bus ${busId} has incomplete data:`, busData);
         return;
     }
 
+    const newLatLng = L.latLng(latitude, longitude);
+
     if (busMarkers[busId]) {
-        // Update marker position if it already exists
-        busMarkers[busId].setLatLng([latitude, longitude]);
+        // Animate existing marker to the new position
+        animateMarker(busMarkers[busId], newLatLng);
+
+        // Update path polyline
+        if (!busMarkers[busId].path) {
+            busMarkers[busId].path = L.polyline([newLatLng], {
+                color: 'blue',
+                weight: 3,
+                opacity: 0.7
+            }).addTo(map);
+        } else {
+            busMarkers[busId].path.addLatLng(newLatLng);
+        }
     } else {
-        // Create a new marker if it doesn't exist
-        const marker = L.marker([latitude, longitude], {
-            title: `Bus ${busId.toUpperCase()} 🚌`
+        // Create a new marker
+        const marker = L.marker(newLatLng, {
+            title: `Bus ${busId.toUpperCase()} 🚌`,
+            icon: L.icon({
+                iconUrl: 'https://img.icons8.com/color/48/000000/bus.png',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            })
         });
 
         marker.busData = { id: busId, timestamp };
         busMarkers[busId] = marker;
 
-        // Show bus info when marker is clicked
-        marker.on('click', () => showBusInfo(busId)); // Pass bus ID to fetch details
+        // Add marker to the cluster group
         if (markerCluster) markerCluster.addLayer(marker);
+
+        // Initialize path polyline for the new marker
+        marker.path = L.polyline([newLatLng], {
+            color: 'blue',
+            weight: 3,
+            opacity: 0.7
+        }).addTo(map);
+
+        // Add click listener for displaying bus info
+        marker.on('click', () => showBusInfo(busId));
     }
 }
+
+// Function to animate marker position smoothly
+function animateMarker(marker, newLatLng) {
+    const duration = 1000; // Animation duration in ms
+    const frameRate = 60; // Frames per second
+    const frames = duration / (1000 / frameRate);
+    const startLatLng = marker.getLatLng();
+    let frame = 0;
+
+    function moveMarker() {
+        frame++;
+        const lat = startLatLng.lat + (newLatLng.lat - startLatLng.lat) * (frame / frames);
+        const lng = startLatLng.lng + (newLatLng.lng - startLatLng.lng) * (frame / frames);
+        marker.setLatLng([lat, lng]);
+
+        if (frame < frames) {
+            requestAnimationFrame(moveMarker);
+        }
+    }
+
+    requestAnimationFrame(moveMarker);
+}
+
+
+// Function to display bus distances in `bus-details` div
+function showBusDistances() {
+    const busDetailsElement = document.getElementById('bus-details');
+    busDetailsElement.innerHTML = "<h3>Distance to Buses</h3>";
+    Object.values(busMarkers).forEach(marker => {
+        const distance = map.distance(userMarker.getLatLng(), marker.getLatLng()).toFixed(2);
+        const timestamp = marker.busData.timestamp
+            ? new Date(marker.busData.timestamp).toLocaleTimeString()
+            : "Unknown time"; // Handle missing timestamps gracefully
+        busDetailsElement.innerHTML += `<p>Bus ${marker.busData.id}: ${distance} meters away at ${timestamp}</p>`;
+    });
+}
+
 
 // Display only available bus names in `bus-details` div by default
 function displayAvailableBuses() {
@@ -226,15 +291,7 @@ function closeAlertBox() {
 
 
 // Function to display bus distances in `bus-details` div
-function showBusDistances() {
-    const busDetailsElement = document.getElementById('bus-details');
-    busDetailsElement.innerHTML = "<h3>Distance to Buses</h3>";
-    Object.values(busMarkers).forEach(marker => {
-        const distance = map.distance(userMarker.getLatLng(), marker.getLatLng()).toFixed(2);
-        const timestamp = new Date(marker.busData.timestamp).toLocaleTimeString();
-        busDetailsElement.innerHTML += `<p>Bus ${marker.busData.id}: ${distance} meters away at ${timestamp}</p>`;
-    });
-}
+
 // Updated Search location on the map based on input
 function searchLocation() {
     const searchInput = document.querySelector(".search-bar input").value;
@@ -272,3 +329,93 @@ function updateNotice() {
 
 // Initialize the map and Firebase data loading on page load
 window.addEventListener("load", initMap);
+// Add event listener to the "Get Directions" button
+document.querySelector(".direction-button").addEventListener("click", () => {
+    document.getElementById("direction-modal").style.display = "block";
+
+    // Suggest current location as starting point
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            const { latitude, longitude } = position.coords;
+            const userLatLng = `${latitude}, ${longitude}`;
+            document.getElementById("start-location").value = userLatLng;
+        });
+    }
+});
+
+// Close the modal
+document.getElementById("close-modal-button").addEventListener("click", () => {
+    document.getElementById("direction-modal").style.display = "none";
+});
+
+// Handle route finding
+document.getElementById("find-route-button").addEventListener("click", () => {
+    const start = document.getElementById("start-location").value;
+    const end = document.getElementById("end-location").value;
+
+    if (!start || !end) {
+        alert("Please provide both start and end locations.");
+        return;
+    }
+
+    // Geocode and display route using Leaflet Routing Machine
+    const routingControl = L.Routing.control({
+        waypoints: [
+            L.latLng(start.split(",").map(Number)), // Convert "lat, lng" to [lat, lng]
+            L.latLng(end.split(",").map(Number))
+        ],
+        routeWhileDragging: true,
+        geocoder: L.Control.Geocoder.nominatim()
+    }).addTo(map);
+
+    document.getElementById("direction-modal").style.display = "none"; // Close the modal
+});
+document.getElementById('search-input').addEventListener('input', function () {
+  const query = this.value.toLowerCase();
+  const suggestions = [];
+
+  // Simulate fetching bus and location data
+  const buses = ['Bus1', 'Bus2', 'Bus3'];
+  const locations = ['Kathmandu', 'Pokhara', 'Chitwan'];
+
+  // Filter buses and locations based on query
+  buses.forEach(bus => {
+    if (bus.toLowerCase().includes(query)) {
+      suggestions.push(`<li>${bus}</li>`);
+    }
+  });
+
+  locations.forEach(location => {
+    if (location.toLowerCase().includes(query)) {
+      suggestions.push(`<li>${location}</li>`);
+    }
+  });
+
+  const suggestionBox = document.getElementById('suggestion-box');
+  const suggestionsList = document.getElementById('suggestions');
+  const closeSuggestions = document.getElementById('close-suggestions');
+
+  if (suggestions.length > 0) {
+    suggestionsList.innerHTML = suggestions.join('');
+    suggestionBox.style.display = 'block';
+    closeSuggestions.style.display = 'block';
+  } else {
+    suggestionBox.style.display = 'none';
+    closeSuggestions.style.display = 'none';
+  }
+
+  // Add event listeners for suggestion clicks
+  document.querySelectorAll('#suggestions li').forEach(item => {
+    item.addEventListener('click', function () {
+      document.getElementById('search-input').value = this.textContent;
+      suggestionBox.style.display = 'none';
+      closeSuggestions.style.display = 'none';
+    });
+  });
+});
+
+// Close suggestions on button click
+document.getElementById('close-suggestions').addEventListener('click', function () {
+  document.getElementById('suggestion-box').style.display = 'none';
+  this.style.display = 'none';
+});
