@@ -197,9 +197,11 @@ nav svg {
     right: -100%;
     z-index: 10;
     width: 60%;
-    background-color: var(--color-1);
-    box-shadow: -5px 0 5px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(2px);
+    background-color: white;
+    box-shadow: -5px 0 5px rgba(0, 0, 0, 0.35);
     transition: 0.75s ease-out;
+    
   }
 
   nav a {
@@ -354,7 +356,7 @@ nav svg {
   padding: 15px;
   background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent background */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  z-index: 2000;
   cursor: pointer;
   font-size: 20px;
 }
@@ -366,7 +368,7 @@ nav svg {
 /* Popup Styles */
 .popup {
   position: fixed;
-  top: 50%;
+  top: 35%;
   left: 50%;
   transform: translate(-50%, -50%);
   background: white;
@@ -467,10 +469,15 @@ nav svg {
   cursor: pointer;
   font-size: 14px;
 }
+.toggle-available-buses-button:disabled {
+  background-color: #ccc; /* Light gray */
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 
 .popup {
   position: fixed;
-  top: 20%;
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -20%);
   width: 80%;
