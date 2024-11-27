@@ -29,13 +29,12 @@
             </label>
             <label id="overlay" for="sidebar-active"></label>
             <div class="links-container">
-                <label for="sidebar-active" class="close-sidebar-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="32" viewBox="0 0 960 960" width="32">
+                <label for="sidebar-active" class="close-sidebar-button">❌
                         <path d="m256 200 56 56 224-224-224-224-56 56 224 224-224 224Z"/>
                     </svg>
                 </label>
-                <a onclick="nearBusStop()">Near BusStop</a>
-                <a onclick="findBusNearMe()">BusNear Me</a>
+                <a onclick="nearBusStop()">BusStop</a>
+                <a onclick="findBusNearMe()">BusNearMe</a>
                 <a href="../html/feedback.html">Feedback</a>
             </div>
         </nav>
@@ -58,8 +57,7 @@
                 <h2 style="font-weight: bold">Buses are nearby you</h2>
                 <p id="alert-message"></p>
                 <h3 style="color:red">Click on Additional Info for more details.</h3>
-                <h1>↘</h1>
-                <span class="close-btn" onclick="closeAlertBox()">❌</span>
+                <span class="close-btn" onclick="closeAlertBox()">CLOSE</span>
             </div>
   <!-- Popups for Available Buses -->
             <div id="popup-available-buses" class="popup hidden">
@@ -129,6 +127,14 @@
     <!-- Leaflet Control Geocoder plugin for searching locations -->
     <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
-
+    <script>
+        // Function to close the alert box
+        function closeAlertBox() {
+            const alertBox = document.getElementById('alert-box');
+            if (alertBox) {
+                alertBox.style.display = "none"; // Hide the alert box
+            }
+        }
+    </script>
 </body>
 </html>
