@@ -81,6 +81,7 @@ function initMap() {
             showPopup('popup-available-buses');
         });
     }
+    
 
     const toggleAdditionalInfoBtn = document.querySelector('.toggle-additional-info-button');
     if (toggleAdditionalInfoBtn) {
@@ -177,7 +178,9 @@ function showBusDistances() {
         } else {
             busDetailsElement.innerHTML += `<p>Bus ${marker.busData.id}: Location unknown.</p>`;
         }
+       
     });
+      busDetailsElement.innerHTML += `                  <button class="close-btn" onclick="closePopup('popup-available-buses')">Close</button>`
 }
 
 // Display only available bus names in `bus-details` div by default
@@ -265,7 +268,7 @@ function findBusNearMe() {
             // Calculate distances and find nearby buses (within 30 meters)
             const nearbyBuses = Object.values(busMarkers).filter(marker => {
                 const distance = map.distance(userMarker.getLatLng(), marker.getLatLng());
-                return distance <= 30; // Buses within 30 meters
+                return distance <= 50; // Buses within 30 meters
             });
 
             displayNearbyBuses(nearbyBuses); // Display nearby buses
@@ -491,7 +494,7 @@ function enableSearchWithSuggestions() {
                     suggestionsContainer.appendChild(suggestion);
                 });
             } else {
-                suggestionsContainer.innerHTML = "<div>No results within 300 km radius of Nepal.</div>";
+                suggestionsContainer.innerHTML = "<div>there is no such palce in Nepal.</div>";
             }
         });
     });
