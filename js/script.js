@@ -1,4 +1,4 @@
-// Firebase Configuration - Replace with your actual Firebase credentials
+// Firebase Configuration 
 const firebaseConfig = {
     apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
     authDomain: "v-track-gu999.firebaseapp.com",
@@ -10,7 +10,7 @@ const firebaseConfig = {
     measurementId: "G-38X29VT1YT"
 };
 
-// Initialize Firebase only if it hasn't been initialized already
+// Initialize Firebase 
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -270,7 +270,8 @@ function findBusNearMe() {
                 const distance = map.distance(userMarker.getLatLng(), marker.getLatLng());
                 return distance <= 50; // Buses within 30 meters
             });
-
+            const popup = document.getElementById('popup-available-buses');
+            if (popup) popup.classList.remove('hidden');
             displayNearbyBuses(nearbyBuses); // Display nearby buses
             showBusDistances(); // Show distances in bus details section
         }, error => {
