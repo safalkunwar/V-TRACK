@@ -73,7 +73,7 @@ table td {
     }
 }
 
-button {
+button, #direction-popup{
     padding: 10px 20px;
     font-size: 16px;
     color: white;
@@ -83,6 +83,6 @@ button {
     cursor: pointer;
 }
 
-button:hover {
+button:hover,#direction-popup{
     background-color: #0056b3;
 }

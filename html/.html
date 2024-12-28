@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,9 +30,13 @@
             </label>
             <label id="overlay" for="sidebar-active"></label>
             <div class="links-container">
-                <label for="sidebar-active" class="close-sidebar-button">❌</label>
-                <a onclick="nearBusStop()">BusStop</a>
-                <a onclick="findBusNearMe()">BusNearMe</a>
+                <label for="sidebar-active" class="close-sidebar-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="32" viewBox="0 0 960 960" width="32">
+                        <path d="m256 200 56 56 224-224-224-224-56 56 224 224-224 224Z"/>
+                    </svg>
+                </label>
+                <a onclick="nearBusStop()">Near BusStop</a>
+                <a onclick="findBusNearMe()">BusNear Me</a>
                 <a href="../html/feedback.html">Feedback</a>
             </div>
         </nav>
@@ -47,14 +52,6 @@
                     </div>
                 </div>
             </div>
-            <div class="floating-controls">
-                <button class="control-btn rating" onclick="openRatingModal()">
-                    <i class="fas fa-star"></i> Rate Service
-                </button>
-                <button class="control-btn marker" onclick="togglePlaceMarker()">
-                    <i class="fas fa-map-marker-alt"></i> Place Marker
-                </button>
-            </div>
         </div>
             <!-- Alert Box -->
             <div id="alert-box" class="hidden">
@@ -62,17 +59,19 @@
                 <h2 style="font-weight: bold">Buses are nearby you</h2>
                 <p id="alert-message"></p>
                 <h3 style="color:red">Click on Additional Info for more details.</h3>
-                <span class="close-btn" onclick="closeAlertBox()">CLOSE</span>
+                <h1>↘</h1>
+                <span class="close-btn" onclick="closeAlertBox()">❌</span>
             </div>
-  <!-- Popups for Available Buses -->
-            <div id="popup-available-buses" class="popup hidden">
+
+              <!-- Popups for Available Buses -->
+              <div id="popup-available-buses" class="popup hidden">
                 <div class="popup-content" id="bus-details">
                     <span class="close-icon">&times;</span>
                     <h3>Available Buses</h3>
                     <ul id="available-bus-list">
                     </ul>
                     <button class="close-btn" onclick="closePopup('popup-available-buses')">Close</button>
-                </div></div>
+                </div>
             <!-- Popups for Bus Info -->
             <div id="popup-bus-info" class="popup hidden">
                 <div class="popup-content">
@@ -120,41 +119,18 @@
             </div>
         </div>
     </div>
-    <div id="ratingModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeRatingModal()">&times;</span>
-            <h2><i class="fas fa-star"></i> Rate Your Ride</h2>
-            <div class="rating-stars">
-                <i class="fas fa-star" data-rating="1"></i>
-                <i class="fas fa-star" data-rating="2"></i>
-                <i class="fas fa-star" data-rating="3"></i>
-                <i class="fas fa-star" data-rating="4"></i>
-                <i class="fas fa-star" data-rating="5"></i>
-            </div>
-            <textarea id="ratingComment" placeholder="Share your experience (optional)"></textarea>
-            <div id="busSelectionContainer" class="hidden">
-                <h3>Select Bus to Rate</h3>
-                <div id="busList"></div>
-            </div>
-            <button onclick="submitRating()" class="submit-rating">Submit Rating</button>
-        </div>
-    </div>
+    <script type="module" src="../js/script.js"></script>
+    <!-- Firebase JS SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <!-- Leaflet.js for map handling -->
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <!-- Leaflet MarkerCluster plugin -->
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-    <script src="../js/config.js"></script>
-    <script src="../js/script.js"></script>
-    <script src="../js/map.js"></script>
-    <script>
-        // Function to close the alert box
-        function closeAlertBox() {
-            const alertBox = document.getElementById('alert-box');
-            if (alertBox) {
-                alertBox.style.display = "none"; // Hide the alert box
-            }
-        }
-    </script>
+    <!-- Leaflet Control Geocoder plugin for searching locations -->
+    <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
 </body>
 </html>

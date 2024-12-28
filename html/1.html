@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Tracker</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <!-- Leaflet CSS for map rendering -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <!-- MarkerCluster CSS for clustering markers -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <input type="checkbox" id="sidebar-active">
+            <label for="sidebar-active" class="open-sidebar-button">
+                <!-- SVG for menu icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" height="32" viewBox="0 -960 960 960" width="32">
+                    <path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/>
+                </svg>
+            </label>
+            <label id="overlay" for="sidebar-active"></label>
+            <div class="links-container">
+                <label for="sidebar-active" class="close-sidebar-button">
+                    <!-- SVG for close icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" height="32" viewBox="0 -960 960 960" width="32">
+                        <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
+                    </svg>
+                </label>
+                <a class="home-link" href="../html/miniindex.html">
+                    <img src="../img/vlogo.png" alt="Logo" class="logo">
+                </a>
+                <div class="search-bar">
+                    <input type="text" placeholder="Search location..." id="location-input">
+                    <div class="direction-container">
+                        <button class="direction-button">Get Directions</button>
+                    </div>
+                    
+                    <!-- Popup Modal for Directions -->
+                    <div id="direction-modal" class="modal">
+                        <div class="modal-content">
+                            <h3>Find Directions</h3>
+                            <label for="start-location">Start Location:</label>
+                            <input type="text" id="start-location" placeholder="Enter starting location" />
+                            <label for="end-location">End Location:</label>
+                            <input type="text" id="end-location" placeholder="Enter destination" />
+                            <button id="find-route-button">Find Route</button>
+                            <button id="close-modal-button">Close</button>
+                        </div>
+                    </div>
+                </div>
+                <a href="#" onclick="nearBusStop()">Near Bus Stop</a> 
+                <a href="#" onclick="findBusNearMe()">Find Bus Near Me</a>
+                <a href="../html/feedback.html">Feedback</a>
+            </div>
+        </nav>
+        <nav class="notice" id="notice">
+            <h3>Notice</h3>
+            <p>No notices at this time.</p>
+        </nav>
+        <div class="content">
+            <div id="map" style="height: 500px; width: 100%;"></div>
+            <div id="alert-box" style="display: none; border: 1px solid #ccc; padding: 10px; margin: 10px 0; background-color: #f9f9f9;"></div>
+            <div class="details">
+                <div class="bus-details" id="bus-details">
+                    <h3>🚌 BUS DETAILS</h3>
+                    <p>Loading bus details...</p>
+                </div>
+                <div class="bus-info" id="bus-info">
+                    <h3>Bus Info</h3>
+                    <p>Select a bus to see details.</p>
+                    <button class="additional-info-button" onclick="redirectToAdditionalInfo()">Additional Info</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript and Libraries -->
+    <script type="module" src="../js/script.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+</body>
+</html>

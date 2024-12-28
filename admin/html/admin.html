@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <nav class="admin-nav">
+            <h1>Admin Dashboard</h1>
+            <button onclick="logout()">Logout</button>
+        </nav>
+
+        <div class="admin-content">
+            <!-- Bus Management -->
+            <section class="admin-section">
+                <h2>Bus Management</h2>
+                <form id="bus-form" onsubmit="addBus(event)">
+                    <input type="text" id="busName" placeholder="Bus Name" required>
+                    <input type="text" id="busNumber" placeholder="Bus Number" required>
+                    <input type="text" id="busRoute" placeholder="Route" required>
+                    <input type="text" id="driverName" placeholder="Driver Name" required>
+                    <input type="tel" id="driverNum" placeholder="Driver Phone" required>
+                    <textarea id="additionalDetails" placeholder="Additional Details"></textarea>
+                    <button type="submit">Add Bus</button>
+                </form>
+            </section>
+
+            <!-- Notice Management -->
+            <section class="admin-section">
+                <h2>Notice Management</h2>
+                <form id="notice-form" onsubmit="addNotice(event)">
+                    <textarea id="notice-content" placeholder="Enter notice content" required></textarea>
+                    <button type="submit">Post Notice</button>
+                </form>
+            </section>
+
+            <!-- Bus List -->
+            <section class="admin-section">
+                <h2>Current Buses</h2>
+                <div id="bus-list"></div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="../js/admin.js"></script>
+
+    <script>
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '/index.html';
+            }).catch((error) => {
+                console.error('Error logging out:', error);
+            });
+        }
+
+        function addBus(event) {
+            event.preventDefault();
+            const busData = {
+                busName: document.getElementById('busName').value,
+                busNumber: document.getElementById('busNumber').value,
+                busRoute: document.getElementById('busRoute').value,
+                driverName: document.getElementById('driverName').value,
+                driverNum: document.getElementById('driverNum').value,
+                additionalDetails: document.getElementById('additionalDetails').value
+            };
+
+            database.ref('busDetails').push(busData)
+                .then(() => {
+                    alert('Bus added successfully');
+                    document.getElementById('bus-form').reset();
+                })
+                .catch(error => {
+                    console.error('Error adding bus:', error);
+                    alert('Error adding bus');
+                });
+        }
+
+        function addNotice(event) {
+            event.preventDefault();
+            const notice = {
+                content: document.getElementById('notice-content').value,
+                timestamp: Date.now()
+            };
+
+            database.ref('notices').push(notice)
+                .then(() => {
+                    alert('Notice posted successfully');
+                    document.getElementById('notice-form').reset();
+                })
+                .catch(error => {
+                    console.error('Error posting notice:', error);
+                    alert('Error posting notice');
+                });
+        }
+    </script>
+</body>
+</html> 
