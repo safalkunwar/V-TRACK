@@ -356,4 +356,151 @@ style.textContent = `
         margin: 10px;
     }
 `;
-document.head.appendChild(style); 
+document.head.appendChild(style);
+
+function loadPendingDrivers() {
+    database.ref('pendingDrivers').on('value', snapshot => {
+        const container = document.getElementById('pendingDriversContainer');
+        container.innerHTML = '';
+        
+        snapshot.forEach(child => {
+            const driver = child.val();
+            container.innerHTML += `
+                <div class="driver-card pending">
+                    <div class="driver-info">
+                        <h4>${driver.name}</h4>
+                        <p>License: ${driver.licenseNumber}</p>
+                        <p>Experience: ${driver.experience} years</p>
+                        <p>Phone: ${driver.phone}</p>
+                    </div>
+                    <div class="driver-actions">
+                        <button onclick="approveDriver('${child.key}')">Approve</button>
+                        <button onclick="rejectDriver('${child.key}')" class="reject">Reject</button>
+                    </div>
+                </div>
+            `;
+        });
+    });
+}
+
+async function approveDriver(driverId) {
+    try {
+        const snapshot = await database.ref(`pendingDrivers/${driverId}`).once('value');
+        const driverData = snapshot.val();
+        
+        // Move to approved drivers
+        await database.ref(`driverInfo/${driverData.userId}`).set({
+            ...driverData,
+            status: 'approved',
+            approvedAt: Date.now()
+        });
+        
+        // Remove from pending
+        await database.ref(`pendingDrivers/${driverId}`).remove();
+        
+        showNotification('Driver approved successfully');
+    } catch (error) {
+        console.error('Error approving driver:', error);
+        showNotification('Error approving driver', 'error');
+    }
+}
+
+function editDriver(driverId) {
+    // Load driver data into edit modal
+    database.ref(`driverInfo/${driverId}`).once('value')
+        .then(snapshot => {
+            const driver = snapshot.val();
+            document.getElementById('editName').value = driver.name;
+            document.getElementById('editLicense').value = driver.licenseNumber;
+            document.getElementById('editPhone').value = driver.phone;
+            document.getElementById('editBus').value = driver.assignedBus || '';
+            document.getElementById('editRoute').value = driver.assignedRoute || '';
+            
+            // Show modal
+            document.getElementById('driverEditModal').style.display = 'block';
+            
+            // Set current driver ID for form submission
+            document.getElementById('driverEditForm').setAttribute('data-driver-id', driverId);
+        });
+}
+
+// Handle driver edit form submission
+document.getElementById('driverEditForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const driverId = e.target.getAttribute('data-driver-id');
+    const updates = {
+        name: document.getElementById('editName').value,
+        licenseNumber: document.getElementById('editLicense').value,
+        phone: document.getElementById('editPhone').value,
+        assignedBus: document.getElementById('editBus').value,
+        assignedRoute: document.getElementById('editRoute').value,
+        lastUpdated: Date.now()
+    };
+
+    try {
+        await database.ref(`driverInfo/${driverId}`).update(updates);
+        showNotification('Driver information updated successfully');
+        document.getElementById('driverEditModal').style.display = 'none';
+    } catch (error) {
+        console.error('Error updating driver:', error);
+        showNotification('Error updating driver information', 'error');
+    }
+});
+
+function sendMessageToDriver(driverId) {
+    const message = document.getElementById('driverMessage').value;
+    if (!message) return;
+
+    database.ref(`messages/${driverId}`).push({
+        message,
+        timestamp: Date.now(),
+        from: 'admin'
+    }).then(() => {
+        showNotification('Message sent successfully');
+        document.querySelector('.modal').remove();
+    }).catch(error => {
+        console.error('Error sending message:', error);
+        showNotification('Error sending message', 'error');
+    });
+}
+
+// Load available buses and route analysis
+function loadAvailableBuses() {
+    const busContainer = document.getElementById('busFleetContainer');
+    database.ref('busDetails').on('value', snapshot => {
+        busContainer.innerHTML = ''; // Clear existing content
+        snapshot.forEach(child => {
+            const busData = child.val();
+            busContainer.innerHTML += `
+                <div class="bus-card">
+                    <h4>${busData.busName}</h4>
+                    <p>Bus Number: ${busData.busNumber}</p>
+                    <p>Assigned Driver: ${busData.driverName || 'N/A'}</p>
+                </div>
+            `;
+        });
+    });
+}
+
+function loadRouteAnalysis() {
+    const routeContainer = document.getElementById('routeAnalysisContainer');
+    database.ref('routes').on('value', snapshot => {
+        routeContainer.innerHTML = ''; // Clear existing content
+        snapshot.forEach(child => {
+            const routeData = child.val();
+            routeContainer.innerHTML += `
+                <div class="route-card">
+                    <h4>${routeData.name}</h4>
+                    <p>Description: ${routeData.description || 'No description available'}</p>
+                </div>
+            `;
+        });
+    });
+}
+
+// Call these functions on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadAvailableBuses();
+    loadRouteAnalysis();
+}); 

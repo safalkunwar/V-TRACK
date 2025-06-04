@@ -15,8 +15,9 @@
             <div class="admin-nav-links">
                 <a href="dashboard.html" class="active">Dashboard</a>
                 <a href="adminpanel.html">Bus Management</a>
+                <a href="routes.html">Route Management</a>
                 <a href="bushistory.html">Bus History</a>
-                <a href="backendfeedback.html">Feedback</a>
+                <a href="#" onclick="showMessages()">Driver Messages</a>
                 <button onclick="logout()">Logout</button>
             </div>
         </nav>
@@ -83,6 +84,42 @@
             <div class="dashboard-card">
                 <h3>Route Analysis</h3>
                 <canvas id="routeChart"></canvas>
+            </div>
+
+            <!-- Add this section after Quick Statistics -->
+            <div class="dashboard-card pending-requests">
+                <h3><i class="fas fa-clock"></i> Pending Driver Requests</h3>
+                <div id="pendingRequestsContainer" class="requests-list">
+                    <!-- Pending requests will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Add bus overview section -->
+            <div class="dashboard-card bus-overview">
+                <h3><i class="fas fa-bus"></i> Bus Fleet Overview</h3>
+                <div id="busFleetContainer" class="bus-grid">
+                    <!-- Bus cards will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Add reviews slideshow -->
+            <div class="dashboard-card reviews-section">
+                <h3><i class="fas fa-star"></i> Recent Reviews</h3>
+                <div class="reviews-slideshow">
+                    <div id="reviewsContainer" class="slides-container">
+                        <!-- Reviews will be loaded here -->
+                    </div>
+                    <button class="slide-btn prev" onclick="changeSlide(-1)">❮</button>
+                    <button class="slide-btn next" onclick="changeSlide(1)">❯</button>
+                </div>
+            </div>
+
+            <!-- Add bus/driver profile modal -->
+            <div id="profileModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <div id="profileContent"></div>
+                </div>
             </div>
         </div>
     </div>

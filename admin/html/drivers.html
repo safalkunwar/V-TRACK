@@ -1,0 +1,51 @@
+<!-- Add this section to your admin panel -->
+<section class="admin-section">
+    <h2>Driver Management</h2>
+    
+    <!-- Pending Drivers -->
+    <div class="pending-drivers">
+        <h3>Pending Driver Applications</h3>
+        <div id="pendingDriversContainer" class="drivers-grid"></div>
+    </div>
+
+    <!-- Active Drivers -->
+    <div class="active-drivers">
+        <h3>Active Drivers</h3>
+        <div id="activeDriversContainer" class="drivers-grid"></div>
+    </div>
+
+    <!-- Driver Edit Modal -->
+    <div id="driverEditModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Edit Driver Details</h3>
+            <form id="driverEditForm">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="editName" required>
+                </div>
+                <div class="form-group">
+                    <label>License Number</label>
+                    <input type="text" id="editLicense" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="editPhone" required>
+                </div>
+                <div class="form-group">
+                    <label>Assigned Bus</label>
+                    <select id="editBus" required>
+                        <!-- Bus options will be loaded dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Route</label>
+                    <select id="editRoute" required>
+                        <!-- Route options will be loaded dynamically -->
+                    </select>
+                </div>
+                <button type="submit">Save Changes</button>
+            </form>
+        </div>
+    </div>
+</section> 

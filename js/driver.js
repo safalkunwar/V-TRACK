@@ -1,3 +1,15 @@
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
+    authDomain: "v-track-gu999.firebaseapp.com",
+    databaseURL: "https://v-track-gu999-default-rtdb.firebaseio.com",
+    projectId: "v-track-gu999",
+    storageBucket: "v-track-gu999.appspot.com",
+    messagingSenderId: "1046512747961",
+    appId: "1:1046512747961:web:80df40c48bca3159296268",
+    measurementId: "G-38X29VT1YT"
+};
+
 // Initialize Firebase
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
@@ -6,154 +18,197 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const database = firebase.database();
 let driverId = null;
+let map = null;
+let currentPositionMarker = null;
+let isTracking = false;
+let watchId = null;
 
-// Check authentication
+// Check authentication and initialize
 auth.onAuthStateChanged(user => {
     if (user) {
         driverId = user.uid;
-        loadDriverData();
+        initializeDriverDashboard();
     } else {
         window.location.href = '../index.html';
     }
 });
 
-function loadDriverData() {
-    // Load driver stats
+function initializeDriverDashboard() {
     loadStats();
-    // Load ratings
     loadRatings();
-    // Load route
-    loadRoute();
-    // Load alerts
-    loadAlerts();
+    initializeMap();
+    setupEventListeners();
+}
+
+function initializeMap() {
+    if (!map) {
+        const mapContainer = document.getElementById('trackingMap');
+        if (mapContainer) {
+            map = L.map('trackingMap').setView([28.2096, 83.9856], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+        }
+    }
+}
+
+function setupEventListeners() {
+    // Section navigation
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = e.currentTarget.getAttribute('onclick').match(/'([^']+)'/)[1];
+            showSection(section);
+        });
+    });
+
+    // Tracking buttons
+    const startBtn = document.getElementById('startTrackingBtn');
+    const stopBtn = document.getElementById('stopTrackingBtn');
+    
+    if (startBtn) startBtn.addEventListener('click', startTracking);
+    if (stopBtn) stopBtn.addEventListener('click', stopTracking);
 }
 
 function showSection(sectionId) {
     document.querySelectorAll('.dashboard-section').forEach(section => {
         section.classList.remove('active');
     });
-    document.getElementById(sectionId).classList.add('active');
     
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+        if (sectionId === 'overview' && map) {
+            map.invalidateSize();
+        }
+    }
+
+    // Update navigation active state
     document.querySelectorAll('.nav-links a').forEach(link => {
         link.classList.remove('active');
-    });
-    event.currentTarget.classList.add('active');
-}
-
-function loadStats() {
-    if (!driverId) return;
-
-    database.ref(`drivers/${driverId}`).on('value', snapshot => {
-        const driverData = snapshot.val() || {};
-        const stats = driverData.stats || {};
-        const status = driverData.status || 'inactive';
-
-        document.getElementById('avgRating').textContent = 
-            stats.averageRating?.toFixed(1) || '0.0';
-        document.getElementById('distanceToday').textContent = 
-            `${stats.distanceToday?.toFixed(1) || '0'} km`;
-        document.getElementById('hoursActive').textContent = 
-            `${stats.hoursActive || '0'}h`;
-        
-        const statusIndicator = document.getElementById('statusIndicator');
-        statusIndicator.className = `status-${status}`;
-        statusIndicator.querySelector('span').textContent = 
-            status.charAt(0).toUpperCase() + status.slice(1);
-    });
-}
-
-function loadRatings() {
-    if (!driverId) return;
-
-    database.ref(`ratings/${driverId}`).orderByChild('timestamp').limitToLast(10)
-        .on('value', snapshot => {
-            const container = document.getElementById('ratingsContainer');
-            container.innerHTML = '';
-            
-            const ratings = [];
-            snapshot.forEach(child => {
-                ratings.unshift(child.val());
-            });
-            
-            ratings.forEach(rating => {
-                container.innerHTML += `
-                    <div class="rating-card">
-                        <div class="rating-stars">
-                            ${'★'.repeat(rating.rating)}${'☆'.repeat(5-rating.rating)}
-                        </div>
-                        <p>${rating.comment || 'No comment provided'}</p>
-                        <small>${new Date(rating.timestamp).toLocaleString()}</small>
-                    </div>
-                `;
-            });
-            
-            if (ratings.length === 0) {
-                container.innerHTML = '<p>No ratings yet</p>';
-            }
-        });
-}
-
-function loadRoute() {
-    if (!driverId) return;
-
-    // Initialize route map
-    const routeMap = L.map('routeMap').setView([28.2096, 83.9856], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(routeMap);
-
-    // Load and display route
-    database.ref(`routes/${driverId}/current`).on('value', snapshot => {
-        const routeData = snapshot.val();
-        if (routeData) {
-            // Display route on map
-            displayRoute(routeMap, routeData);
+        if (link.getAttribute('onclick').includes(sectionId)) {
+            link.classList.add('active');
         }
     });
 }
 
-function loadAlerts() {
+function startTracking() {
+    if (!navigator.geolocation) {
+        showNotification('Geolocation is not supported by your browser');
+        return;
+    }
+
+    if (!driverId) {
+        showNotification('Driver ID not found. Please log in again.');
+        return;
+    }
+
+    document.getElementById('startTrackingBtn').classList.add('hidden');
+    document.getElementById('stopTrackingBtn').classList.remove('hidden');
+    document.body.classList.add('fullscreen-mode');
+    
+    isTracking = true;
+    updateDriverStatus('active');
+
+    watchId = navigator.geolocation.watchPosition(
+        updatePosition,
+        handleLocationError,
+        {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 5000
+        }
+    );
+}
+
+function stopTracking() {
+    if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+    }
+
+    document.getElementById('startTrackingBtn').classList.remove('hidden');
+    document.getElementById('stopTrackingBtn').classList.add('hidden');
+    document.body.classList.remove('fullscreen-mode');
+    
+    isTracking = false;
+    updateDriverStatus('inactive');
+}
+
+function updatePosition(position) {
+    if (!isTracking || !driverId) return;
+
+    const { latitude, longitude, speed } = position.coords;
+    const pos = [latitude, longitude];
+    const timestamp = Date.now();
+
+    // Update marker
+    if (!currentPositionMarker && map) {
+        currentPositionMarker = L.marker(pos).addTo(map);
+    } else if (currentPositionMarker) {
+        currentPositionMarker.setLatLng(pos);
+    }
+
+    if (map) {
+        map.setView(pos);
+    }
+
+    // Update speed display
+    const speedKmh = speed ? Math.round(speed * 3.6) : 0;
+    const speedDisplay = document.getElementById('speedDisplay');
+    if (speedDisplay) {
+        speedDisplay.textContent = `${speedKmh} km/h`;
+    }
+
+    // Save to Firebase
+    const locationData = {
+        latitude,
+        longitude,
+        speed: speedKmh,
+        timestamp
+    };
+
+    database.ref(`BusLocation/${driverId}/${timestamp}`).set(locationData)
+        .catch(error => console.error('Error updating location:', error));
+    
+    database.ref(`drivers/${driverId}/currentLocation`).set(locationData)
+        .catch(error => console.error('Error updating current location:', error));
+}
+
+function handleLocationError(error) {
+    console.error('Location Error:', error);
+    showNotification(`Location error: ${error.message}`);
+    stopTracking();
+}
+
+function updateDriverStatus(status) {
     if (!driverId) return;
-
-    database.ref(`alerts/${driverId}`).orderByChild('timestamp').limitToLast(10)
-        .on('value', snapshot => {
-            const container = document.getElementById('alertsContainer');
-            container.innerHTML = '';
-            
-            const alerts = [];
-            snapshot.forEach(child => {
-                alerts.unshift(child.val());
-            });
-            
-            alerts.forEach(alert => {
-                container.innerHTML += `
-                    <div class="alert-card ${alert.type}">
-                        <h4>${alert.title}</h4>
-                        <p>${alert.message}</p>
-                        <small>${new Date(alert.timestamp).toLocaleString()}</small>
-                    </div>
-                `;
-            });
-            
-            if (alerts.length === 0) {
-                container.innerHTML = '<p>No alerts</p>';
-            }
-        });
+    
+    database.ref(`drivers/${driverId}/status`).set(status)
+        .catch(error => console.error('Error updating status:', error));
 }
 
-function logout() {
-    auth.signOut().then(() => {
-        window.location.href = '../index.html';
-    }).catch(error => {
-        console.error('Error logging out:', error);
-    });
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
 }
 
-function startTrackingSession() {
-    window.location.href = '../driver/tracking.html';
-}
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (isTracking) {
+        stopTracking();
+    }
+});
 
-// Initialize dashboard when page loads
+// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     showSection('overview');
 }); 

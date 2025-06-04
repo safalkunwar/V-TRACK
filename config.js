@@ -13,8 +13,4 @@ const firebaseConfig = {
 // Initialize Firebase
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
-}
-
-// Make Firebase services available globally
-window.auth = firebase.auth();
-window.database = firebase.database();
+} 
