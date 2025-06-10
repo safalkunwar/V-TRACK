@@ -4,25 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bus History - Admin</title>
-    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/unified-admin.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-polylinedecorator/dist/leaflet.polylineDecorator.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="admin-container">
-        <nav class="admin-nav">
-            <h1>Bus History</h1>
-            <div class="admin-nav-links">
-                <a href="adminpanel.html">Bus Management</a>
-                <a href="bushistory.html" class="active">Bus History</a>
-                <a href="backendfeedback.html">Feedback</a>
-                <button onclick="logout()">Logout</button>
-            </div>
-        </nav>
+        <!-- Navbar will be loaded here -->
+        <div id="navbar-container"></div>
 
         <div class="admin-content">
             <section class="admin-section">
-                <h2>Bus Path History</h2>
+                <h2><i class="fas fa-history"></i> Bus Path History</h2>
                 <div class="history-controls">
                     <select id="busSelect" onchange="showOverallPath()">
                         <option value="">Select Bus</option>
@@ -32,8 +26,8 @@
                             <input type="date" id="startDate">
                             <input type="date" id="endDate">
                         </div>
-                        <button onclick="showPathByDate()">Show Path for Dates</button>
-                        <button onclick="deleteRecords()" class="delete-btn">Delete Records</button>
+                        <button onclick="showPathByDate()"><i class="fas fa-search"></i> Show Path for Dates</button>
+                        <button onclick="deleteRecords()" class="delete-btn"><i class="fas fa-trash"></i> Delete Records</button>
                     </div>
                 </div>
                 <div id="history-display">
@@ -50,8 +44,16 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-polylinedecorator/dist/leaflet.polylineDecorator.js"></script>
+    <script src="../js/navbar.js"></script>
     <script src="../js/admin.js"></script>
     <script>
+        // Initialize navbar when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            navbarLoader.loadNavbar('navbar-container', 'Bus History');
+            loadBusList();
+            initHistoryMap();
+        });
+
         // Show overall path when bus is selected
         function showOverallPath() {
             const busId = document.getElementById('busSelect').value;
@@ -142,12 +144,6 @@
                     `;
                 });
         }
-
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            loadBusList();
-            initHistoryMap();
-        });
     </script>
 </body>
 </html> 

@@ -4,39 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Route Management - Admin</title>
-    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/unified-admin.css">
     <link rel="stylesheet" href="../css/routes.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="admin-container">
-        <nav class="admin-nav">
-            <h1>Route Management</h1>
-            <div class="admin-nav-links">
-                <a href="dashboard.html">Dashboard</a>
-                <a href="adminpanel.html">Bus Management</a>
-                <a href="routes.html" class="active">Routes</a>
-            </div>
-        </nav>
+        <!-- Navbar will be loaded here -->
+        <div id="navbar-container"></div>
 
         <div class="route-management">
             <!-- Route Creation -->
             <div class="route-creation card">
-                <h3>Create New Route</h3>
+                <h3><i class="fas fa-plus-circle"></i> Create New Route</h3>
                 <div class="route-instructions">
-                    <p>Click on the map to add route points. Each point can be named.</p>
+                    <p><i class="fas fa-info-circle"></i> Click on the map to add route points. Each point can be named.</p>
                 </div>
                 <div id="routeAssignmentMap" style="height: 400px;"></div>
                 <div class="route-controls">
-                    <button id="saveRouteBtn" disabled>Save Route</button>
-                    <button onclick="clearRoute()">Clear</button>
+                    <button id="saveRouteBtn" disabled><i class="fas fa-save"></i> Save Route</button>
+                    <button onclick="clearRoute()"><i class="fas fa-eraser"></i> Clear</button>
                 </div>
             </div>
 
             <!-- Existing Routes -->
             <div class="existing-routes card">
-                <h3>Existing Routes</h3>
+                <h3><i class="fas fa-list"></i> Existing Routes</h3>
                 <div id="routesList"></div>
             </div>
         </div>
@@ -47,6 +41,13 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="../js/config.js"></script>
+    <script src="../js/navbar.js"></script>
     <script src="../js/routes.js"></script>
+    <script>
+        // Initialize navbar when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            navbarLoader.loadNavbar('navbar-container', 'Route Management');
+        });
+    </script>
 </body>
 </html> 

@@ -1,316 +1,428 @@
-
-
-// Initialize map and markers
-let map, userMarkers = [], busMarkers = [];
-let currentUserPosition = null;
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize map
-    map = L.map('live-map').setView([28.2096, 83.9856], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    // Initialize features
-    initializeRouteList();
-    initializeNotifications();
-    initializeRating();
-    initializeBusTracking();
-});
-
-// Bus Tracking Functions
-function initializeBusTracking() {
-    const busesRef = database.ref('BusLocation');
-    busesRef.on('value', (snapshot) => {
-        updateBusMarkers(snapshot.val());
-    });
-}
-
-function updateBusMarkers(buses) {
-    // Clear existing bus markers
-    busMarkers.forEach(marker => map.removeLayer(marker));
-    busMarkers = [];
-
-    // Add new bus markers
-    if (buses) {
-        Object.entries(buses).forEach(([busId, bus]) => {
-            if (bus.latitude && bus.longitude) {
-                const marker = L.marker([bus.latitude, bus.longitude], {
-                    icon: L.divIcon({
-                        className: 'bus-marker',
-                        html: `<i class="fas fa-bus"></i>`,
-                        iconSize: [30, 30]
-                    })
-                })
-                .bindPopup(`
-                    <strong>Bus ${busId}</strong><br>
-                    Route: ${bus.route || 'N/A'}<br>
-                    Speed: ${bus.speed || 'N/A'} km/h
-                `);
-                
-                marker.addTo(map);
-                busMarkers.push(marker);
-            }
-        });
+// Enhanced Google Maps Style Dashboard for V-TRACK
+class GoogleMapsDashboard {
+    constructor() {
+        this.firebaseManager = null;
+        this.mapManager = null;
+        this.utils = null;
+        this.selectedBus = null;
+        this.activeFilters = {
+            activeBuses: true,
+            inactiveBuses: true,
+            routeHistory: false
+        };
+        
+        this.initialize();
     }
-}
 
-// Route Management
-function initializeRouteList() {
-    const routeList = document.getElementById('route-list');
-    const routesRef = database.ref('routes');
-    
-    routesRef.on('value', (snapshot) => {
-        routeList.innerHTML = '';
-        const routes = snapshot.val();
-        if (routes) {
-            Object.entries(routes).forEach(([routeId, route]) => {
-                const div = document.createElement('div');
-                div.className = 'route-list-item';
-                div.innerHTML = `
-                    <div>
-                        <strong>${route.name || routeId}</strong>
-                        <div>${route.description || ''}</div>
-                    </div>
-                    <button onclick="viewRouteDetails('${routeId}')">View</button>
-                `;
-                routeList.appendChild(div);
+    initialize() {
+        // Initialize modules
+        this.firebaseManager = new FirebaseManager();
+        this.utils = new Utils();
+        
+        // Wait for Google Maps to load before initializing map manager
+        this.waitForGoogleMapsAndInitialize();
+        
+        // Make managers globally accessible
+        window.firebaseManager = this.firebaseManager;
+        window.utils = this.utils;
+        
+        // Initialize UI components
+        this.initializeSidebar();
+        this.initializeFloatingButtons();
+        this.initializeSearch();
+        this.initializeBusDropdown();
+        
+        // Initialize saved places and recent searches
+        this.utils.updateSavedPlacesList();
+        this.utils.updateRecentSearchesList();
+    }
+
+    waitForGoogleMapsAndInitialize() {
+        const checkGoogleMaps = setInterval(() => {
+            if (window.google && window.google.maps) {
+                clearInterval(checkGoogleMaps);
+                console.log('Google Maps loaded, initializing map manager...');
+                this.mapManager = new MapManager(this.firebaseManager);
+                window.mapManager = this.mapManager;
+                
+                // Start real-time updates after map is ready
+                this.startRealTimeUpdates();
+                this.updateNotification();
+            }
+        }, 100);
+
+        // Timeout after 10 seconds
+        setTimeout(() => {
+            clearInterval(checkGoogleMaps);
+            if (!this.mapManager) {
+                console.warn('Google Maps failed to load, initializing without Google services...');
+                this.mapManager = new MapManager(this.firebaseManager);
+                window.mapManager = this.mapManager;
+                
+                // Start real-time updates
+                this.startRealTimeUpdates();
+                this.updateNotification();
+            }
+        }, 10000);
+    }
+
+    initializeSidebar() {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarClose = document.getElementById('sidebarClose');
+        const sidebar = document.getElementById('sidebar');
+
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => {
+                this.utils.toggleSidebar();
             });
         }
-    });
 
-    // Route search functionality
-    const searchInput = document.getElementById('route-search');
-    searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const routeItems = routeList.getElementsByClassName('route-list-item');
-        Array.from(routeItems).forEach(item => {
-            const text = item.textContent.toLowerCase();
-            item.style.display = text.includes(searchTerm) ? '' : 'none';
-        });
-    });
-}
-
-// Feature Functions
-function showSchedules() {
-    const schedulesRef = database.ref('routes');
-    schedulesRef.once('value')
-        .then(snapshot => {
-            const routes = snapshot.val();
-            if (!routes) {
-                showPopup('Bus Schedules', '<p>No schedules available at the moment.</p>');
-                return;
-            }
-
-            let scheduleContent = '<div class="schedules-container">';
-            Object.entries(routes).forEach(([routeId, route]) => {
-                scheduleContent += `
-                    <div class="schedule-item">
-                        <h3>${route.name || routeId}</h3>
-                        <p>${route.description || ''}</p>
-                        <p>First Bus: ${route.firstBus || 'N/A'}</p>
-                        <p>Last Bus: ${route.lastBus || 'N/A'}</p>
-                        <p>Frequency: ${route.frequency || 'N/A'}</p>
-                    </div>
-                `;
+        if (sidebarClose) {
+            sidebarClose.addEventListener('click', () => {
+                this.utils.closeSidebar();
             });
-            scheduleContent += '</div>';
+        }
 
-            showPopup('Bus Schedules', scheduleContent);
-        })
-        .catch(error => {
-            console.error('Error fetching schedules:', error);
-            showPopup('Error', 'Failed to load schedules. Please try again.');
+        // Close sidebar when clicking outside
+        document.addEventListener('click', (e) => {
+            if (sidebar && !sidebar.contains(e.target) && !sidebarToggle?.contains(e.target)) {
+                this.utils.closeSidebar();
+            }
         });
-}
-
-function showHistory() {
-    if (!firebase.auth().currentUser) {
-        showPopup('Error', 'Please login to view travel history');
-        return;
     }
 
-    const userId = firebase.auth().currentUser.uid;
-    const historyRef = database.ref(`users/${userId}/travelHistory`);
-    
-    historyRef.orderByChild('timestamp').limitToLast(10).once('value')
-        .then(snapshot => {
-            const history = snapshot.val();
-            if (!history) {
-                showPopup('Travel History', '<p>No travel history available.</p>');
-                return;
-            }
-
-            let historyContent = '<div class="history-container">';
-            Object.entries(history).reverse().forEach(([tripId, trip]) => {
-                const date = new Date(trip.timestamp);
-                historyContent += `
-                    <div class="history-item">
-                        <h3>${trip.routeName || 'Unknown Route'}</h3>
-                        <p>Date: ${date.toLocaleDateString()}</p>
-                        <p>Time: ${date.toLocaleTimeString()}</p>
-                        <p>From: ${trip.from || 'N/A'}</p>
-                        <p>To: ${trip.to || 'N/A'}</p>
-                    </div>
-                `;
+    initializeFloatingButtons() {
+        // Current location button
+        const currentLocationBtn = document.getElementById('currentLocationBtn');
+        if (currentLocationBtn) {
+            currentLocationBtn.addEventListener('click', () => {
+                if (this.mapManager) {
+                    this.mapManager.getCurrentLocation();
+                } else {
+                    this.utils.showNotification('Map not ready yet, please wait...', 'info');
+                }
             });
-            historyContent += '</div>';
+        }
 
-            showPopup('Travel History', historyContent);
-        })
-        .catch(error => {
-            console.error('Error fetching history:', error);
-            showPopup('Error', 'Failed to load travel history. Please try again.');
-        });
-}
+        // Active buses button
+        const activeBusesBtn = document.getElementById('activeBusesBtn');
+        if (activeBusesBtn) {
+            activeBusesBtn.addEventListener('click', () => {
+                this.toggleActiveBuses();
+            });
+        }
 
-function showNotifications() {
-    const noticesRef = database.ref('notices');
-    noticesRef.once('value')
-        .then(snapshot => {
-            const notices = snapshot.val();
-            let content = '<div class="notifications-settings">';
-            
-            if (notices) {
-                content += '<h3>Recent Notices</h3>';
-                Object.entries(notices).reverse().forEach(([noticeId, notice]) => {
-                    const date = new Date(notice.timestamp || Date.now());
-                    content += `
-                        <div class="notification-option">
-                            <h4>${notice.title || 'Notice'}</h4>
-                            <p>${notice.message || ''}</p>
-                            <small>${date.toLocaleDateString()}</small>
-                        </div>
-                    `;
-                });
+        // Inactive buses button
+        const inactiveBusesBtn = document.getElementById('inactiveBusesBtn');
+        if (inactiveBusesBtn) {
+            inactiveBusesBtn.addEventListener('click', () => {
+                this.toggleInactiveBuses();
+            });
+        }
+
+        // Route history button
+        const routeHistoryBtn = document.getElementById('routeHistoryBtn');
+        if (routeHistoryBtn) {
+            routeHistoryBtn.addEventListener('click', () => {
+                this.toggleRouteHistory();
+            });
+        }
+
+        // Get directions button
+        const directionsBtn = document.getElementById('directionsBtn');
+        if (directionsBtn) {
+            directionsBtn.addEventListener('click', () => {
+                this.getDirections();
+            });
+        }
+    }
+
+    initializeSearch() {
+        const searchInput = document.querySelector('.search-input');
+        const searchFilter = document.getElementById('searchFilter');
+
+        if (searchInput) {
+            // Debounced search
+            const debouncedSearch = this.utils.debounce((query) => {
+                this.utils.performSearch(query);
+            }, 300);
+
+            searchInput.addEventListener('input', (e) => {
+                debouncedSearch(e.target.value);
+            });
+
+            // Add to recent searches when search is performed
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && searchInput.value.trim()) {
+                    this.utils.addToRecentSearches(searchInput.value.trim());
+                }
+            });
+        }
+
+        if (searchFilter) {
+            searchFilter.addEventListener('change', (e) => {
+                this.utils.filterSearchResults(e.target.value);
+            });
+        }
+    }
+
+    initializeBusDropdown() {
+        // Create bus dropdown in sidebar
+        const busList = document.getElementById('busList');
+        if (busList) {
+            this.utils.showLoading('busList', 'Loading buses...');
+        }
+    }
+
+    // Toggle active buses filter
+    toggleActiveBuses() {
+        this.activeFilters.activeBuses = !this.activeFilters.activeBuses;
+        const btn = document.getElementById('activeBusesBtn');
+        if (btn) {
+            if (this.activeFilters.activeBuses) {
+                btn.classList.add('active');
             } else {
-                content += '<p>No notices available.</p>';
+                btn.classList.remove('active');
             }
+        }
+        this.updateBusVisibility();
+    }
+
+    // Toggle inactive buses filter
+    toggleInactiveBuses() {
+        this.activeFilters.inactiveBuses = !this.activeFilters.inactiveBuses;
+        const btn = document.getElementById('inactiveBusesBtn');
+        if (btn) {
+            if (this.activeFilters.inactiveBuses) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+        this.updateBusVisibility();
+    }
+
+    // Toggle route history
+    toggleRouteHistory() {
+        this.activeFilters.routeHistory = !this.activeFilters.routeHistory;
+        const btn = document.getElementById('routeHistoryBtn');
+        if (btn) {
+            if (this.activeFilters.routeHistory) {
+                btn.classList.add('active');
+                if (this.selectedBus && this.mapManager) {
+                    this.mapManager.showRouteHistory(this.selectedBus);
+                }
+            } else {
+                btn.classList.remove('active');
+                if (this.mapManager) {
+                    this.mapManager.clearRouteHistory();
+                }
+            }
+        }
+    }
+
+    // Update bus visibility based on filters
+    updateBusVisibility() {
+        if (!this.mapManager) return;
+
+        Object.keys(this.mapManager.busMarkers).forEach(busId => {
+            const marker = this.mapManager.busMarkers[busId];
+            const isActive = this.firebaseManager.isBusActive(marker.getLatLng());
             
-            content += '</div>';
-            showPopup('Notifications', content);
-        })
-        .catch(error => {
-            console.error('Error fetching notifications:', error);
-            showPopup('Error', 'Failed to load notifications. Please try again.');
+            if ((isActive && this.activeFilters.activeBuses) || (!isActive && this.activeFilters.inactiveBuses)) {
+                marker.addTo(this.mapManager.map);
+            } else {
+                marker.remove();
+            }
         });
-}
+    }
 
-function showRoutePlanner() {
-    const content = `
-        <div class="route-planner">
-            <h3>Plan Your Journey</h3>
-            <div class="route-input">
-                <input type="text" id="fromLocation" placeholder="From">
-                <input type="text" id="toLocation" placeholder="To">
-                <input type="time" id="departureTime">
-                <button onclick="planRoute()">Find Routes</button>
-            </div>
-            <div id="routeResults"></div>
-        </div>
-    `;
-    
-    showPopup('Route Planner', content);
-}
-
-// Rating System
-function initializeRating() {
-    const stars = document.querySelectorAll('.rating-stars i');
-    let currentRating = 0;
-
-    stars.forEach(star => {
-        star.addEventListener('click', () => {
-            currentRating = parseInt(star.dataset.rating);
-            updateStars(currentRating);
-        });
-    });
-
-    document.getElementById('submit-rating').addEventListener('click', () => {
-        if (currentRating === 0) {
-            alert('Please select a rating');
+    // Get directions functionality
+    getDirections() {
+        if (!this.selectedBus) {
+            this.utils.showNotification('Please select a bus first', 'info');
             return;
         }
 
-        const feedback = document.getElementById('feedback-text').value;
-        submitRating(currentRating, feedback);
-    });
-}
+        if (!this.mapManager || !this.mapManager.currentLocation) {
+            this.utils.showNotification('Please get your current location first', 'info');
+            return;
+        }
 
-function updateStars(rating) {
-    document.querySelectorAll('.rating-stars i').forEach(star => {
-        const starRating = parseInt(star.dataset.rating);
-        star.className = starRating <= rating ? 'fas fa-star' : 'far fa-star';
-    });
-}
-
-function submitRating(rating, feedback) {
-    database.ref('ratings').push({
-        rating,
-        feedback,
-        timestamp: Date.now(),
-        userId: firebase.auth().currentUser?.uid || 'anonymous'
-    })
-    .then(() => {
-        alert('Thank you for your feedback!');
-        document.getElementById('feedback-text').value = '';
-        updateStars(0);
-    })
-    .catch(error => {
-        console.error('Error submitting rating:', error);
-        alert('Failed to submit rating. Please try again.');
-    });
-}
-
-// Helper Functions
-function showPopup(title, content) {
-    const popup = document.getElementById('popup');
-    const popupMessage = document.getElementById('popup-message');
-    
-    popupMessage.innerHTML = `<h2>${title}</h2>${content}`;
-    popup.style.display = 'block';
-}
-
-function closePopup() {
-    document.getElementById('popup').style.display = 'none';
-}
-
-function viewRouteDetails(routeId) {
-    const routesRef = database.ref(`routes/${routeId}`);
-    routesRef.once('value')
-        .then(snapshot => {
-            const route = snapshot.val();
-            if (!route) {
-                showPopup('Route Details', '<p>Route details not available.</p>');
-                return;
-            }
-
-            const content = `
-                <div class="route-details">
-                    <h3>${route.name || routeId}</h3>
-                    <p>${route.description || ''}</p>
-                    <div class="route-info">
-                        <p><strong>First Bus:</strong> ${route.firstBus || 'N/A'}</p>
-                        <p><strong>Last Bus:</strong> ${route.lastBus || 'N/A'}</p>
-                        <p><strong>Frequency:</strong> ${route.frequency || 'N/A'}</p>
-                    </div>
-                    <div class="route-stops">
-                        <h4>Stops</h4>
-                        <ul>
-                            ${(route.stops || []).map(stop => `<li>${stop}</li>`).join('')}
-                        </ul>
-                    </div>
-                </div>
-            `;
-            
-            showPopup('Route Details', content);
-        })
-        .catch(error => {
-            console.error('Error fetching route details:', error);
-            showPopup('Error', 'Failed to load route details. Please try again.');
-        });
-}
-
-// Check authentication status
-firebase.auth().onAuthStateChanged(user => {
-    if (!user) {
-        window.location.href = '/login.html';
+        const busLocation = this.mapManager.busMarkers[this.selectedBus].getLatLng();
+        this.mapManager.getDirections(this.mapManager.currentLocation, busLocation);
     }
+
+    // Update bus list in sidebar
+    updateBusList(busData) {
+        const busList = document.getElementById('busList');
+        if (!busList) return;
+
+        const buses = Object.keys(busData).map(busId => {
+            const bus = busData[busId];
+            const isActive = this.firebaseManager.isBusActive(bus.timestamp);
+            return { id: busId, ...bus, isActive };
+        });
+
+        busList.innerHTML = buses.map(bus => `
+            <div class="bus-item ${bus.id === this.selectedBus ? 'selected' : ''}" 
+                 onclick="dashboard.selectBus('${bus.id}')">
+                <div class="bus-icon ${bus.isActive ? 'active' : 'inactive'}">
+                    ${bus.id}
+                </div>
+                <div class="bus-info">
+                    <div class="bus-name">Bus ${bus.id}</div>
+                    <div class="bus-status">${bus.isActive ? 'Active' : 'Inactive'} • ${this.utils.formatTime(bus.timestamp)}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Select a bus
+    selectBus(busId) {
+        this.selectedBus = busId;
+        
+        if (this.mapManager) {
+            this.mapManager.selectBus(busId);
+        }
+        
+        // Update bus list selection
+        document.querySelectorAll('.bus-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        const selectedItem = document.querySelector(`[onclick="dashboard.selectBus('${busId}')"]`);
+        if (selectedItem) {
+            selectedItem.classList.add('selected');
+        }
+
+        // Show route history if enabled
+        if (this.activeFilters.routeHistory && this.mapManager) {
+            this.mapManager.showRouteHistory(busId);
+        }
+
+        // Update bottom info bar
+        if (this.mapManager) {
+            this.mapManager.updateBottomInfoBar(busId);
+        }
+    }
+
+    // Start real-time updates
+    startRealTimeUpdates() {
+        // Listen to bus locations
+        this.firebaseManager.listenToBusLocations((busData) => {
+            if (this.mapManager) {
+                this.mapManager.updateBusMarkers(busData);
+            }
+            this.updateBusList(busData);
+            this.updateNotification();
+        });
+
+        // Listen to bus details
+        this.firebaseManager.listenToBusDetails((busDetails) => {
+            // Update bus details if needed
+            console.log('Bus details updated:', busDetails);
+        });
+
+        // Update notification every 30 seconds
+        setInterval(() => {
+            this.updateNotification();
+        }, 30000);
+    }
+
+    // Update notification
+    updateNotification() {
+        if (!this.mapManager) return;
+
+        const activeBuses = Object.values(this.mapManager.busMarkers).filter(marker => 
+            this.firebaseManager.isBusActive(marker.getLatLng())
+        ).length;
+        
+        const notification = document.getElementById('bottomNotification');
+        if (notification) {
+            const subtitle = notification.querySelector('.notification-subtitle');
+            if (subtitle) {
+                subtitle.textContent = `Tracking ${activeBuses} buses in your area • Last updated ${new Date().toLocaleTimeString()}`;
+            }
+        }
+    }
+
+    // Global functions for onclick handlers
+    static getCurrentLocation() {
+        if (window.dashboard && window.dashboard.mapManager) {
+            window.dashboard.mapManager.getCurrentLocation();
+        } else {
+            window.dashboard?.utils?.showNotification('Map not ready yet, please wait...', 'info');
+        }
+    }
+
+    static setHomeLocation() {
+        if (window.dashboard && window.dashboard.mapManager && window.dashboard.mapManager.currentLocation) {
+            window.dashboard.utils.addSavedPlace('Home', window.dashboard.mapManager.currentLocation, 'home');
+            window.dashboard.utils.showNotification('Home location saved!', 'success');
+        } else {
+            window.dashboard.utils.showNotification('Please get your location first', 'info');
+        }
+    }
+
+    static findNearbyBusStops() {
+        if (window.dashboard && window.dashboard.mapManager && window.dashboard.mapManager.currentLocation) {
+            // Simulate finding nearby bus stops
+            const nearbyStops = [
+                { name: 'Central Bus Stop', distance: '0.2 km' },
+                { name: 'University Bus Stop', distance: '0.5 km' },
+                { name: 'Hospital Bus Stop', distance: '0.8 km' }
+            ];
+            
+            window.dashboard.utils.showNotification(`Found ${nearbyStops.length} nearby bus stops`, 'info');
+        } else {
+            window.dashboard.utils.showNotification('Please get your location first', 'info');
+        }
+    }
+
+    static addSavedPlace() {
+        const placeName = prompt('Enter place name:');
+        if (placeName && window.dashboard && window.dashboard.mapManager && window.dashboard.mapManager.currentLocation) {
+            window.dashboard.utils.addSavedPlace(placeName, window.dashboard.mapManager.currentLocation);
+            window.dashboard.utils.showNotification('Place saved!', 'success');
+        } else {
+            window.dashboard.utils.showNotification('Please get your location first', 'info');
+        }
+    }
+
+    static goToSavedPlace(placeKey) {
+        if (window.dashboard && window.dashboard.utils) {
+            window.dashboard.utils.goToSavedPlace(placeKey);
+        }
+    }
+
+    static repeatSearch(search) {
+        if (window.dashboard && window.dashboard.utils) {
+            window.dashboard.utils.repeatSearch(search);
+        }
+    }
+
+    static hideNotification() {
+        if (window.dashboard && window.dashboard.utils) {
+            window.dashboard.utils.hideNotification();
+        }
+    }
+}
+
+// Initialize dashboard when DOM is loaded
+let dashboard;
+document.addEventListener('DOMContentLoaded', function() {
+    dashboard = new GoogleMapsDashboard();
+    
+    // Make dashboard globally accessible
+    window.dashboard = dashboard;
 });
+
+// Global functions for onclick handlers
+window.getCurrentLocation = GoogleMapsDashboard.getCurrentLocation;
+window.setHomeLocation = GoogleMapsDashboard.setHomeLocation;
+window.findNearbyBusStops = GoogleMapsDashboard.findNearbyBusStops;
+window.addSavedPlace = GoogleMapsDashboard.addSavedPlace;
+window.goToSavedPlace = GoogleMapsDashboard.goToSavedPlace;
+window.repeatSearch = GoogleMapsDashboard.repeatSearch;
+window.hideNotification = GoogleMapsDashboard.hideNotification;

@@ -1,51 +1,230 @@
-<!-- Add this section to your admin panel -->
-<section class="admin-section">
-    <h2>Driver Management</h2>
-    
-    <!-- Pending Drivers -->
-    <div class="pending-drivers">
-        <h3>Pending Driver Applications</h3>
-        <div id="pendingDriversContainer" class="drivers-grid"></div>
-    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Management - Admin</title>
+    <link rel="stylesheet" href="../css/unified-admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Navbar will be loaded here -->
+        <div id="navbar-container"></div>
 
-    <!-- Active Drivers -->
-    <div class="active-drivers">
-        <h3>Active Drivers</h3>
-        <div id="activeDriversContainer" class="drivers-grid"></div>
-    </div>
+        <div class="admin-content">
+            <!-- Driver Management -->
+            <section class="admin-section">
+                <h2><i class="fas fa-user-tie"></i> Driver Management</h2>
+                
+                <!-- Pending Drivers -->
+                <div class="pending-drivers">
+                    <h3><i class="fas fa-clock"></i> Pending Driver Applications</h3>
+                    <div id="pendingDriversContainer" class="drivers-grid"></div>
+                </div>
 
-    <!-- Driver Edit Modal -->
-    <div id="driverEditModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>Edit Driver Details</h3>
-            <form id="driverEditForm">
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" id="editName" required>
+                <!-- Active Drivers -->
+                <div class="active-drivers">
+                    <h3><i class="fas fa-users"></i> Active Drivers</h3>
+                    <div id="activeDriversContainer" class="drivers-grid"></div>
                 </div>
-                <div class="form-group">
-                    <label>License Number</label>
-                    <input type="text" id="editLicense" required>
+
+                <!-- Driver Edit Modal -->
+                <div id="driverEditModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h3><i class="fas fa-edit"></i> Edit Driver Details</h3>
+                        <form id="driverEditForm">
+                            <div class="form-group">
+                                <label><i class="fas fa-user"></i> Name</label>
+                                <input type="text" id="editName" required>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-id-card"></i> License Number</label>
+                                <input type="text" id="editLicense" required>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-phone"></i> Phone</label>
+                                <input type="tel" id="editPhone" required>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-bus"></i> Assigned Bus</label>
+                                <select id="editBus" required>
+                                    <!-- Bus options will be loaded dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-route"></i> Route</label>
+                                <select id="editRoute" required>
+                                    <!-- Route options will be loaded dynamically -->
+                                </select>
+                            </div>
+                            <button type="submit"><i class="fas fa-save"></i> Save Changes</button>
+                        </form>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Phone</label>
-                    <input type="tel" id="editPhone" required>
-                </div>
-                <div class="form-group">
-                    <label>Assigned Bus</label>
-                    <select id="editBus" required>
-                        <!-- Bus options will be loaded dynamically -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Route</label>
-                    <select id="editRoute" required>
-                        <!-- Route options will be loaded dynamically -->
-                    </select>
-                </div>
-                <button type="submit">Save Changes</button>
-            </form>
+            </section>
         </div>
     </div>
-</section> 
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="../js/navbar.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+        // Initialize navbar when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            navbarLoader.loadNavbar('navbar-container', 'Driver Management');
+            loadDrivers();
+        });
+
+        // Load drivers function
+        function loadDrivers() {
+            // Load pending drivers
+            database.ref('pendingDrivers').on('value', snapshot => {
+                const container = document.getElementById('pendingDriversContainer');
+                container.innerHTML = '';
+                
+                snapshot.forEach(child => {
+                    const driver = child.val();
+                    container.innerHTML += `
+                        <div class="driver-card">
+                            <h4>${driver.name}</h4>
+                            <p><i class="fas fa-id-card"></i> License: ${driver.licenseNumber}</p>
+                            <p><i class="fas fa-phone"></i> Phone: ${driver.phone}</p>
+                            <p><i class="fas fa-clock"></i> Applied: ${new Date(driver.timestamp).toLocaleDateString()}</p>
+                            <div class="driver-actions">
+                                <button onclick="approveDriver('${child.key}')" class="btn-approve">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <button onclick="rejectDriver('${child.key}')" class="btn-reject">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            // Load active drivers
+            database.ref('driverInfo').on('value', snapshot => {
+                const container = document.getElementById('activeDriversContainer');
+                container.innerHTML = '';
+                
+                snapshot.forEach(child => {
+                    const driver = child.val();
+                    container.innerHTML += `
+                        <div class="driver-card">
+                            <h4>${driver.name}</h4>
+                            <p><i class="fas fa-id-card"></i> License: ${driver.licenseNumber}</p>
+                            <p><i class="fas fa-phone"></i> Phone: ${driver.phone}</p>
+                            <p><i class="fas fa-bus"></i> Bus: ${driver.assignedBus || 'Not assigned'}</p>
+                            <div class="driver-actions">
+                                <button onclick="editDriver('${child.key}')" class="btn-edit">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button onclick="removeDriver('${child.key}')" class="btn-remove">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        // Approve driver function
+        function approveDriver(driverId) {
+            database.ref(`pendingDrivers/${driverId}`).once('value')
+                .then(snapshot => {
+                    const driverData = snapshot.val();
+                    return database.ref('driverInfo').push(driverData);
+                })
+                .then(() => {
+                    return database.ref(`pendingDrivers/${driverId}`).remove();
+                })
+                .then(() => {
+                    alert('Driver approved successfully');
+                })
+                .catch(error => {
+                    console.error('Error approving driver:', error);
+                    alert('Error approving driver');
+                });
+        }
+
+        // Reject driver function
+        function rejectDriver(driverId) {
+            if (confirm('Are you sure you want to reject this driver?')) {
+                database.ref(`pendingDrivers/${driverId}`).remove()
+                    .then(() => {
+                        alert('Driver rejected');
+                    })
+                    .catch(error => {
+                        console.error('Error rejecting driver:', error);
+                        alert('Error rejecting driver');
+                    });
+            }
+        }
+
+        // Edit driver function
+        function editDriver(driverId) {
+            database.ref(`driverInfo/${driverId}`).once('value')
+                .then(snapshot => {
+                    const driver = snapshot.val();
+                    document.getElementById('editName').value = driver.name;
+                    document.getElementById('editLicense').value = driver.licenseNumber;
+                    document.getElementById('editPhone').value = driver.phone;
+                    
+                    // Show modal
+                    document.getElementById('driverEditModal').style.display = 'block';
+                    
+                    // Handle form submission
+                    document.getElementById('driverEditForm').onsubmit = (e) => {
+                        e.preventDefault();
+                        const updatedData = {
+                            name: document.getElementById('editName').value,
+                            licenseNumber: document.getElementById('editLicense').value,
+                            phone: document.getElementById('editPhone').value,
+                            assignedBus: document.getElementById('editBus').value,
+                            route: document.getElementById('editRoute').value
+                        };
+                        
+                        database.ref(`driverInfo/${driverId}`).update(updatedData)
+                            .then(() => {
+                                alert('Driver updated successfully');
+                                document.getElementById('driverEditModal').style.display = 'none';
+                            })
+                            .catch(error => {
+                                console.error('Error updating driver:', error);
+                                alert('Error updating driver');
+                            });
+                    };
+                });
+        }
+
+        // Remove driver function
+        function removeDriver(driverId) {
+            if (confirm('Are you sure you want to remove this driver?')) {
+                database.ref(`driverInfo/${driverId}`).remove()
+                    .then(() => {
+                        alert('Driver removed successfully');
+                    })
+                    .catch(error => {
+                        console.error('Error removing driver:', error);
+                        alert('Error removing driver');
+                    });
+            }
+        }
+
+        // Close modal when clicking on X or outside
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('driverEditModal');
+            if (e.target === modal || e.target.classList.contains('close')) {
+                modal.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 

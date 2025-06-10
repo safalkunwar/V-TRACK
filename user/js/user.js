@@ -25,10 +25,36 @@ function sendMessage() {
 }
 
 function initMap() {
-    let map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 27.7172, lng: 85.3240 },
-        zoom: 12
-    });
+    // Wait for Google Maps to load
+    const checkGoogleMaps = setInterval(() => {
+        if (window.google && window.google.maps) {
+            clearInterval(checkGoogleMaps);
+            console.log('Google Maps loaded, initializing user map...');
+            
+            const mapElement = document.getElementById('map');
+            if (mapElement) {
+                let map = new google.maps.Map(mapElement, {
+                    center: { lat: 27.7172, lng: 85.3240 },
+                    zoom: 12
+                });
+                
+                // Store map reference globally if needed
+                window.userMap = map;
+            }
+        }
+    }, 100);
+
+    // Timeout after 10 seconds
+    setTimeout(() => {
+        clearInterval(checkGoogleMaps);
+        if (!window.userMap) {
+            console.warn('Google Maps failed to load for user map');
+            const mapElement = document.getElementById('map');
+            if (mapElement) {
+                mapElement.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Map loading failed. Please refresh the page.</div>';
+            }
+        }
+    }, 10000);
 }
 var modal = document.getElementById("myProfilePopup");
 

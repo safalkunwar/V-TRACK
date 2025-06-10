@@ -3,7 +3,7 @@ import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, get, query, orderByChild, equalTo } from 'firebase/database';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 // In real environment, after 'npm install @gradio/client', you need to uncomment the line below:
-// import { Client } from "@gradio/client";
+import { Client } from "@gradio/client";
 
 // Main App component for the V-Track Chatbot
 const App = () => {
@@ -77,7 +77,6 @@ const App = () => {
     };
 
     // Initialize Gradio Client (this part is for your local environment)
-    // In this Canvas environment, we cannot directly import @gradio/client.
     // In your real environment, you would uncomment and use this:
     /*
     const initGradioClient = async () => {
