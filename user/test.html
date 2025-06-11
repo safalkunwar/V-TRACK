@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-TRACK Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #1557b0;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>V-TRACK Enhanced Dashboard Test</h1>
+        
+        <div class="test-section">
+            <h3>Module Loading Test</h3>
+            <button class="test-button" onclick="testModules()">Test Module Loading</button>
+            <div id="moduleStatus"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Firebase Connection Test</h3>
+            <button class="test-button" onclick="testFirebase()">Test Firebase Connection</button>
+            <div id="firebaseStatus"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Map Initialization Test</h3>
+            <button class="test-button" onclick="testMap()">Test Map Initialization</button>
+            <div id="mapStatus"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Dashboard Launch</h3>
+            <button class="test-button" onclick="launchDashboard()">Launch Enhanced Dashboard</button>
+            <p>This will open the enhanced Google Maps-style dashboard in a new tab.</p>
+        </div>
+
+        <div class="test-section">
+            <h3>Features Overview</h3>
+            <ul>
+                <li>✅ Google Maps-style layout with fullscreen map</li>
+                <li>✅ Real-time bus tracking from Firebase</li>
+                <li>✅ Bus switching with dropdown selection</li>
+                <li>✅ Route history for today's date</li>
+                <li>✅ Directions functionality with Google Maps API</li>
+                <li>✅ Bottom info bar with bus details</li>
+                <li>✅ Collapsible sidebar with saved places</li>
+                <li>✅ Search with Google Places autocomplete</li>
+                <li>✅ Floating action buttons</li>
+                <li>✅ Responsive design for mobile and desktop</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function showStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function testModules() {
+            try {
+                // Test if modules are loaded
+                if (typeof FirebaseManager !== 'undefined') {
+                    showStatus('moduleStatus', '✅ FirebaseManager module loaded successfully', 'success');
+                } else {
+                    showStatus('moduleStatus', '❌ FirebaseManager module not found', 'error');
+                }
+
+                if (typeof MapManager !== 'undefined') {
+                    showStatus('moduleStatus', '✅ MapManager module loaded successfully', 'success');
+                } else {
+                    showStatus('moduleStatus', '❌ MapManager module not found', 'error');
+                }
+
+                if (typeof Utils !== 'undefined') {
+                    showStatus('moduleStatus', '✅ Utils module loaded successfully', 'success');
+                } else {
+                    showStatus('moduleStatus', '❌ Utils module not found', 'error');
+                }
+
+                if (typeof GoogleMapsDashboard !== 'undefined') {
+                    showStatus('moduleStatus', '✅ GoogleMapsDashboard module loaded successfully', 'success');
+                } else {
+                    showStatus('moduleStatus', '❌ GoogleMapsDashboard module not found', 'error');
+                }
+            } catch (error) {
+                showStatus('moduleStatus', `❌ Error testing modules: ${error.message}`, 'error');
+            }
+        }
+
+        function testFirebase() {
+            try {
+                // Test Firebase configuration
+                const firebaseConfig = {
+                    apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
+                    authDomain: "v-track-gu999.firebaseapp.com",
+                    databaseURL: "https://v-track-gu999-default-rtdb.firebaseio.com",
+                    projectId: "v-track-gu999",
+                    storageBucket: "v-track-gu999.appspot.com",
+                    messagingSenderId: "1046512747961",
+                    appId: "1:1046512747961:web:80df40c48bca3159296268",
+                    measurementId: "G-38X29VT1YT"
+                };
+
+                showStatus('firebaseStatus', '✅ Firebase configuration is valid', 'success');
+                showStatus('firebaseStatus', '📡 Database URL: https://v-track-gu999-default-rtdb.firebaseio.com/BusLocation', 'info');
+            } catch (error) {
+                showStatus('firebaseStatus', `❌ Firebase configuration error: ${error.message}`, 'error');
+            }
+        }
+
+        function testMap() {
+            try {
+                // Test if Leaflet is available
+                if (typeof L !== 'undefined') {
+                    showStatus('mapStatus', '✅ Leaflet map library loaded successfully', 'success');
+                } else {
+                    showStatus('mapStatus', '❌ Leaflet map library not found', 'error');
+                }
+
+                // Test if Google Maps API is available
+                if (typeof google !== 'undefined' && google.maps) {
+                    showStatus('mapStatus', '✅ Google Maps API loaded successfully', 'success');
+                } else {
+                    showStatus('mapStatus', '❌ Google Maps API not found', 'error');
+                }
+            } catch (error) {
+                showStatus('mapStatus', `❌ Map test error: ${error.message}`, 'error');
+            }
+        }
+
+        function launchDashboard() {
+            window.open('html/dashboard.html', '_blank');
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                testModules();
+                testFirebase();
+                testMap();
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 

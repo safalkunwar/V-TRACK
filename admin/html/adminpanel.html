@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Management - Admin</title>
+    <link rel="stylesheet" href="../css/unified-admin.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Navbar will be loaded here -->
+        <div id="navbar-container"></div>
+
+        <div class="admin-content">
+            <!-- Bus Management -->
+            <section class="admin-section">
+                <h2><i class="fas fa-bus"></i> Bus Management</h2>
+                <form id="bus-form" onsubmit="addBus(event)">
+                    <input type="text" id="busName" placeholder="Bus Name" required>
+                    <input type="text" id="busNumber" placeholder="Bus Number" required>
+                    <input type="text" id="busRoute" placeholder="Route" required>
+                    <input type="text" id="driverName" placeholder="Driver Name" required>
+                    <input type="tel" id="driverNum" placeholder="Driver Phone" required>
+                    <textarea id="additionalDetails" placeholder="Additional Details"></textarea>
+                    <button type="submit"><i class="fas fa-plus"></i> Add Bus</button>
+                </form>
+            </section>
+
+            <!-- Notice Management -->
+            <section class="admin-section">
+                <h2><i class="fas fa-bullhorn"></i> Notice Management</h2>
+                <form id="notice-form" onsubmit="addNotice(event)">
+                    <textarea id="notice-content" placeholder="Enter notice content" required></textarea>
+                    <button type="submit"><i class="fas fa-paper-plane"></i> Post Notice</button>
+                </form>
+            </section>
+
+            <!-- Bus List -->
+            <section class="admin-section">
+                <h2><i class="fas fa-list"></i> Current Buses</h2>
+                <div id="bus-list"></div>
+            </section>
+
+            <!-- Bus History Section -->
+            <section class="admin-section">
+                <h2><i class="fas fa-history"></i> Quick Bus History View</h2>
+                <div class="history-controls">
+                    <select id="busSelect">
+                        <option value="">Select Bus</option>
+                    </select>
+                    <div class="date-range">
+                        <input type="date" id="startDate" placeholder="Start Date">
+                        <input type="date" id="endDate" placeholder="End Date">
+                    </div>
+                    <button onclick="viewBusHistory()"><i class="fas fa-search"></i> View History</button>
+                    <button onclick="deleteRecords()" class="delete-btn"><i class="fas fa-trash"></i> Delete Records</button>
+                </div>
+                <div id="history-display">
+                    <div id="history-map"></div>
+                    <div id="history-list"></div>
+                </div>
+            </section>
+
+            <!-- Available Buses Section -->
+            <section class="admin-section">
+                <h2><i class="fas fa-bus"></i> Available Buses</h2>
+                <div id="busFleetContainer" class="bus-grid">
+                    <!-- Buses will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Route Analysis Section -->
+            <section class="admin-section">
+                <h2><i class="fas fa-route"></i> Route Analysis</h2>
+                <div id="routeAnalysisContainer" class="route-grid">
+                    <!-- Route analysis will be loaded here -->
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="../js/navbar.js"></script>
+    <script src="../js/admin.js"></script>
+
+    <script>
+        // Initialize navbar when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            navbarLoader.loadNavbar('navbar-container', 'Bus Management');
+        });
+
+        // Add bus function
+        function addBus(event) {
+            event.preventDefault();
+            const busData = {
+                busName: document.getElementById('busName').value,
+                busNumber: document.getElementById('busNumber').value,
+                busRoute: document.getElementById('busRoute').value,
+                driverName: document.getElementById('driverName').value,
+                driverNum: document.getElementById('driverNum').value,
+                additionalDetails: document.getElementById('additionalDetails').value
+            };
+
+            database.ref('busDetails').push(busData)
+                .then(() => {
+                    alert('Bus added successfully');
+                    document.getElementById('bus-form').reset();
+                    loadBusList(); // Refresh the bus list
+                })
+                .catch(error => {
+                    console.error('Error adding bus:', error);
+                    alert('Error adding bus');
+                });
+        }
+
+        // Add notice function
+        function addNotice(event) {
+            event.preventDefault();
+            const notice = {
+                content: document.getElementById('notice-content').value,
+                timestamp: Date.now()
+            };
+
+            database.ref('notices').push(notice)
+                .then(() => {
+                    alert('Notice posted successfully');
+                    document.getElementById('notice-form').reset();
+                })
+                .catch(error => {
+                    console.error('Error posting notice:', error);
+                    alert('Error posting notice');
+                });
+        }
+    </script>
+</body>
+</html> 

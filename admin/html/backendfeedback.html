@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback - Admin</title>
+    <link rel="stylesheet" href="../css/unified-admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Navbar will be loaded here -->
+        <div id="navbar-container"></div>
+
+        <div class="admin-content">
+            <section class="admin-section">
+                <h2><i class="fas fa-comments"></i> User Feedback</h2>
+                <div class="feedback-table-container">
+                    <table class="feedback-table">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-star"></i> Rank</th>
+                                <th><i class="fas fa-user"></i> Name</th>
+                                <th><i class="fas fa-envelope"></i> Email</th>
+                                <th><i class="fas fa-comment"></i> Message</th>
+                                <th><i class="fas fa-clock"></i> Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feedbackList"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Include Firebase JavaScript SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="../js/navbar.js"></script>
+    <script src="../js/backfeedback.js"></script>
+    <script>
+        // Initialize navbar when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            navbarLoader.loadNavbar('navbar-container', 'User Feedback');
+        });
+    </script>
+</body>
+</html>
