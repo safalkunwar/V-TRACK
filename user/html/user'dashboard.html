@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - V-TRACK</title>
+    <link rel="stylesheet" href="../css/user.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="user-container">
+        <nav class="user-nav">
+            <h1>V-TRACK Dashboard</h1>
+            <div class="user-nav-links">
+                <a href="dashboard.html" class="active">Live Tracking</a>
+                <a href="routes.html">Bus Routes</a>
+                <a href="notices.html">Notices</a>
+                <a href="markers.html">Place Marker</a>
+                <a href="ratings.html">Rate Services</a>
+                <a href="chat.html">Live Chat</a>
+                <button onclick="logout()">Logout</button>
+            </div>
+        </nav>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card map-card">
+                <h3>Live Bus Location</h3>
+                <div ichd="map"></div>
+            </div>
+            <div class="dashboard-card">
+                <h3>Available Bus Routes</h3>
+                <div id="routeList"></div>
+            </div>
+            <div class="dashboard-card">
+                <h3>Important Notices</h3>
+                <div id="noticeBoard"></div>
+            </div>
+            <div class="dashboard-card">
+                <h3>Rate Our Service</h3>
+                <div id="ratingSection">
+                    <input type="number" id="userRating" min="1" max="5" placeholder="Rate 1-5">
+                    <button onclick="submitRating()">Submit</button>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <h3>Place a Marker</h3>
+                <button onclick="addMarker()">Add Marker on Map</button>
+            </div>
+            <div class="dashboard-card chat-section">
+                <h3>Live Chat Support</h3>
+                <div class="chat-box" id="chatBox"></div>
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type a message...">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/user.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
+</body>
+</html>

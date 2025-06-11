@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus History - Admin</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-polylinedecorator/dist/leaflet.polylineDecorator.css" />
+</head>
+<body>
+    <div class="admin-container">
+        <nav class="admin-nav">
+            <h1>Bus History</h1>
+            <div class="admin-nav-links">
+                <a href="adminpanel.html">Bus Management</a>
+                <a href="bushistory.html" class="active">Bus History</a>
+                <a href="backendfeedback.html">Feedback</a>
+                <button onclick="logout()">Logout</button>
+            </div>
+        </nav>
+
+        <div class="admin-content">
+            <section class="admin-section">
+                <h2>Bus Path History</h2>
+                <div class="history-controls">
+                    <select id="busSelect" onchange="showOverallPath()">
+                        <option value="">Select Bus</option>
+                    </select>
+                    <div class="date-filter hidden" id="dateFilter">
+                        <div class="date-range">
+                            <input type="date" id="startDate">
+                            <input type="date" id="endDate">
+                        </div>
+                        <button onclick="showPathByDate()">Show Path for Dates</button>
+                        <button onclick="deleteRecords()" class="delete-btn">Delete Records</button>
+                    </div>
+                </div>
+                <div id="history-display">
+                    <div id="history-map"></div>
+                    <div id="history-list"></div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-polylinedecorator/dist/leaflet.polylineDecorator.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+        // Show overall path when bus is selected
+        function showOverallPath() {
+            const busId = document.getElementById('busSelect').value;
+            if (!busId) return;
+
+            // Show date filter after bus is selected
+            document.getElementById('dateFilter').classList.remove('hidden');
+
+            // Clear previous data
+            clearMap();
+
+            // Fetch all location history for the bus
+            database.ref('BusLocation').child(busId).once('value')
+                .then(snapshot => {
+                    const locations = [];
+                    snapshot.forEach(child => {
+                        const location = child.val();
+                        if (location.latitude && location.longitude) {
+                            locations.push({
+                                lat: location.latitude,
+                                lng: location.longitude,
+                                timestamp: location.timestamp
+                            });
+                        }
+                    });
+
+                    if (locations.length > 0) {
+                        displayBusPath(locations, 'Overall Path History');
+                    } else {
+                        alert('No path history found for this bus');
+                    }
+                });
+        }
+
+        // Show path for specific date range
+        function showPathByDate() {
+            const busId = document.getElementById('busSelect').value;
+            const startDate = new Date(document.getElementById('startDate').value).getTime();
+            const endDate = new Date(document.getElementById('endDate').value).getTime();
+
+            if (!busId || !startDate || !endDate) {
+                alert('Please select bus and date range');
+                return;
+            }
+
+            clearMap();
+
+            database.ref('BusLocation').child(busId)
+                .orderByChild('timestamp')
+                .startAt(startDate)
+                .endAt(endDate)
+                .once('value')
+                .then(snapshot => {
+                    const locations = [];
+                    snapshot.forEach(child => {
+                        const location = child.val();
+                        if (location.latitude && location.longitude) {
+                            locations.push({
+                                lat: location.latitude,
+                                lng: location.longitude,
+                                timestamp: location.timestamp
+                            });
+                        }
+                    });
+
+                    if (locations.length > 0) {
+                        displayBusPath(locations, `Path History (${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()})`);
+                        displayTimelineList(locations);
+                    } else {
+                        alert('No path history found for selected date range');
+                    }
+                });
+        }
+
+        // Display timeline list
+        function displayTimelineList(locations) {
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '<h3>Timeline</h3>';
+            
+            locations.sort((a, b) => a.timestamp - b.timestamp)
+                .forEach(loc => {
+                    const date = new Date(loc.timestamp);
+                    historyList.innerHTML += `
+                        <div class="track-point">
+                            <span class="timestamp">${date.toLocaleString()}</span>
+                            <span>Lat: ${loc.lat.toFixed(4)}, Lng: ${loc.lng.toFixed(4)}</span>
+                        </div>
+                    `;
+                });
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBusList();
+            initHistoryMap();
+        });
+    </script>
+</body>
+</html> 

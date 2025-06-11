@@ -47,17 +47,11 @@ async function login() {
     if (!email.endsWith("@gandakiuniversity.edu.np")) {
         alert("Please use your university email.");
         return;
-    }
-    
-    if (email === "nirajan.60222@gandakiuniversity.edu.np") {
-        alert("Please use your university email.");
-        return;
-    }
 
     try {
         // Authenticate user
         await firebase.auth().signInWithEmailAndPassword(email, password);
-        window.location.href = "../html/miniindex.html";
+        window.location.href = "../html/index.html";
     } catch (error) {
         console.error("Login error:", error);
         alert("Login failed. Check your credentials.");
