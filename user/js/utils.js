@@ -231,24 +231,33 @@ class Utils {
         }
     }
 
-    // Search Utilities
-    performSearch(query) {
+    // NEW Search: Nominatim (OpenStreetMap)
+    async performSearch(query) {
         if (!query.trim()) {
             this.clearSearchResults();
             return;
         }
 
-        // Add to recent searches
         this.addToRecentSearches(query.trim());
+        const results = await this.geocodeSearch(query.trim());
+        this.displaySearchResults(results);
+    }
 
-        // Simulate search results (replace with actual search implementation)
-        const searchResults = [
-            { name: `${query} Bus Stop`, type: 'bus-stop', location: [6.9271, 79.8612] },
-            { name: `${query} Station`, type: 'station', location: [6.9271, 79.8612] },
-            { name: `${query} Location`, type: 'location', location: [6.9271, 79.8612] }
-        ];
-
-        this.displaySearchResults(searchResults);
+    async geocodeSearch(query) {
+        try {
+            // Use a CORS-friendly free Nominatim proxy
+            const url = `https://geocode.maps.co/search?q=${encodeURIComponent(query)}&limit=5`;
+            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            const json = await res.json();
+            return json.map(item => ({
+                name: item.display_name || item.name || 'Location',
+                type: item.type || 'location',
+                location: [parseFloat(item.lat), parseFloat(item.lon)]
+            }));
+        } catch (e) {
+            console.error('Geocoding failed', e);
+            return [];
+        }
     }
 
     displaySearchResults(results) {
@@ -283,11 +292,20 @@ class Utils {
 
     goToSearchResult(name, location) {
         if (window.mapManager) {
+            // Set destination marker and remember selection
+            if (window.mapManager.destinationMarker) {
+                window.mapManager.map.removeLayer(window.mapManager.destinationMarker);
+            }
+            window.mapManager.destinationMarker = L.marker(location, {
+                icon: L.divIcon({
+                    className: 'destination-marker',
+                    html: '<i class="fas fa-map-marker-alt"></i>',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                })
+            }).addTo(window.mapManager.map);
             window.mapManager.map.setView(location, 16);
-            L.marker(location)
-                .addTo(window.mapManager.map)
-                .bindPopup(`<b>${name}</b>`)
-                .openPopup();
+            this.lastSelectedDestination = location;
         }
         this.clearSearchResults();
     }

@@ -7,7 +7,525 @@
     <link rel="stylesheet" href="../css/unified-admin.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-polylinedecorator/dist/leaflet.polylineDecorator.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .history-controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .date-filter {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .date-range {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .date-range input[type="date"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .available-dates {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .history-display {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        #history-map {
+            height: 600px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        
+        #history-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .track-point {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .track-point:last-child {
+            border-bottom: none;
+        }
+        
+        .timestamp {
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .coordinates {
+            font-family: monospace;
+            color: #666;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            padding: 20px;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .success-message {
+            color: #155724;
+            text-align: center;
+            padding: 20px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .stats-card h4 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .road-alignment-toggle {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .road-alignment-toggle label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        .road-alignment-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            width: 180px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .map-controls button {
+            display: block;
+            width: 100%;
+            margin-bottom: 5px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: #764ba2;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .map-controls button:hover {
+            background: #f8f9fa;
+        }
+        
+        .map-controls button:last-child {
+            margin-bottom: 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #28a745);
+            transition: width 0.3s ease;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            max-width: 300px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .notification.error {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .notification.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .leaflet-popup-content {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .leaflet-popup-content b {
+            color: #007bff;
+        }
+        
+        .start-marker, .end-marker {
+            background: transparent;
+            border: none;
+        }
+        
+        .filter-options {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .filter-options h5 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .filter-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .filter-item input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .filter-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .filter-toggle {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+        }
+        
+        .gap-handling-toggle {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .gap-handling-toggle label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        .gap-handling-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .map-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 8px;
+        }
+        
+        .loading-content {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .loading-content i {
+            font-size: 2rem;
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+        
+        .loading-content p {
+            margin: 10px 0;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px auto 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #28a745);
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        .map-legend {
+            font-size: 12px;
+        }
+        
+        .map-legend h6 {
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .filter-item small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 11px;
+        }
+        
+        .enhanced-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            max-width: 350px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideInEnhanced 0.4s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .enhanced-notification.success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+        
+        .enhanced-notification.error {
+            background: linear-gradient(135deg, #dc3545, #e74c3c);
+            color: white;
+        }
+        
+        .enhanced-notification.warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: #212529;
+        }
+        
+        .enhanced-notification.info {
+            background: linear-gradient(135deg, #17a2b8, #6f42c1);
+            color: white;
+        }
+        
+        @keyframes slideInEnhanced {
+            from {
+                transform: translateX(100%) scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .path-stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .path-stats h4 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        
+        .path-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        
+        .path-stat-item {
+            text-align: center;
+        }
+        
+        .path-stat-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .path-stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+    </style>
 </head>
 <body>
     <div class="admin-container">
@@ -17,22 +535,211 @@
         <div class="admin-content">
             <section class="admin-section">
                 <h2><i class="fas fa-history"></i> Bus Path History</h2>
-                <div class="history-controls">
-                    <select id="busSelect" onchange="showOverallPath()">
-                        <option value="">Select Bus</option>
-                    </select>
-                    <div class="date-filter hidden" id="dateFilter">
-                        <div class="date-range">
-                            <input type="date" id="startDate">
-                            <input type="date" id="endDate">
+                
+                <!-- Enhanced Stats Card -->
+                <div class="stats-card">
+                    <h4><i class="fas fa-chart-line"></i> Tracking Overview</h4>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalBuses">-</div>
+                            <div class="stat-label">Total Buses</div>
                         </div>
-                        <button onclick="showPathByDate()"><i class="fas fa-search"></i> Show Path for Dates</button>
-                        <button onclick="deleteRecords()" class="delete-btn"><i class="fas fa-trash"></i> Delete Records</button>
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalRecords">-</div>
+                            <div class="stat-label">Total Records</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="activeDays">-</div>
+                            <div class="stat-label">Active Days</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="avgSpeed">-</div>
+                            <div class="stat-label">Avg Speed</div>
+                        </div>
                     </div>
                 </div>
+                
+                <div class="history-controls">
+                    <div class="form-group">
+                        <label for="busSelect"><i class="fas fa-bus"></i> Select Bus:</label>
+                        <select id="busSelect" onchange="onBusSelect()">
+                            <option value="">Select Bus</option>
+                        </select>
+                    </div>
+                    
+                    <div class="date-filter hidden" id="dateFilter">
+                        <h4><i class="fas fa-calendar"></i> Date Selection</h4>
+                        <div class="available-dates" id="availableDates">
+                            Loading available dates...
+                        </div>
+                        <div class="date-range">
+                            <div>
+                                <label for="startDate">Start Date:</label>
+                                <input type="date" id="startDate" onchange="onDateChange()">
+                            </div>
+                            <div>
+                                <label for="endDate">End Date:</label>
+                                <input type="date" id="endDate" onchange="onDateChange()">
+                            </div>
+                        </div>
+                        
+                        <!-- Enhanced Path Filtering Options -->
+                        <div class="filter-options">
+                            <h5><i class="fas fa-filter"></i> Path Filtering & Road Alignment</h5>
+                            <div class="filter-grid">
+                                <div class="filter-item">
+                                    <label for="maxDistance">Max Distance (meters):</label>
+                                    <input type="number" id="maxDistance" value="300" min="100" max="5000">
+                                    <small>Maximum distance between consecutive GPS points</small>
+                                </div>
+                                <div class="filter-item">
+                                    <label for="maxTimeGap">Max Time Gap (minutes):</label>
+                                    <input type="number" id="maxTimeGap" value="30" min="1" max="120">
+                                    <small>Maximum time gap between tracking points</small>
+                                </div>
+                                <div class="filter-item">
+                                    <label for="maxSpeed">Max Speed (km/h):</label>
+                                    <input type="number" id="maxSpeed" value="120" min="20" max="200">
+                                    <small>Maximum realistic speed for filtering</small>
+                                </div>
+                                <div class="filter-item">
+                                    <label for="segmentDistance">Segment Distance (meters):</label>
+                                    <input type="number" id="segmentDistance" value="500" min="100" max="2000">
+                                    <small>Distance threshold for continuous segments</small>
+                                </div>
+                            </div>
+                            
+                            <div class="filter-toggle">
+                                <label>
+                                    <input type="checkbox" id="enableFiltering" checked> Enable Advanced Filtering
+                                </label>
+                            </div>
+                            
+                            <div class="road-alignment-toggle">
+                                <label>
+                                    <input type="checkbox" id="enableRoadAlignment" checked> Enable Road Alignment (Snap to Roads)
+                                </label>
+                                <small style="display: block; margin-top: 5px; color: #666;">
+                                    Uses OpenStreetMap data to align paths with actual roads for better accuracy
+                                </small>
+                            </div>
+                            
+                            <div class="gap-handling-toggle">
+                                <label>
+                                    <input type="checkbox" id="enableGapHandling" checked> Enable Gap Handling
+                                </label>
+                                <small style="display: block; margin-top: 5px; color: #666;">
+                                    Automatically connects reasonable gaps using road routing
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="showPathByDate()">
+                                <i class="fas fa-search"></i> Show Path
+                            </button>
+                            <button class="btn btn-secondary" onclick="showOverallPath()">
+                                <i class="fas fa-route"></i> Show All History
+                            </button>
+                            <button class="btn btn-success" onclick="exportPathData()">
+                                <i class="fas fa-download"></i> Export Data
+                            </button>
+                            <button class="btn btn-warning" onclick="optimizePath()">
+                                <i class="fas fa-magic"></i> Optimize Path
+                            </button>
+                            <button class="btn btn-danger" onclick="deleteRecords()">
+                                <i class="fas fa-trash"></i> Delete Records
+                            </button>
+                        </div>
+                        
+                        <!-- Enhanced Legend -->
+                        <div class="map-legend" style="margin-top: 15px; padding: 10px; background: white; border-radius: 5px; border: 1px solid #dee2e6;">
+                            <h6><i class="fas fa-info-circle"></i> Map Legend</h6>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 12px;">
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <div style="background: #28a745; color: white; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px;">🟢</div>
+                                    <span>Start Point</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <div style="background: #dc3545; color: white; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px;">🔴</div>
+                                    <span>End Point</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <div style="width: 20px; height: 3px; background: #007bff;"></div>
+                                    <span>Route Path</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <div style="width: 20px; height: 3px; background: #007bff; border-top: 2px solid #ffffff;"></div>
+                                    <span>Animated Path</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div id="history-display">
-                    <div id="history-map"></div>
-                    <div id="history-list"></div>
+                    <div id="history-map">
+                        <!-- Enhanced Map Controls -->
+                        <div class="map-controls">
+                            <button onclick="resetMapView()" title="Reset Map View">
+                                <i class="fas fa-home"></i> Reset
+                            </button>
+                            <button onclick="toggleFullscreen()" title="Toggle Fullscreen">
+                                <i class="fas fa-expand"></i> Fullscreen
+                            </button>
+                            <button onclick="togglePathLabels()" title="Toggle Path Labels">
+                                <i class="fas fa-tags"></i> Labels
+                            </button>
+                            <button onclick="togglePathArrows()" title="Toggle Direction Arrows">
+                                <i class="fas fa-arrows-alt"></i> Arrows
+                            </button>
+                            <button onclick="toggleAnimatedPaths()" title="Toggle Animated Paths">
+                                <i class="fas fa-running"></i> Animation
+                            </button>
+                            <button onclick="centerOnPath()" title="Center on Path">
+                                <i class="fas fa-crosshairs"></i> Center
+                            </button>
+                        </div>
+                        
+                        <!-- Loading Overlay -->
+                        <div id="map-loading-overlay" class="map-loading-overlay" style="display: none;">
+                            <div class="loading-content">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Processing GPS data...</p>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="history-list">
+                        <div class="loading">Select a bus to view history</div>
+                    </div>
+                </div>
+                
+                <!-- Enhanced Debug Section -->
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                    <h4><i class="fas fa-bug"></i> Debug Information</h4>
+                    <p><strong>Firebase URL:</strong> https://v-track-gu999-default-rtdb.firebaseio.com/</p>
+                    <p><strong>Data Structure:</strong> BusLocation/bus1/timestamp/latitude,longitude,timestamp</p>
+                    <p><strong>Enhanced Features:</strong> Road Alignment, GPS Format Parsing, Advanced Filtering</p>
+                    <div class="btn-group">
+                        <button onclick="testFirebaseConnection()" class="btn btn-secondary">
+                            <i class="fas fa-plug"></i> Test Connection
+                        </button>
+                        <button onclick="testBusData('bus1')" class="btn btn-secondary">
+                            <i class="fas fa-database"></i> Test Bus1 Data
+                        </button>
+                        <button onclick="testBusData('bus2')" class="btn btn-secondary">
+                            <i class="fas fa-database"></i> Test Bus2 Data
+                        </button>
+                        <button onclick="testGPSParsing()" class="btn btn-secondary">
+                            <i class="fas fa-map-marker-alt"></i> Test GPS Parsing
+                        </button>
+                    </div>
+                    <div id="debug-output" style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
+                        Debug output will appear here...
+                    </div>
                 </div>
             </section>
         </div>
@@ -44,106 +751,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-polylinedecorator/dist/leaflet.polylineDecorator.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script src="../js/navbar.js"></script>
-    <script src="../js/admin.js"></script>
-    <script>
-        // Initialize navbar when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            navbarLoader.loadNavbar('navbar-container', 'Bus History');
-            loadBusList();
-            initHistoryMap();
-        });
-
-        // Show overall path when bus is selected
-        function showOverallPath() {
-            const busId = document.getElementById('busSelect').value;
-            if (!busId) return;
-
-            // Show date filter after bus is selected
-            document.getElementById('dateFilter').classList.remove('hidden');
-
-            // Clear previous data
-            clearMap();
-
-            // Fetch all location history for the bus
-            database.ref('BusLocation').child(busId).once('value')
-                .then(snapshot => {
-                    const locations = [];
-                    snapshot.forEach(child => {
-                        const location = child.val();
-                        if (location.latitude && location.longitude) {
-                            locations.push({
-                                lat: location.latitude,
-                                lng: location.longitude,
-                                timestamp: location.timestamp
-                            });
-                        }
-                    });
-
-                    if (locations.length > 0) {
-                        displayBusPath(locations, 'Overall Path History');
-                    } else {
-                        alert('No path history found for this bus');
-                    }
-                });
-        }
-
-        // Show path for specific date range
-        function showPathByDate() {
-            const busId = document.getElementById('busSelect').value;
-            const startDate = new Date(document.getElementById('startDate').value).getTime();
-            const endDate = new Date(document.getElementById('endDate').value).getTime();
-
-            if (!busId || !startDate || !endDate) {
-                alert('Please select bus and date range');
-                return;
-            }
-
-            clearMap();
-
-            database.ref('BusLocation').child(busId)
-                .orderByChild('timestamp')
-                .startAt(startDate)
-                .endAt(endDate)
-                .once('value')
-                .then(snapshot => {
-                    const locations = [];
-                    snapshot.forEach(child => {
-                        const location = child.val();
-                        if (location.latitude && location.longitude) {
-                            locations.push({
-                                lat: location.latitude,
-                                lng: location.longitude,
-                                timestamp: location.timestamp
-                            });
-                        }
-                    });
-
-                    if (locations.length > 0) {
-                        displayBusPath(locations, `Path History (${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()})`);
-                        displayTimelineList(locations);
-                    } else {
-                        alert('No path history found for selected date range');
-                    }
-                });
-        }
-
-        // Display timeline list
-        function displayTimelineList(locations) {
-            const historyList = document.getElementById('history-list');
-            historyList.innerHTML = '<h3>Timeline</h3>';
-            
-            locations.sort((a, b) => a.timestamp - b.timestamp)
-                .forEach(loc => {
-                    const date = new Date(loc.timestamp);
-                    historyList.innerHTML += `
-                        <div class="track-point">
-                            <span class="timestamp">${date.toLocaleString()}</span>
-                            <span>Lat: ${loc.lat.toFixed(4)}, Lng: ${loc.lng.toFixed(4)}</span>
-                        </div>
-                    `;
-                });
-        }
-    </script>
+    <script src="../js/bushistory.js"></script>
 </body>
 </html> 

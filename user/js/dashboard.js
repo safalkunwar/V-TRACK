@@ -35,6 +35,10 @@ class GoogleMapsDashboard {
         // Initialize saved places and recent searches
         this.utils.updateSavedPlacesList();
         this.utils.updateRecentSearchesList();
+
+        // Initialize notices and routes
+        this.initializeNotices();
+        this.initializeRoutes();
     }
 
     waitForGoogleMapsAndInitialize() {
@@ -135,17 +139,55 @@ class GoogleMapsDashboard {
                 this.getDirections();
             });
         }
+
+        // Map type buttons
+        const streetViewBtn = document.getElementById('streetViewBtn');
+        const satelliteViewBtn = document.getElementById('satelliteViewBtn');
+        const terrainViewBtn = document.getElementById('terrainViewBtn');
+        const darkViewBtn = document.getElementById('darkViewBtn');
+
+        if (streetViewBtn) {
+            streetViewBtn.addEventListener('click', () => {
+                if (this.mapManager) {
+                    this.mapManager.changeMapType('street');
+                }
+            });
+        }
+
+        if (satelliteViewBtn) {
+            satelliteViewBtn.addEventListener('click', () => {
+                if (this.mapManager) {
+                    this.mapManager.changeMapType('satellite');
+                }
+            });
+        }
+
+        if (terrainViewBtn) {
+            terrainViewBtn.addEventListener('click', () => {
+                if (this.mapManager) {
+                    this.mapManager.changeMapType('terrain');
+                }
+            });
+        }
+
+        if (darkViewBtn) {
+            darkViewBtn.addEventListener('click', () => {
+                if (this.mapManager) {
+                    this.mapManager.changeMapType('dark');
+                }
+            });
+        }
     }
 
     initializeSearch() {
-        const searchInput = document.querySelector('.search-input');
-        const searchFilter = document.getElementById('searchFilter');
+        const searchInput = document.getElementById('newSearchInput');
+        const directionBtn = document.getElementById('directionBtn');
 
         if (searchInput) {
             // Debounced search
             const debouncedSearch = this.utils.debounce((query) => {
                 this.utils.performSearch(query);
-            }, 300);
+            }, 400);
 
             searchInput.addEventListener('input', (e) => {
                 debouncedSearch(e.target.value);
@@ -159,11 +201,77 @@ class GoogleMapsDashboard {
             });
         }
 
-        if (searchFilter) {
-            searchFilter.addEventListener('change', (e) => {
-                this.utils.filterSearchResults(e.target.value);
+        if (directionBtn) {
+            directionBtn.addEventListener('click', async () => {
+                await this.getDirectionsFromSearch();
             });
         }
+    }
+
+    // Get directions from search input
+    async getDirectionsFromSearch() {
+        const searchInput = document.getElementById('newSearchInput');
+        if (!searchInput || !searchInput.value.trim()) {
+            this.utils.showNotification('Please enter a destination first', 'info');
+            return;
+        }
+
+        if (!this.mapManager) return;
+        // If we don't yet have current location, try to fetch it
+        if (!this.mapManager.currentLocation) {
+            await new Promise(resolve => {
+                navigator.geolocation?.getCurrentPosition((pos) => {
+                    this.mapManager.currentLocation = [pos.coords.latitude, pos.coords.longitude];
+                    resolve();
+                }, () => resolve(), { enableHighAccuracy: true, timeout: 5000 });
+            });
+        }
+
+        if (!this.mapManager.currentLocation) {
+            this.utils.showNotification('Please get your current location first', 'info');
+            return;
+        }
+
+        // Nominatim search
+        const results = await this.utils.geocodeSearch(searchInput.value.trim());
+        if (results.length === 0) {
+            this.utils.showNotification('Location not found', 'error');
+            return;
+        }
+        const destination = results[0].location;
+
+        // Leaflet routing/draw fallback
+        const origin = this.mapManager.currentLocation;
+        const waypoints = [L.latLng(origin[0], origin[1]), L.latLng(destination[0], destination[1])];
+        if (this.mapManager.routingControl) {
+            this.mapManager.map.removeControl(this.mapManager.routingControl);
+            this.mapManager.routingControl = null;
+        }
+        this.mapManager.routingControl = L.Routing.control({
+            waypoints,
+            routeWhileDragging: false,
+            show: false,
+            addWaypoints: false,
+            lineOptions: { styles: [{ color: '#1a73e8', weight: 5, opacity: 0.9 }] }
+        })
+        .on('routesfound', (e) => {
+            const coords = e.routes[0].coordinates.map(c => [c.lat, c.lng]);
+            this.mapManager.clearRouteDisplay();
+            this.mapManager.drawBaseRoute(coords);
+            this.mapManager.animateAlongCoordinates(coords);
+            this.mapManager.map.fitBounds(L.latLngBounds(coords), { padding: [20, 20] });
+        })
+        .addTo(this.mapManager.map);
+
+        // Fallback if routing fails
+        setTimeout(() => {
+            if (!this.mapManager.baseRoutePolyline && !this.mapManager.progressRoutePolyline) {
+                const coords = waypoints.map(w => [w.lat, w.lng]);
+                this.mapManager.drawBaseRoute(coords);
+                this.mapManager.animateAlongCoordinates(coords);
+                this.mapManager.map.fitBounds(L.latLngBounds(coords), { padding: [20, 20] });
+            }
+        }, 2000);
     }
 
     initializeBusDropdown() {
@@ -172,6 +280,200 @@ class GoogleMapsDashboard {
         if (busList) {
             this.utils.showLoading('busList', 'Loading buses...');
         }
+    }
+
+    // Initialize notices
+    initializeNotices() {
+        const noticesList = document.getElementById('noticesList');
+        if (noticesList) {
+            this.utils.showLoading('noticesList', 'Loading notices...');
+        }
+
+        // Listen to notices from Firebase
+        if (this.firebaseManager.database) {
+            this.firebaseManager.database.ref('notices').on('value', (snapshot) => {
+                const notices = snapshot.val();
+                this.updateNoticesList(notices);
+            });
+        } else {
+            // Fallback for when Firebase is not available
+            setTimeout(() => {
+                const noticesList = document.getElementById('noticesList');
+                if (noticesList) {
+                    noticesList.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">Firebase not connected</div>';
+                }
+            }, 2000);
+        }
+    }
+
+    // Initialize routes
+    initializeRoutes() {
+        const routesList = document.getElementById('routesList');
+        if (routesList) {
+            this.utils.showLoading('routesList', 'Loading routes...');
+        }
+
+        // Listen to routes from Firebase
+        if (this.firebaseManager.database) {
+            this.firebaseManager.database.ref('routes').on('value', (snapshot) => {
+                const routes = snapshot.val();
+                this.updateRoutesList(routes);
+            });
+        } else {
+            // Fallback for when Firebase is not available
+            setTimeout(() => {
+                const routesList = document.getElementById('routesList');
+                if (routesList) {
+                    routesList.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">Firebase not connected</div>';
+                }
+            }, 2000);
+        }
+    }
+
+    // Update notices list
+    updateNoticesList(notices) {
+        const noticesList = document.getElementById('noticesList');
+        if (!noticesList) return;
+
+        if (!notices) {
+            noticesList.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">No notices available</div>';
+            return;
+        }
+
+        const noticesArray = Object.keys(notices).map(key => ({
+            id: key,
+            ...notices[key]
+        })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+        noticesList.innerHTML = noticesArray.map(notice => `
+            <div class="notice-item" onclick="dashboard.showNoticeDetails('${notice.id}')">
+                <div class="notice-content">${notice.content || 'No content'}</div>
+                <div class="notice-description">${notice.description || 'No description'}</div>
+                <div class="notice-date">${notice.createdAt ? new Date(notice.createdAt).toLocaleDateString() : 'Unknown date'}</div>
+            </div>
+        `).join('');
+    }
+
+    // Update routes list
+    updateRoutesList(routes) {
+        const routesList = document.getElementById('routesList');
+        if (!routesList) return;
+
+        if (!routes) {
+            routesList.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">No routes available</div>';
+            return;
+        }
+
+        const routesArray = Object.keys(routes).map(key => ({
+            id: key,
+            ...routes[key]
+        }));
+
+        routesList.innerHTML = routesArray.map(route => `
+            <div class="route-item" onclick="dashboard.showRouteDetails('${route.id}')">
+                <div class="route-name">${route.name || 'Unnamed Route'}</div>
+                <div class="route-description">${route.description || 'No description'}</div>
+                <div class="route-points">${route.points ? Object.keys(route.points).length : 0} points</div>
+            </div>
+        `).join('');
+    }
+
+    // Show notice details
+    showNoticeDetails(noticeId) {
+        this.firebaseManager.database.ref(`notices/${noticeId}`).once('value', (snapshot) => {
+            const notice = snapshot.val();
+            if (notice) {
+                const popupContent = `
+                    <div style="min-width: 300px; max-width: 400px;">
+                        <h3>📢 Notice Details</h3>
+                        <div style="margin: 10px 0;">
+                            <p><strong>Content:</strong> ${notice.content || 'N/A'}</p>
+                            <p><strong>Description:</strong> ${notice.description || 'N/A'}</p>
+                            <p><strong>Created:</strong> ${notice.createdAt ? new Date(notice.createdAt).toLocaleString() : 'N/A'}</p>
+                        </div>
+                    </div>
+                `;
+
+                // Show popup at center of map
+                L.popup()
+                    .setLatLng(this.mapManager.map.getCenter())
+                    .setContent(popupContent)
+                    .openOn(this.mapManager.map);
+            }
+        });
+    }
+
+    // Show route details
+    showRouteDetails(routeId) {
+        this.firebaseManager.database.ref(`routes/${routeId}`).once('value', (snapshot) => {
+            const route = snapshot.val();
+            if (route && route.points) {
+                // Prepare waypoints in order
+                const pointsArray = Object.values(route.points);
+                // Clear existing route/routing/animation
+                this.mapManager.clearRouteDisplay();
+
+                // Build waypoints (every point)
+                const waypoints = pointsArray.map(p => L.latLng(p.lat, p.lng));
+
+                // Compute routed path and animate along it (same technique as path history)
+                this.mapManager.routeAnimating = false;
+                this.mapManager.routingControl = L.Routing.control({
+                    waypoints: waypoints,
+                    routeWhileDragging: false,
+                    show: false,
+                    addWaypoints: false,
+                    lineOptions: { styles: [{ color: '#8ab4f8', weight: 5, opacity: 0.9 }] }
+                })
+                .on('routesfound', (e) => {
+                    this.mapManager.routeAnimating = true;
+                    const coords = e.routes[0].coordinates.map(c => [c.lat, c.lng]);
+                    this.mapManager.drawBaseRoute(coords);
+                    this.mapManager.animateAlongCoordinates(coords);
+                    this.mapManager.map.fitBounds(L.latLngBounds(coords), { padding: [20, 20] });
+                })
+                .addTo(this.mapManager.map);
+
+                // Fallback if routing is blocked/slow
+                setTimeout(() => {
+                    if (!this.mapManager.routeAnimating) {
+                        const coords = waypoints.map(w => [w.lat, w.lng]);
+                        this.mapManager.drawBaseRoute(coords);
+                        this.mapManager.animateAlongCoordinates(coords);
+                        this.mapManager.map.fitBounds(L.latLngBounds(coords), { padding: [20, 20] });
+                    }
+                }, 2000);
+
+                // Add route markers with names
+                pointsArray.forEach((point, index) => {
+                    const marker = L.marker([point.lat, point.lng], {
+                        icon: L.divIcon({
+                            className: 'route-marker',
+                            html: index + 1,
+                            iconSize: [16, 16],
+                            iconAnchor: [8, 8]
+                        })
+                    }).addTo(this.mapManager.map);
+                    marker.bindPopup(`<b>${point.name || `Point ${index + 1}`}</b>`);
+                });
+
+                // Show route info popup
+                const popupContent = `
+                    <div style="min-width: 300px; max-width: 400px;">
+                        <h3>🚌 ${route.name || 'Route Details'}</h3>
+                        <div style="margin: 10px 0;">
+                            <p><strong>Description:</strong> ${route.description || 'N/A'}</p>
+                            <p><strong>Points:</strong> ${Object.keys(route.points).length}</p>
+                        </div>
+                    </div>
+                `;
+
+                L.popup()
+                    .setLatLng(this.mapManager.map.getCenter())
+                    .setContent(popupContent)
+                    .openOn(this.mapManager.map);
+            }
+        });
     }
 
     // Toggle active buses filter
@@ -417,6 +719,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Make dashboard globally accessible
     window.dashboard = dashboard;
 });
+
 
 // Global functions for onclick handlers
 window.getCurrentLocation = GoogleMapsDashboard.getCurrentLocation;

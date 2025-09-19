@@ -401,8 +401,18 @@ const App = () => {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-4px); }
         }
+        @keyframes bounce-fast {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+        .animate-bounce-slow {
+          animation: bounce-slow 1.2s infinite;
+        }
+        .animate-bounce-medium {
+          animation: bounce-medium 1.2s infinite 0.2s;
+        }
         .animate-bounce-fast {
-          animation: bounce-fast 1.2s infinite 0.4s; /* Add more delay */
+          animation: bounce-fast 1.2s infinite 0.4s;
         }
       `}</style>
     </div>

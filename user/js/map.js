@@ -15,20 +15,52 @@ class MapManager {
         this.currentLocation = null;
         this.googleMapsLoaded = false;
         this.busRoutes = {}; // Store predefined routes for buses
+        this.routingControl = null; // Add for Leaflet Routing Machine
+        this.animatedBusMarker = null; // For animated bus movement
+        this.animationInterval = null; // Animation interval
+        this.baseRoutePolyline = null; // Static route polyline
+        this.progressRoutePolyline = null; // Progress overlay polyline
+        this.currentMapType = 'street'; // Current map type
+        this.mapLayers = {}; // Store different map layers
+        this.segmentTimer = null; // timer for segment animation
+        this.stepTimer = null; // inner step timer
+        this.routeAnimating = false; // set true when routed path is ready
         
         this.initializeMap();
         this.waitForGoogleMaps();
         this.initializeBusRoutes();
     }
 
+    // 🔹 Distance check to filter out jumps
+    filterPath(points) {
+        const filtered = [];
+        const maxJump = 5000; // meters
+        function haversine(p1, p2) {
+            const R = 6371000;
+            const dLat = (p2.lat - p1.lat) * Math.PI/180;
+            const dLon = (p2.lng - p1.lng) * Math.PI/180;
+            const a = Math.sin(dLat/2)**2 +
+                      Math.cos(p1.lat * Math.PI/180) *
+                      Math.cos(p2.lat * Math.PI/180) *
+                      Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+        for (let i=0; i<points.length; i++) {
+            if (i===0) filtered.push(points[i]);
+            else if (haversine(points[i-1], points[i]) < maxJump) filtered.push(points[i]);
+        }
+        return filtered;
+    }
+
     initializeMap() {
         // Initialize Leaflet map
         this.map = L.map('live-map').setView([6.9271, 79.8612], 13); // Colombo, Sri Lanka
 
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(this.map);
+        // Initialize different map layers
+        this.initializeMapLayers();
+
+        // Add default street layer
+        this.mapLayers.street.addTo(this.map);
 
         // Add custom CSS for markers
         this.addCustomMarkerStyles();
@@ -37,6 +69,49 @@ class MapManager {
         this.map.on('click', (e) => {
             this.handleMapClick(e);
         });
+    }
+
+    // Initialize different map layers
+    initializeMapLayers() {
+        // Street view (OpenStreetMap)
+        this.mapLayers.street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        });
+
+        // Satellite view
+        this.mapLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri'
+        });
+
+        // Terrain view
+        this.mapLayers.terrain = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri'
+        });
+
+        // Dark view
+        this.mapLayers.dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© CartoDB'
+        });
+    }
+
+    // Change map type
+    changeMapType(mapType) {
+        // Remove current layer
+        Object.values(this.mapLayers).forEach(layer => {
+            this.map.removeLayer(layer);
+        });
+
+        // Add new layer
+        if (this.mapLayers[mapType]) {
+            this.mapLayers[mapType].addTo(this.map);
+            this.currentMapType = mapType;
+        }
+
+        // Update button states
+        document.querySelectorAll('.map-type-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.getElementById(mapType + 'ViewBtn').classList.add('active');
     }
 
     // Initialize predefined routes for buses (3-4km realistic paths)
@@ -176,19 +251,10 @@ class MapManager {
                 }
             }
 
-            // Initialize Google Directions Service
-            if (window.google && window.google.maps) {
-                this.directionsService = new google.maps.DirectionsService();
-                this.directionsRenderer = new google.maps.DirectionsRenderer({
-                    suppressMarkers: true,
-                    polylineOptions: {
-                        strokeColor: '#1a73e8',
-                        strokeWeight: 4,
-                        strokeOpacity: 0.8
-                    }
-                });
-                console.log('Google Directions Service initialized');
-            }
+        // Disable Google Directions if API not enabled/blocked; rely on Leaflet routing elsewhere
+        // Disable Directions entirely to avoid ApiNotActivated/blocked errors; we use LRMachine
+        this.directionsService = null;
+        this.directionsRenderer = null;
         } catch (error) {
             console.error('Error initializing Google services:', error);
         }
@@ -422,9 +488,9 @@ class MapManager {
     createBusIcon(busId, isActive) {
         const icon = L.divIcon({
             className: `bus-marker ${isActive ? 'active' : 'inactive'}`,
-            html: busId,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
+            html: '🚌', // Bus emoji instead of bus ID
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
         });
         return icon;
     }
@@ -461,8 +527,11 @@ class MapManager {
                 <button class="popup-button" onclick="mapManager.getDirectionsToBus('${busId}')">
                     Get Directions
                 </button>
-                <button class="popup-button" onclick="mapManager.showBusRoute('${busId}')">
-                    Show Route
+                <button class="popup-button" onclick="mapManager.showBusDetails('${busId}')">
+                    Show Details
+                </button>
+                <button class="popup-button" onclick="mapManager.chooseTimeframe('${busId}')">
+                    Show Path History
                 </button>
             </div>
         `;
@@ -531,9 +600,12 @@ class MapManager {
 
     // Show route history for selected bus
     showRouteHistory(busId) {
-        // Clear existing route
+        // This function will now be responsible for showing the *current* route history
+        // based on the realtime data, not a predefined one.
+        // The historical path display will be handled by chooseTimeframe and showPath.
         if (this.routePolylines[busId]) {
             this.map.removeLayer(this.routePolylines[busId]);
+            delete this.routePolylines[busId];
         }
 
         this.firebaseManager.getRouteHistory(busId, (routePoints) => {
@@ -541,7 +613,7 @@ class MapManager {
                 const coordinates = routePoints
                     .filter(point => this.isValidCoordinates(point.latitude, point.longitude))
                     .map(point => [parseFloat(point.latitude), parseFloat(point.longitude)]);
-                
+
                 if (coordinates.length > 1) {
                     const polyline = L.polyline(coordinates, {
                         color: '#1a73e8',
@@ -549,10 +621,325 @@ class MapManager {
                         opacity: 0.8,
                         dashArray: '5, 5'
                     }).addTo(this.map);
-                    
+
                     this.routePolylines[busId] = polyline;
                 }
             }
+        });
+    }
+
+    // New function to choose timeframe for historical path
+    chooseTimeframe(busId) {
+        this.firebaseManager.database.ref("BusLocation/"+busId).once("value", snap => {
+            const busData = snap.val();
+            if (!busData) return;
+
+            // Extract timestamps
+            const timestamps = Object.keys(busData)
+                .map(t => parseInt(t))
+                .filter(t => !isNaN(t));
+
+            if (!timestamps.length) return utils.showNotification("No data available for path history", "info");
+
+            // Group by day
+            const days = [...new Set(
+                timestamps.map(ts => new Date(ts).toISOString().slice(0,10))
+            )];
+
+            // Build selection UI
+            let html = `<b>Select Date:</b><br>`;
+            days.forEach(d => {
+                html += `<button class="popup-button" style="margin-bottom: 5px;" onclick="mapManager.showPath('${busId}','${d}')">${d}</button><br>`;
+            });
+
+            L.popup()
+              .setLatLng(this.busMarkers[busId].getLatLng())
+              .setContent(html)
+              .openOn(this.map);
+        });
+    }
+
+    // New function to show historical path for a given bus and date
+    showPath(busId, date) {
+        this.firebaseManager.database.ref("BusLocation/" + busId).once("value", snap => {
+            const busData = snap.val();
+            if (!busData) return;
+
+            const points = Object.keys(busData).map(k => {
+                const ts = parseInt(k);
+                if (isNaN(ts)) return null;
+                const d = new Date(ts).toISOString().slice(0, 10);
+
+                if (d !== date) return null; // filter only this date
+
+                const lat = parseFloat(busData[k].latitude);
+                const lng = parseFloat(busData[k].longitude);
+
+                if (isNaN(lat) || isNaN(lng)) return null;
+
+                return { lat, lng, time: ts };
+            }).filter(p => p);
+
+            if (!points.length) return utils.showNotification("No data for " + date, "info");
+
+            // Sort & filter path
+            points.sort((a, b) => a.time - b.time);
+            const filteredPoints = this.filterPath(points);
+
+            // Remove old path/routing
+            if (this.routePolylines[busId]) {
+                this.map.removeLayer(this.routePolylines[busId]);
+                this.routePolylines[busId] = null;
+            }
+            if (this.routingControl) {
+                this.map.removeControl(this.routingControl);
+                this.routingControl = null;
+            }
+
+            // Clear any existing route display/animation
+            this.clearRouteDisplay();
+
+            // Use Leaflet Routing Machine with waypoints (shortest path)
+            // To avoid overload, take every 5th point + last point
+            const waypoints = filteredPoints.filter((_, i) => i % 5 === 0);
+            waypoints.push(filteredPoints[filteredPoints.length - 1]);
+
+            this.routeAnimating = false;
+            this.routingControl = L.Routing.control({
+                waypoints: waypoints.map(p => L.latLng(p.lat, p.lng)),
+                routeWhileDragging: false,
+                show: false,
+                addWaypoints: false,
+                lineOptions: { styles: [{ color: "#8ab4f8", weight: 5, opacity: 0.9 }] }
+            })
+            .on('routesfound', (e) => {
+                this.routeAnimating = true;
+                const coords = e.routes[0].coordinates.map(c => [c.lat, c.lng]);
+                this.drawBaseRoute(coords);
+                this.animateAlongCoordinates(coords);
+                this.map.fitBounds(L.latLngBounds(coords), { padding: [20, 20] });
+            })
+            .addTo(this.map);
+
+            // Fallback if routing is blocked/slow (e.g., OSRM demo blocked by adblock)
+            setTimeout(() => {
+                if (!this.routeAnimating) {
+                    const coords = waypoints.map(p => [p.lat, p.lng]);
+                    this.drawBaseRoute(coords);
+                    this.animateAlongCoordinates(coords);
+                    this.map.fitBounds(L.latLngBounds(coords), { padding: [20, 20] });
+                }
+            }, 2000);
+        });
+    }
+
+    // Start animated bus movement along the path
+    startBusAnimation(points, busId) {
+        // Backward-compat: delegate to overlay animation
+        if (!points || points.length < 2) return;
+        const coords = points.map(p => [p.lat, p.lng]);
+        this.drawBaseRoute(coords);
+        this.animateAlongCoordinates(coords);
+    }
+
+    // Draw the static base route polyline
+    drawBaseRoute(coordinates) {
+        if (this.baseRoutePolyline) {
+            this.map.removeLayer(this.baseRoutePolyline);
+            this.baseRoutePolyline = null;
+        }
+        this.baseRoutePolyline = L.polyline(coordinates, {
+            color: '#8ab4f8',
+            weight: 6,
+            opacity: 0.6
+        }).addTo(this.map);
+
+        // Reset progress overlay
+        if (this.progressRoutePolyline) {
+            this.map.removeLayer(this.progressRoutePolyline);
+            this.progressRoutePolyline = null;
+        }
+    }
+
+    // Animate along given coordinates with progress overlay
+    animateAlongCoordinates(coordinates) {
+        if (!coordinates || coordinates.length < 2) return;
+
+        // Clear any existing animation
+        this.clearAnimation();
+
+        // Initialize progress polyline
+        this.progressRoutePolyline = L.polyline([coordinates[0]], {
+            color: '#ff6d6d',
+            weight: 7,
+            opacity: 0.9
+        }).addTo(this.map);
+
+        // Create animated bus marker at the very front of progress
+        if (this.animatedBusMarker) {
+            this.map.removeLayer(this.animatedBusMarker);
+            this.animatedBusMarker = null;
+        }
+        this.animatedBusMarker = L.marker(coordinates[0], {
+            icon: L.divIcon({
+                className: 'animated-bus-marker',
+                html: '🚌',
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            })
+        }).addTo(this.map);
+
+        let currentIndex = 0;
+        const animationSpeedMs = 500; // per segment pacing
+        const steps = 60; // smoother interpolation
+
+        const animateSegment = () => {
+            if (currentIndex >= coordinates.length - 1) {
+                // Animation complete
+                this.clearAnimation(false); // keep polylines
+                return;
+            }
+
+            const start = coordinates[currentIndex];
+            const end = coordinates[currentIndex + 1];
+            let step = 0;
+
+            const runStep = () => {
+                if (!this.animatedBusMarker) return;
+                if (step > steps) {
+                    clearInterval(this.stepTimer);
+                    this.stepTimer = null;
+                    currentIndex++;
+                    this.segmentTimer = setTimeout(animateSegment, 0);
+                    return;
+                }
+
+                const t = step / steps;
+                const lat = start[0] + (end[0] - start[0]) * t;
+                const lng = start[1] + (end[1] - start[1]) * t;
+
+                if (this.animatedBusMarker && this.animatedBusMarker.setLatLng) {
+                    this.animatedBusMarker.setLatLng([lat, lng]);
+                }
+
+                const progressed = coordinates.slice(0, currentIndex + 1);
+                progressed.push([lat, lng]);
+                this.progressRoutePolyline.setLatLngs(progressed);
+
+                step++;
+            };
+
+            this.stepTimer = setInterval(runStep, Math.max(10, animationSpeedMs / steps));
+        };
+
+        // Seed progress and start
+        this.progressRoutePolyline.setLatLngs([coordinates[0]]);
+        animateSegment();
+    }
+
+    // Clear animation
+    clearAnimation(removeOverlays = true) {
+        if (this.animationInterval) {
+            clearInterval(this.animationInterval);
+            this.animationInterval = null;
+        }
+        if (this.stepTimer) {
+            clearInterval(this.stepTimer);
+            this.stepTimer = null;
+        }
+        if (this.segmentTimer) {
+            clearTimeout(this.segmentTimer);
+            this.segmentTimer = null;
+        }
+        if (this.animatedBusMarker) {
+            this.map.removeLayer(this.animatedBusMarker);
+            this.animatedBusMarker = null;
+        }
+        if (removeOverlays) {
+            if (this.progressRoutePolyline) {
+                this.map.removeLayer(this.progressRoutePolyline);
+                this.progressRoutePolyline = null;
+            }
+        }
+    }
+
+    // Clear all route display artifacts (routing control, polylines, animation)
+    clearRouteDisplay() {
+        if (this.routingControl) {
+            this.map.removeControl(this.routingControl);
+            this.routingControl = null;
+        }
+        if (this.baseRoutePolyline) {
+            this.map.removeLayer(this.baseRoutePolyline);
+            this.baseRoutePolyline = null;
+        }
+        if (this.progressRoutePolyline) {
+            this.map.removeLayer(this.progressRoutePolyline);
+            this.progressRoutePolyline = null;
+        }
+        this.clearAnimation();
+    }
+
+    // Show bus details from Firebase
+    showBusDetails(busId) {
+        this.firebaseManager.database.ref('busDetails').once('value', (snapshot) => {
+            const busDetails = snapshot.val();
+            if (!busDetails) {
+                this.showNotification('No bus details available', 'info');
+                return;
+            }
+
+            // Find the bus details by busId or busNumber
+            let busDetail = null;
+            Object.keys(busDetails).forEach(key => {
+                const detail = busDetails[key];
+                if (detail.busNumber === busId || detail.busName === busId || key === busId) {
+                    busDetail = detail;
+                }
+            });
+
+            if (!busDetail) {
+                this.showNotification('Bus details not found', 'info');
+                return;
+            }
+
+            // Create detailed popup
+            const popupContent = `
+                <div style="min-width: 300px; max-width: 400px;">
+                    <h3>🚌 ${busDetail.busName || 'Bus Details'}</h3>
+                    <div style="margin: 10px 0;">
+                        <p><strong>Bus Number:</strong> ${busDetail.busNumber || 'N/A'}</p>
+                        <p><strong>Route:</strong> ${busDetail.busRoute || 'N/A'}</p>
+                        <p><strong>Driver Name:</strong> ${busDetail.driverName || 'N/A'}</p>
+                        <p><strong>Driver Contact:</strong> ${busDetail.driverNum || 'N/A'}</p>
+                        <p><strong>Additional Info:</strong> ${busDetail.additionalDetails || 'N/A'}</p>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <button class="popup-button" onclick="mapManager.selectBus('${busId}')" style="margin-right: 5px;">
+                            Track Bus
+                        </button>
+                        <button class="popup-button" onclick="mapManager.getDirectionsToBus('${busId}')" style="margin-right: 5px;">
+                            Get Directions
+                        </button>
+                        <button class="popup-button" onclick="mapManager.chooseTimeframe('${busId}')">
+                            Path History
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Show popup at bus location
+            if (this.busMarkers[busId]) {
+                L.popup()
+                    .setLatLng(this.busMarkers[busId].getLatLng())
+                    .setContent(popupContent)
+                    .openOn(this.map);
+            } else {
+                this.showNotification('Bus location not available', 'info');
+            }
+        }).catch(error => {
+            console.error('Error fetching bus details:', error);
+            this.showNotification('Error loading bus details', 'error');
         });
     }
 
@@ -562,6 +949,11 @@ class MapManager {
             this.map.removeLayer(polyline);
         });
         this.routePolylines = {};
+        // Clear routing control
+        if (this.routingControl) {
+            this.map.removeControl(this.routingControl);
+            this.routingControl = null;
+        }
     }
 
     // Get current location
@@ -863,6 +1255,15 @@ class MapManager {
             this.map.removeLayer(this.destinationMarker);
             this.destinationMarker = null;
         }
+
+        // Clear routing control
+        if (this.routingControl) {
+            this.map.removeControl(this.routingControl);
+            this.routingControl = null;
+        }
+
+        // Clear animation
+        this.clearAnimation();
     }
 }
 

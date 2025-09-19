@@ -494,4 +494,504 @@ For questions or issues related to the admin panel refactoring:
 **Version**: 2.2.0 (with Live Firebase Integration and Interactive Map)
 **Compatibility**: Modern browsers (Chrome 80+, Firefox 75+, Safari 13+, Edge 80+)
 **Firebase Version**: 8.10.0
-**Leaflet Version**: 1.9.4 
+**Leaflet Version**: 1.9.4
+
+# V-TRACK Admin Panel - Enhanced Features
+
+## 🚀 New Features & Enhancements
+
+### 1. Enhanced Bus Path History with Date Filtering
+
+**Location**: `admin/html/bushistory.html` & `admin/js/bushistory.js`
+
+**Features**:
+- **Smart Date Filtering**: Only shows dates where the bus was actually tracked
+- **Path Visualization**: Smooth polylines with start/end markers
+- **Path Smoothing**: Moving average algorithm for cleaner route display
+- **Timeline View**: Organized timeline grouped by date
+- **Real-time Updates**: Live data from Firebase BusLocation and busHistory paths
+
+**How it works**:
+1. Select a bus from the dropdown
+2. Available dates are automatically loaded and displayed
+3. Choose date range (only valid dates are selectable)
+4. View smooth path with timeline details
+5. Delete records for specific date ranges
+
+### 2. Enhanced Driver Management with Approval Workflow
+
+**Location**: `admin/html/drivers.html` & `admin/js/drivers.js`
+
+**Features**:
+- **Tabbed Interface**: Separate tabs for Pending and Active drivers
+- **Approval Workflow**: Drivers start in "Pending" status, move to "Active" after approval
+- **Bus & Route Assignment**: Dropdown menus to assign buses and routes to drivers
+- **Enhanced UI**: Modern card-based design with status badges
+- **Real-time Counts**: Live counters for pending and active drivers
+
+**Firebase Structure**:
+```json
+{
+  "pendingDrivers": {
+    "driverId": {
+      "name": "Driver Name",
+      "licenseNumber": "LIC123",
+      "phone": "+1234567890",
+      "email": "driver@example.com",
+      "timestamp": 1234567890
+    }
+  },
+  "driverInfo": {
+    "driverId": {
+      "name": "Driver Name",
+      "licenseNumber": "LIC123",
+      "phone": "+1234567890",
+      "status": "active",
+      "assignedBusId": "busId",
+      "assignedRouteId": "routeId",
+      "rank": "Bronze",
+      "approvedAt": 1234567890
+    }
+  }
+}
+```
+
+### 3. Bug Fixes & Error Handling
+
+#### Fixed Issues:
+1. **React Error #130**: Fixed missing CSS animation definitions in `chatbot.jsx`
+2. **Leaflet Not Loaded**: Added proper initialization checks and retry logic
+3. **Null Element Errors**: Added comprehensive null checks before DOM manipulation
+4. **Firebase Connection**: Added safe database wrapper with error handling
+5. **CORS Issues**: Implemented fallback reverse geocoding system
+
+#### Error Handling Improvements:
+- **Safe Database Calls**: All Firebase operations wrapped in error handling
+- **DOM Element Checks**: Null checks before accessing DOM elements
+- **Graceful Degradation**: Fallback systems when external APIs fail
+- **User Feedback**: Clear error messages and loading states
+
+## 🛠️ Technical Implementation
+
+### Path Smoothing Algorithm
+```javascript
+function smoothPath(locations) {
+    if (locations.length < 3) return locations;
+    
+    const smoothed = [];
+    const windowSize = 3; // Moving average window
+    
+    for (let i = 0; i < locations.length; i++) {
+        const start = Math.max(0, i - Math.floor(windowSize / 2));
+        const end = Math.min(locations.length, i + Math.floor(windowSize / 2) + 1);
+        
+        let sumLat = 0, sumLng = 0, count = 0;
+        
+        for (let j = start; j < end; j++) {
+            sumLat += locations[j].lat;
+            sumLng += locations[j].lng;
+            count++;
+        }
+        
+        smoothed.push({
+            lat: sumLat / count,
+            lng: sumLng / count,
+            timestamp: locations[i].timestamp
+        });
+    }
+    
+    return smoothed;
+}
+```
+
+### Safe Database Wrapper
+```javascript
+function safeDatabaseCall(callback) {
+    if (!checkFirebaseConnection()) {
+        console.error('Firebase not available');
+        return;
+    }
+    try {
+        callback(database);
+    } catch (error) {
+        console.error('Database operation failed:', error);
+    }
+}
+```
+
+### Fallback Reverse Geocoding
+```javascript
+function getFallbackLocationName(latlng) {
+    const locations = [
+        { lat: 28.2096, lng: 83.9856, name: 'Pokhara Center' },
+        // ... more predefined locations
+    ];
+    
+    // Find closest predefined location
+    let closestLocation = locations[0];
+    let minDistance = calculateDistance(latlng, closestLocation);
+    
+    for (const location of locations) {
+        const distance = calculateDistance(latlng, location);
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestLocation = location;
+        }
+    }
+    
+    return minDistance < 0.01 ? closestLocation.name : 
+           `Location (${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`;
+}
+```
+
+## 📁 File Structure
+
+```
+admin/
+├── html/
+│   ├── bushistory.html      # Enhanced bus history page
+│   ├── drivers.html         # Enhanced driver management
+│   └── adminpanel.html      # Main admin panel
+├── js/
+│   ├── bushistory.js        # Bus history functionality
+│   ├── drivers.js           # Driver management functionality
+│   ├── admin.js             # Core admin functionality (fixed)
+│   ├── routes.js            # Route management (CORS fixes)
+│   └── navbar.js            # Navigation component
+└── css/
+    └── unified-admin.css    # Styling for admin panel
+```
+
+## 🔧 Configuration
+
+### Firebase Configuration
+All admin pages use the same Firebase configuration:
+```javascript
+const firebaseConfig = {
+    apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
+    authDomain: "v-track-gu999.firebaseapp.com",
+    databaseURL: "https://v-track-gu999-default-rtdb.firebaseio.com",
+    projectId: "v-track-gu999",
+    storageBucket: "v-track-gu999.appspot.com",
+    messagingSenderId: "1046512747961",
+    appId: "1:1046512747961:web:80df40c48bca3159296268",
+    measurementId: "G-38X29VT1YT"
+};
+```
+
+### Required Dependencies
+- Firebase 8.10.0
+- Leaflet 1.7.1
+- Font Awesome 6.0.0
+
+## 🚀 Usage Instructions
+
+### Bus History
+1. Navigate to Bus History page
+2. Select a bus from the dropdown
+3. Available dates will be displayed
+4. Choose date range and click "Show Path"
+5. View smooth path with timeline details
+
+### Driver Management
+1. Navigate to Driver Management page
+2. **Pending Tab**: Review and approve/reject new applications
+3. **Active Tab**: Manage existing drivers
+4. Click "Edit" to assign buses/routes and update information
+
+## 🐛 Troubleshooting
+
+### Common Issues:
+1. **Map not loading**: Check if Leaflet is properly loaded
+2. **No data showing**: Verify Firebase connection and data structure
+3. **CORS errors**: Fallback system should handle this automatically
+4. **React errors**: Ensure all CSS animations are properly defined
+
+### Debug Mode:
+Enable console logging by setting:
+```javascript
+localStorage.setItem('debug', 'true');
+```
+
+## 📈 Performance Optimizations
+
+1. **Lazy Loading**: Components initialize only when needed
+2. **Debounced Updates**: Database calls are optimized
+3. **Memory Management**: Proper cleanup of event listeners
+4. **Caching**: Bus and route data cached for better performance
+
+## 🔒 Security Considerations
+
+1. **Input Validation**: All user inputs are validated
+2. **Firebase Rules**: Ensure proper security rules are set
+3. **Error Handling**: Sensitive information not exposed in errors
+4. **Authentication**: Admin authentication should be implemented
+
+## 📝 Future Enhancements
+
+1. **Real-time Notifications**: WebSocket integration for live updates
+2. **Advanced Analytics**: Detailed performance metrics
+3. **Mobile Responsiveness**: Better mobile experience
+4. **Export Features**: PDF/Excel export capabilities
+5. **Bulk Operations**: Mass approve/reject drivers
+
+---
+
+**Last Updated**: June 2024
+**Version**: 2.0.0
+**Status**: Production Ready ✅
+
+# V-TRACK Bus History System - Enhanced Version
+
+## 🚌 Overview
+
+The V-TRACK Bus History System provides comprehensive tracking and visualization of bus routes with advanced GPS data processing, road alignment, and filtering capabilities. This enhanced version addresses inconsistent Firebase GPS formats and provides clean, road-aligned polylines for accurate route visualization.
+
+## ✨ Key Features
+
+### 🔧 Enhanced GPS Data Parsing
+- **Multi-format Support**: Handles various Firebase GPS data formats:
+  - `"latitude,longitude,timestamp"` (string format)
+  - `{latitude, longitude, timestamp}` (object format)
+  - `{lat, lng}` (shortened object format)
+- **Automatic Validation**: Filters out invalid GPS coordinates and extreme values
+- **Timestamp Normalization**: Ensures consistent timestamp handling across different formats
+
+### 🛣️ Road Alignment & Path Optimization
+- **OpenStreetMap Integration**: Uses OSM data for road network alignment
+- **Multiple Tile Layers**: 
+  - Standard OpenStreetMap
+  - Satellite imagery
+  - Road-focused transport layer
+- **Path Smoothing**: Advanced algorithms to reduce GPS noise and create smooth routes
+- **Segment Detection**: Automatically identifies continuous route segments
+
+### 📊 Advanced Filtering System
+- **Distance Filtering**: Removes GPS points that are too far apart (>500m default)
+- **Time Gap Filtering**: Handles large time gaps between tracking points
+- **Speed Validation**: Filters unrealistic speeds (>120 km/h default)
+- **Geographic Bounds**: Validates coordinates within Nepal/Pokhara area
+- **GPS Noise Reduction**: Removes points that are too close together
+
+### 🗓️ Smart Calendar System
+- **Dynamic Date Loading**: Shows only dates with actual tracking data
+- **Date Range Selection**: Flexible start/end date filtering
+- **Real-time Validation**: Ensures selected dates contain valid GPS data
+
+### 🎯 Enhanced Visualization
+- **Interactive Polylines**: Hover effects and click popups with route information
+- **Direction Arrows**: Visual indicators showing bus movement direction
+- **Start/End Markers**: Clear markers with detailed information popups
+- **Segment Information**: Distance, duration, and point count for each route segment
+- **Speed Display**: Real-time speed calculations in timeline view
+
+### 📈 Statistics Dashboard
+- **Real-time Metrics**: Total buses, records, active days, average speed
+- **Filtering Statistics**: Shows original vs filtered point counts
+- **Performance Metrics**: Processing time and data quality indicators
+
+### 🛠️ Advanced Controls
+- **Map Controls**: Reset view, fullscreen, toggle labels/arrows
+- **Export Functionality**: CSV export of route data
+- **Path Optimization**: Road alignment optimization tools
+- **Debug Tools**: Comprehensive testing and validation utilities
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Firebase Realtime Database access
+- Modern web browser with JavaScript enabled
+- Internet connection for map tiles and external libraries
+
+### Installation
+1. Ensure all required libraries are loaded in `bushistory.html`:
+   ```html
+   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+   <script src="https://unpkg.com/leaflet-polylinedecorator/dist/leaflet.polylineDecorator.js"></script>
+   <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+   ```
+
+2. Configure Firebase connection in `bushistory.js`:
+   ```javascript
+   const firebaseConfig = {
+       apiKey: "your-api-key",
+       databaseURL: "your-database-url",
+       // ... other config
+   };
+   ```
+
+### Usage
+
+#### 1. Select a Bus
+- Choose from available buses in the dropdown
+- System automatically loads available tracking dates
+
+#### 2. Configure Filtering Options
+- **Max Distance**: Maximum distance between consecutive points (default: 500m)
+- **Max Time Gap**: Maximum time gap between points (default: 30 minutes)
+- **Max Speed**: Maximum realistic speed (default: 120 km/h)
+- **Segment Distance**: Distance threshold for continuous segments (default: 500m)
+
+#### 3. Enable Road Alignment
+- Check "Enable Road Alignment" for better path accuracy
+- Uses OpenStreetMap data to snap coordinates to roads
+
+#### 4. View Routes
+- **Show Path**: Display route for selected date range
+- **Show All History**: Display complete route history
+- **Export Data**: Download route data as CSV
+
+## 📁 File Structure
+
+```
+admin/
+├── html/
+│   └── bushistory.html          # Enhanced HTML interface
+├── js/
+│   └── bushistory.js            # Enhanced JavaScript functionality
+├── css/
+│   └── unified-admin.css        # Styling (referenced)
+└── README.md                    # This documentation
+```
+
+## 🔧 Technical Implementation
+
+### GPS Data Parsing
+```javascript
+function parseGPSData(data, timestamp) {
+    // Handles multiple Firebase GPS formats
+    // Returns normalized {lat, lng, timestamp} object
+}
+```
+
+### Path Filtering
+```javascript
+function filterUnrealisticJumps(locations) {
+    // Applies distance, time, speed, and geographic filters
+    // Returns filtered location array
+}
+```
+
+### Road Alignment
+```javascript
+function checkRoadProximity(lat, lng) {
+    // Validates coordinates within geographic bounds
+    // Filters out GPS errors and extreme values
+}
+```
+
+### Map Visualization
+```javascript
+function displayBusPath(locations, title) {
+    // Creates interactive polylines with hover effects
+    // Adds start/end markers with detailed popups
+    // Implements direction arrows and segment information
+}
+```
+
+## 🎛️ Configuration Options
+
+### Filtering Parameters
+- **maxDistance**: 100-5000 meters (default: 500)
+- **maxTimeGap**: 1-120 minutes (default: 30)
+- **maxSpeed**: 20-200 km/h (default: 120)
+- **segmentDistance**: 100-2000 meters (default: 500)
+
+### Geographic Bounds
+- **Latitude**: 27.0° - 30.0° (Nepal bounds)
+- **Longitude**: 80.0° - 88.0° (Nepal bounds)
+
+### Map Settings
+- **Default Center**: [28.2096, 83.9856] (Pokhara area)
+- **Default Zoom**: 13
+- **Tile Layers**: OpenStreetMap, Satellite, Transport
+
+## 🔍 Debug Features
+
+### Test Functions
+- `testFirebaseConnection()`: Validates Firebase connectivity
+- `testBusData(busId)`: Tests specific bus data retrieval
+- `testGPSParsing()`: Validates GPS data parsing with sample data
+
+### Debug Output
+- Real-time processing information
+- Filtering statistics
+- Error logging and validation results
+
+## 📊 Data Export
+
+### CSV Format
+```csv
+Latitude,Longitude,Timestamp
+28.2096,83.9856,2024-01-15T10:30:00.000Z
+28.2097,83.9857,2024-01-15T10:31:00.000Z
+...
+```
+
+### Export Features
+- Automatic filename generation with bus ID and date
+- Filtered and processed coordinate data
+- Timestamp normalization
+
+## 🚨 Error Handling
+
+### Common Issues
+1. **No GPS Data**: System validates and reports invalid data formats
+2. **Connection Errors**: Automatic retry and user notification
+3. **Map Loading**: Graceful fallback for map initialization failures
+4. **Data Processing**: Comprehensive error logging and user feedback
+
+### Validation Checks
+- GPS coordinate bounds validation
+- Timestamp format verification
+- Firebase connection status monitoring
+- Map library availability checking
+
+## 🔮 Future Enhancements
+
+### Planned Features
+- **Real-time Road Routing**: Integration with OSRM routing engine
+- **Advanced Analytics**: Speed analysis, route optimization suggestions
+- **Mobile Optimization**: Responsive design for mobile devices
+- **Batch Processing**: Handle large datasets more efficiently
+- **API Integration**: REST API for external data access
+
+### Road Alignment Improvements
+- **OSRM Integration**: Real-time road network routing
+- **Google Roads API**: Alternative road alignment service
+- **Custom Road Networks**: Support for custom road data
+
+## 🤝 Contributing
+
+### Development Guidelines
+1. Follow existing code structure and naming conventions
+2. Add comprehensive error handling
+3. Include debug logging for new features
+4. Update documentation for any changes
+5. Test with various GPS data formats
+
+### Testing Checklist
+- [ ] Firebase connection validation
+- [ ] GPS data parsing with different formats
+- [ ] Path filtering and smoothing
+- [ ] Map visualization and interactions
+- [ ] Export functionality
+- [ ] Error handling and user feedback
+
+## 📞 Support
+
+For technical support or feature requests:
+1. Check the debug output for error details
+2. Verify Firebase configuration and permissions
+3. Test with sample GPS data using debug functions
+4. Review browser console for JavaScript errors
+
+## 📄 License
+
+This project is part of the V-TRACK system. Please refer to the main project license for usage terms.
+
+---
+
+**Version**: Enhanced 2.0  
+**Last Updated**: December 2024  
+**Compatibility**: Modern browsers, Firebase 8.x, Leaflet 1.7+ 

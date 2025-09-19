@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
     <style>
         /* Google Maps Style Layout */
         * {
@@ -23,8 +24,8 @@
             height: 100vh;
         }
 
-        /* Top Search Bar */
-        .top-search-bar {
+        /* New Search Bar */
+        .new-search-bar {
             position: fixed;
             top: 20px;
             left: 50%;
@@ -41,33 +42,42 @@
             gap: 12px;
         }
 
-        .search-input {
+        .search-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 8px 12px;
+        }
+
+        .new-search-input {
             flex: 1;
             border: none;
             outline: none;
-            padding: 12px 16px;
+            padding: 8px 12px;
             font-size: 16px;
             background: transparent;
         }
 
-        .search-filter {
-            padding: 8px 16px;
+        .direction-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
             border: none;
-            background: #f1f3f4;
-            border-radius: 16px;
-            font-size: 14px;
-            color: #5f6368;
+            background: #1a73e8;
+            color: white;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
             transition: all 0.2s;
         }
 
-        .search-filter:hover {
-            background: #e8eaed;
-        }
-
-        .search-filter.active {
-            background: #1a73e8;
-            color: white;
+        .direction-btn:hover {
+            background: #1557b0;
+            transform: scale(1.05);
         }
 
         /* Search Results */
@@ -196,6 +206,46 @@
         #live-map {
             width: 100%;
             height: 100%;
+        }
+
+        /* Map Type Selector */
+        .map-type-selector {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            z-index: 800;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .map-type-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: none;
+            background: #f8f9fa;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #5f6368;
+            transition: all 0.2s;
+        }
+
+        .map-type-btn:hover {
+            background: #e8eaed;
+            transform: scale(1.05);
+        }
+
+        .map-type-btn.active {
+            background: #1a73e8;
+            color: white;
         }
 
         /* Floating Buttons */
@@ -407,6 +457,74 @@
             color: #5f6368;
         }
 
+        /* Notices */
+        .notice-item {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .notice-item:hover {
+            background: #ffeaa7;
+            transform: translateY(-1px);
+        }
+
+        .notice-content {
+            font-size: 14px;
+            color: #856404;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .notice-description {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+
+        .notice-date {
+            font-size: 11px;
+            color: #6c757d;
+        }
+
+        /* Routes */
+        .route-item {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .route-item:hover {
+            background: #bee5eb;
+            transform: translateY(-1px);
+        }
+
+        .route-name {
+            font-size: 14px;
+            color: #0c5460;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .route-description {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+
+        .route-points {
+            font-size: 11px;
+            color: #6c757d;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .top-search-bar {
@@ -449,15 +567,16 @@
             background: #34a853;
             border: 2px solid white;
             border-radius: 50%;
-            width: 24px !important;
-            height: 24px !important;
+            width: 32px !important;
+            height: 32px !important;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 12px;
+            font-size: 18px;
             font-weight: bold;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
         }
 
         .bus-marker.inactive {
@@ -468,6 +587,26 @@
             background: #1a73e8;
             border: 3px solid white;
             box-shadow: 0 0 0 3px #1a73e8;
+            transform: scale(1.2);
+        }
+
+        /* Animated Bus Marker */
+        .animated-bus-marker {
+            background: transparent;
+            border: none;
+            width: 40px !important;
+            height: 40px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            animation: busBounce 0.5s ease-in-out infinite alternate;
+            z-index: 1000;
+        }
+
+        @keyframes busBounce {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-5px); }
         }
 
         /* Loading Animation */
@@ -532,17 +671,15 @@
     </style>
 </head>
 <body>
-    <!-- Top Search Bar -->
-    <div class="top-search-bar">
-        <i class="fas fa-search" style="color: #5f6368; margin-left: 12px;"></i>
-        <input type="text" class="search-input" placeholder="Search for places, bus stops, or routes...">
-        <select class="search-filter" id="searchFilter">
-            <option value="all">All</option>
-            <option value="restaurants">Restaurants</option>
-            <option value="hospitals">Hospitals</option>
-            <option value="bus-stops">Bus Stops</option>
-            <option value="nearby-buses">Nearby Buses</option>
-        </select>
+    <!-- New Search Bar -->
+    <div class="new-search-bar">
+        <div class="search-container">
+            <i class="fas fa-search" style="color: #5f6368; margin-left: 12px;"></i>
+            <input type="text" class="new-search-input" placeholder="Search for places..." id="newSearchInput">
+        </div>
+        <button class="direction-btn" id="directionBtn" title="Get Directions">
+            <i class="fas fa-directions"></i>
+        </button>
     </div>
 
     <!-- Sidebar Toggle Button -->
@@ -605,6 +742,24 @@
             </div>
         </div>
 
+        <!-- Notices -->
+        <div class="sidebar-section">
+            <h3>📢 Notices</h3>
+            <div id="noticesList">
+                <div class="loading-spinner"></div>
+                <span style="margin-left: 8px; color: #5f6368;">Loading notices...</span>
+            </div>
+        </div>
+
+        <!-- Routes -->
+        <div class="sidebar-section">
+            <h3>🚌 Routes</h3>
+            <div id="routesList">
+                <div class="loading-spinner"></div>
+                <span style="margin-left: 8px; color: #5f6368;">Loading routes...</span>
+            </div>
+        </div>
+
         <!-- Recent Searches -->
         <div class="sidebar-section">
             <h3>Recent Searches</h3>
@@ -624,6 +779,22 @@
     <!-- Map Container -->
     <div class="map-container">
         <div id="live-map"></div>
+    </div>
+
+    <!-- Map Type Selector -->
+    <div class="map-type-selector">
+        <button class="map-type-btn active" id="streetViewBtn" title="Street View">
+            <i class="fas fa-road"></i>
+        </button>
+        <button class="map-type-btn" id="satelliteViewBtn" title="Satellite View">
+            <i class="fas fa-satellite"></i>
+        </button>
+        <button class="map-type-btn" id="terrainViewBtn" title="Terrain View">
+            <i class="fas fa-mountain"></i>
+        </button>
+        <button class="map-type-btn" id="darkViewBtn" title="Dark View">
+            <i class="fas fa-moon"></i>
+        </button>
     </div>
 
     <!-- Floating Buttons -->
@@ -661,6 +832,7 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>

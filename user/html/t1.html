@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VTrack Bus Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css"/>
+  <style>
+    #map { height: 100vh; width: 100%; }
+    .legend {
+      background: white;
+      padding: 8px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+  <script>
+    // ---------------- Map Setup ----------------
+    const map = L.map('map').setView([28.215, 83.988], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: "© OpenStreetMap"
+    }).addTo(map);
+
+    // ---------------- Firebase Reference ----------------
+    const firebaseUrl = "https://v-track-gu999-default-rtdb.firebaseio.com/BusLocation.json";
+
+    // ---------------- Fetch Bus Data ----------------
+    async function fetchBuses() {
+      const response = await fetch(firebaseUrl);
+      const data = await response.json();
+
+      if (!data) return;
+
+      Object.keys(data).forEach(busId => {
+        const busData = data[busId];
+
+        // Get latest location (last timestamp)
+        const timestamps = Object.keys(busData);
+        const lastTimestamp = timestamps[timestamps.length - 1];
+        const { latitude, longitude } = busData[lastTimestamp];
+
+        // Add bus marker
+        const marker = L.marker([latitude, longitude]).addTo(map);
+        marker.bindPopup(`
+          <b>${busId}</b><br>
+          <button onclick="showPath('${busId}')">Show Path</button>
+        `);
+      });
+    }
+
+    // ---------------- Haversine Distance ----------------
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; // meters
+      const toRad = x => x * Math.PI / 180;
+      const φ1 = toRad(lat1), φ2 = toRad(lat2);
+      const Δφ = toRad(lat2-lat1), Δλ = toRad(lon2-lon1);
+      const a = Math.sin(Δφ/2) ** 2 +
+                Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    // ---------------- Filter Points ----------------
+    function filterPoints(points) {
+      const filtered = [points[0]];
+      for (let i = 1; i < points.length; i++) {
+        const prev = filtered[filtered.length - 1];
+        const dist = haversine(prev[0], prev[1], points[i][0], points[i][1]);
+        if (dist < 2000) {
+          filtered.push(points[i]);
+        }
+      }
+      return filtered;
+    }
+
+    // ---------------- Show Path for a Bus ----------------
+    async function showPath(busId) {
+      const response = await fetch(`https://v-track-gu999-default-rtdb.firebaseio.com/BusLocation/${busId}.json`);
+      const busData = await response.json();
+
+      if (!busData) return;
+
+      // Extract points sorted by timestamp
+      const points = Object.keys(busData)
+        .map(ts => [busData[ts].latitude, busData[ts].longitude])
+        .sort((a, b) => a[0] - b[0]);
+
+      // Raw Path (Red)
+      L.polyline(points, { color: "red", weight: 3, opacity: 0.5 }).addTo(map);
+
+      // Filter jumps
+      const cleanedPoints = filterPoints(points);
+
+      if (cleanedPoints.length >= 2) {
+        const routingControl = L.Routing.control({
+          waypoints: cleanedPoints.map(pt => L.latLng(pt[0], pt[1])),
+          lineOptions: { styles: [{color: 'blue', weight: 4}] },
+          addWaypoints: false,
+          draggableWaypoints: false,
+          fitSelectedRoutes: true,
+          show: false
+        }).addTo(map);
+
+        routingControl.on("routesfound", function(e) {
+          const route = e.routes[0].coordinates;
+          
+          // Create bus icon
+          const busIcon = L.icon({
+            iconUrl: "https://cdn-icons-png.flaticon.com/512/61/61231.png",
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+          });
+          const busMarker = L.marker(route[0], {icon: busIcon}).addTo(map);
+
+          // Animate along route
+          let i = 0;
+          function animate() {
+            if (i < route.length) {
+              busMarker.setLatLng(route[i]);
+              i++;
+              requestAnimationFrame(animate);
+            }
+          }
+          animate();
+        });
+      }
+    }
+
+    // ---------------- Legend ----------------
+    const legend = L.control({position: 'bottomright'});
+    legend.onAdd = () => {
+      const div = L.DomUtil.create("div", "legend");
+      div.innerHTML = `
+        <b>Legend</b><br/>
+        <span style="color:red;">●</span> Raw GPS<br/>
+        <span style="color:blue;">●</span> Road-Aligned Path<br/>
+        🚌 Animated Bus
+      `;
+      return div;
+    };
+    legend.addTo(map);
+
+    // ---------------- Start ----------------
+    fetchBuses();
+  </script>
+</body>
+</html>
