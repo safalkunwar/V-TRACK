@@ -162,13 +162,13 @@
 
       // Redirect after video
       transitionVideo.onended = () => {
-        window.location.href = "dashboard.html";
+        window.location.href = "user/html/dashboard.html";
       };
 
       // Skip handler
       skipBtn.onclick = () => {
         transitionVideo.pause();
-        window.location.href = "dashboard.html";
+        window.location.href = "user/html/dashboard.html";
       };
     });
 
