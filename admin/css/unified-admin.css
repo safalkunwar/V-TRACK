@@ -24,90 +24,192 @@ body {
     min-height: 100vh;
 }
 
-/* Enhanced Navigation */
+/* Enhanced Navigation - Premium & Classic Design */
 .admin-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
-    padding: 20px 30px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-}
-
-.admin-nav:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.admin-nav h1 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 0;
-}
-
-.admin-nav-links {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.admin-nav-links a {
-    text-decoration: none;
-    color: #555;
-    padding: 12px 20px;
-    border-radius: 25px;
-    transition: all 0.3s ease;
-    font-weight: 500;
+    padding: 18px 25px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
+    backdrop-filter: blur(15px);
+    border-radius: 18px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12), 
+                0 2px 8px rgba(102, 126, 234, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
 
-.admin-nav-links a::before {
+.admin-nav::before {
     content: '';
     position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    transition: left 0.5s;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.admin-nav:hover::before {
+    left: 100%;
+}
+
+.admin-nav:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15), 
+                0 5px 15px rgba(102, 126, 234, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.admin-nav h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    letter-spacing: -0.5px;
+    position: relative;
+    animation: titleGlow 3s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 5px rgba(102, 126, 234, 0.3));
+    }
+    50% {
+        filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5));
+    }
+}
+
+.admin-nav-links {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.admin-nav-links a {
+    text-decoration: none;
+    color: #4a5568;
+    padding: 10px 18px;
+    border-radius: 12px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 600;
+    font-size: 0.9rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid transparent;
+}
+
+.admin-nav-links a::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+    z-index: 0;
+}
+
+.admin-nav-links a::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+
+.admin-nav-links a span {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .admin-nav-links a:hover::before {
-    left: 100%;
+    width: 300px;
+    height: 300px;
+}
+
+.admin-nav-links a:hover::after {
+    opacity: 1;
 }
 
 .admin-nav-links a:hover,
 .admin-nav-links a.active {
+    color: white;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35),
+                0 2px 8px rgba(102, 126, 234, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.admin-nav-links a.active {
     background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .logout-btn {
     background: linear-gradient(135deg, #ff6b6b, #ee5a52);
     color: white;
     border: none;
-    padding: 12px 24px;
-    border-radius: 25px;
+    padding: 10px 20px;
+    border-radius: 12px;
     cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.logout-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+}
+
+.logout-btn:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 .logout-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
     background: linear-gradient(135deg, #ff5252, #d32f2f);
+}
+
+.logout-btn:active {
+    transform: translateY(0) scale(0.98);
 }
 
 /* Dashboard Grid */
@@ -122,6 +224,83 @@ body {
 .map-section {
     grid-column: 1 / -1;
     min-height: 600px;
+}
+
+/* Spline Background Animation - Realistic Background */
+.spline-background {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 70%;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    clip-path: polygon(25% 0, 100% 0, 100% 100%, 25% 100%);
+}
+
+.spline-background spline-viewer {
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 0.3;
+    filter: blur(1.5px) brightness(1.2) contrast(1.1);
+    transform: scale(1.15) translateX(-5%);
+    object-fit: cover;
+}
+
+/* Hide Spline logo and controls completely */
+.spline-background spline-viewer::part(logo),
+.spline-background spline-viewer::part(controls),
+.spline-background spline-viewer::part(ui) {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Additional hiding for any Spline UI elements */
+.spline-background ::part(logo),
+.spline-background ::part(controls),
+.spline-background ::part(ui),
+.spline-background [class*="logo"],
+.spline-background [class*="control"],
+.spline-background [id*="logo"],
+.spline-background [id*="control"] {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Ensure all content appears above Spline background */
+.admin-container {
+    position: relative;
+    z-index: 1;
+}
+
+.dashboard-grid {
+    position: relative;
+    z-index: 2;
+}
+
+.dashboard-card {
+    position: relative;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(20px);
+}
+
+.admin-nav {
+    position: relative;
+    z-index: 3;
+}
+
+@media (max-width: 1024px) {
+    .spline-background {
+        width: 100%;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        opacity: 0.2;
+    }
 }
 
 .map-controls {
@@ -588,9 +767,64 @@ button:disabled {
 
 /* Enhanced List Styles */
 .driver-list, .feedback-list, .bus-status-list {
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
     padding-right: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: #667eea #f8f9fa;
+}
+
+.driver-list::-webkit-scrollbar,
+.feedback-list::-webkit-scrollbar,
+.bus-status-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.driver-list::-webkit-scrollbar-track,
+.feedback-list::-webkit-scrollbar-track,
+.bus-status-list::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.driver-list::-webkit-scrollbar-thumb,
+.feedback-list::-webkit-scrollbar-thumb,
+.bus-status-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
+}
+
+.driver-list::-webkit-scrollbar-thumb:hover,
+.feedback-list::-webkit-scrollbar-thumb:hover,
+.bus-status-list::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2, #667eea);
+}
+
+/* Bus Grid - Scrollable Fleet Overview */
+.bus-grid {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: #667eea #f8f9fa;
+}
+
+.bus-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.bus-grid::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.bus-grid::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
+}
+
+.bus-grid::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2, #667eea);
 }
 
 .driver-item, .feedback-item, .bus-status-item {

@@ -1,351 +1,602 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Live Data</title>
-    <link rel="stylesheet" href="../css/unified-admin.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-</head>
-<body>
-    <div class="admin-container">
-        <!-- Navbar will be loaded here -->
-        <div id="navbar-container"></div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Admin Dashboard - Live Data</title>
+        <link rel="stylesheet" href="../css/unified-admin.css" />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css"
+        />
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+            rel="stylesheet"
+        />
+        <!-- Leaflet CSS -->
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            integrity="sha26-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+            crossorigin=""
+        />
+        <style>
+            .bus-marker {
+                background: #28a745;
+                border: 2px solid white;
+                border-radius: 50%;
+                width: 20px !important;
+                height: 20px !important;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+                font-size: 12px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                cursor: pointer;
+            }
+            .bus-marker-inactive {
+                background: #dc3545;
+            }
+            .bus-marker-selected {
+                background: #667eea !important;
+                border: 3px solid #fff;
+                box-shadow: 0 0 0 3px #667eea;
+            }
+            .direction-arrow {
+                color: #667eea;
+                font-size: 12px;
+                font-weight: bold;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+                background: transparent;
+                border: none;
+            }
+            .map-btn.active {
+                background: linear-gradient(135deg, #28a745, #20c997);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            }
+            .bus-list-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px;
+                border-bottom: 1px solid #eee;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+            .bus-list-item:hover {
+                background-color: #f9f9f9;
+            }
+            .bus-list-item.selected {
+                background-color: #eef2ff;
+            }
+            .bus-info h4 {
+                margin: 0;
+                font-size: 14px;
+            }
+            .bus-info p {
+                margin: 2px 0 0;
+                font-size: 12px;
+                color: #666;
+            }
+            .bus-info .status-active {
+                color: #28a745;
+            }
+            .bus-info .status-inactive {
+                color: #dc3545;
+            }
+            .btn-route {
+                background: #667eea;
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* Spline Background Animation - Realistic Background */
+            .spline-background {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 70%;
+                height: 100vh;
+                z-index: 0;
+                pointer-events: none;
+                overflow: hidden;
+                clip-path: polygon(25% 0, 100% 0, 100% 100%, 25% 100%);
+            }
+            
+            .spline-background spline-viewer {
+                width: 100%;
+                height: 100%;
+                display: block;
+                opacity: 0.3;
+                filter: blur(1.5px) brightness(1.2) contrast(1.1);
+                transform: scale(1.15) translateX(-5%);
+                object-fit: cover;
+            }
+            
+            /* Hide Spline logo and controls completely */
+            .spline-background spline-viewer::part(logo),
+            .spline-background spline-viewer::part(controls),
+            .spline-background spline-viewer::part(ui) {
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+            }
+            
+            /* Additional hiding for any Spline UI elements */
+            .spline-background ::part(logo),
+            .spline-background ::part(controls),
+            .spline-background ::part(ui),
+            .spline-background [class*="logo"],
+            .spline-background [class*="control"] {
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+            }
+            
+            /* Ensure all content appears above Spline */
+            .admin-container {
+                position: relative;
+                z-index: 1;
+            }
+            
+            .dashboard-grid {
+                position: relative;
+                z-index: 2;
+            }
+            
+            .dashboard-card {
+                position: relative;
+                z-index: 2;
+                background: rgba(255, 255, 255, 0.97);
+                backdrop-filter: blur(20px);
+            }
+            
+            .admin-nav {
+                position: relative;
+                z-index: 3;
+            }
+            
+            @media (max-width: 1024px) {
+                .spline-background {
+                    width: 100%;
+                    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+                    opacity: 0.2;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Spline Background Animation -->
+        <div class="spline-background">
+            <spline-viewer 
+                url="https://prod.spline.design/C8pSRp0aToPNslbt/scene.splinecode"
+                loading="lazy"
+                style="width: 100%; height: 100%;"
+                hide-controls
+                hide-logo>
+            </spline-viewer>
+        </div>
+        
+        <div class="admin-container">
+            <!-- Navbar will be loaded here -->
+            <div id="navbar-container"></div>
 
-        <div class="dashboard-grid">
-            <!-- Quick Stats -->
-            <div class="dashboard-card stats-card">
-                <h3><i class="fas fa-chart-line"></i> Live Statistics</h3>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <i class="fas fa-bus"></i>
-                        <span id="total-buses">0</span>
-                        <p>Total Buses</p>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-bus" style="color: #28a745;"></i>
-                        <span id="active-buses">0</span>
-                        <p>Active Buses</p>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-bus" style="color: #dc3545;"></i>
-                        <span id="inactive-buses">0</span>
-                        <p>Inactive Buses</p>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-clock"></i>
-                        <span id="updates-24h">0</span>
-                        <p>Updates (24h)</p>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-star"></i>
-                        <span id="most-active-bus">-</span>
-                        <p>Most Active</p>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-route"></i>
-                        <span id="total-distance">0</span>
-                        <p>Total Distance (km)</p>
+            <div class="dashboard-grid">
+                <!-- Quick Stats -->
+                <div class="dashboard-card stats-card">
+                    <h3><i class="fas fa-chart-line"></i> Live Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <i class="fas fa-bus"></i>
+                            <span id="total-buses">0</span>
+                            <p>Total Buses</p>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-bus" style="color: #28a745"></i>
+                            <span id="active-buses">0</span>
+                            <p>Active Buses</p>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-bus" style="color: #dc3545"></i>
+                            <span id="inactive-buses">0</span>
+                            <p>Inactive Buses</p>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-clock"></i>
+                            <span id="updates-24h">0</span>
+                            <p>Updates (24h)</p>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-star"></i>
+                            <span id="most-active-bus">-</span>
+                            <p>Most Active</p>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-route"></i>
+                            <span id="total-distance">0</span>
+                            <p>Total Distance (km)</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Live Bus Tracking Map -->
-            <div class="dashboard-card map-section">
-                <h3><i class="fas fa-map-marked-alt"></i> Live Bus Tracking</h3>
-                <div class="map-controls">
-                    <button id="showActiveBuses" class="map-btn active">
-                        <i class="fas fa-bus"></i> Active Buses
-                    </button>
-                    <button id="showInactiveBuses" class="map-btn">
-                        <i class="fas fa-bus"></i> Inactive Buses
-                    </button>
-                    <button id="showRouteHistory" class="map-btn">
-                        <i class="fas fa-route"></i> Route History
-                    </button>
-                    <button id="centerMap" class="map-btn">
-                        <i class="fas fa-crosshairs"></i> Center Map
-                    </button>
-                    <button id="clearMap" class="map-btn">
-                        <i class="fas fa-trash"></i> Clear Map
-                    </button>
-                </div>
-                <div id="busMap" class="map-container">
-                    <div class="loading-container">
-                        <div class="loading"></div>
-                        <p>Loading map...</p>
+                <!-- Live Bus Tracking Map -->
+                <div class="dashboard-card map-section">
+                    <h3>
+                        <i class="fas fa-map-marked-alt"></i> Live Bus Tracking
+                    </h3>
+                    <div class="map-controls">
+                        <button id="showActiveBuses" class="map-btn active">
+                            <i class="fas fa-bus"></i> Active Buses
+                        </button>
+                        <button id="showInactiveBuses" class="map-btn">
+                            <i class="fas fa-bus"></i> Inactive Buses
+                        </button>
+                        <button id="showRouteHistory" class="map-btn">
+                            <i class="fas fa-route"></i> Route History
+                        </button>
+                        <button id="centerMap" class="map-btn">
+                            <i class="fas fa-crosshairs"></i> Center Map
+                        </button>
+                        <button id="clearMap" class="map-btn">
+                            <i class="fas fa-trash"></i> Clear Map
+                        </button>
+                    </div>
+                    <div id="busMap" class="map-container">
+                        <div class="loading-container">
+                            <div class="loading"></div>
+                            <p>Loading map...</p>
+                        </div>
+                    </div>
+                    <div class="map-legend">
+                        <div class="legend-item">
+                            <i class="fas fa-bus legend-bus"></i>
+                            <span>Active Bus</span>
+                        </div>
+                        <div class="legend-item">
+                            <i class="fas fa-bus legend-bus-inactive"></i>
+                            <span>Inactive Bus</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line"></div>
+                            <span>Route History</span>
+                        </div>
                     </div>
                 </div>
-                <div class="map-legend">
-                    <div class="legend-item">
-                        <i class="fas fa-bus legend-bus"></i>
-                        <span>Active Bus</span>
-                    </div>
-                    <div class="legend-item">
-                        <i class="fas fa-bus legend-bus-inactive"></i>
-                        <span>Inactive Bus</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-line"></div>
-                        <span>Route History</span>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Bus List Sidebar -->
-            <div class="dashboard-card">
-                <h3><i class="fas fa-list"></i> Bus Fleet</h3>
-                <div id="busList" class="bus-list">
-                    <div class="loading-container">
-                        <div class="loading"></div>
-                        <p>Loading bus data...</p>
+                <!-- Bus List Sidebar -->
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-list"></i> Bus Fleet</h3>
+                    <div id="busList" class="bus-list">
+                        <!-- Bus items will be dynamically inserted here -->
                     </div>
                 </div>
-            </div>
-
-            <!-- Bus Status Distribution Chart -->
-            <div class="dashboard-card">
-                <h3><i class="fas fa-chart-pie"></i> Bus Status Distribution</h3>
-                <div class="chart-container">
-                    <canvas id="vehicleTypeChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Recent Bus Movement Activity -->
-            <div class="dashboard-card">
-                <h3><i class="fas fa-chart-line"></i> Recent Bus Movement Activity</h3>
-                <div class="chart-container">
-                    <canvas id="dailyActiveVehiclesChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Real-time Bus Status -->
-            <div class="dashboard-card">
-                <h3><i class="fas fa-bus"></i> Real-time Bus Status</h3>
-                <div class="bus-status-list" id="busStatus">
-                    <div class="loading-container">
-                        <div class="loading"></div>
-                        <p>Loading bus data...</p>
+                <!-- Bus Status Distribution Chart -->
+                <div class="dashboard-card">
+                    <h3>
+                        <i class="fas fa-chart-pie"></i> Bus Status Distribution
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="vehicleTypeChart"></canvas>
                     </div>
                 </div>
-            </div>
 
-            <!-- Recent Alerts -->
-            <div class="dashboard-card">
-                <h3><i class="fas fa-exclamation-triangle"></i> Recent Alerts</h3>
-                <div class="feedback-list" id="recentFeedback">
-                    <div class="loading-container">
-                        <div class="loading"></div>
-                        <p>Loading alerts...</p>
+                <!-- Recent Bus Movement Activity -->
+                <div class="dashboard-card">
+                    <h3>
+                        <i class="fas fa-chart-line"></i> Recent Bus Movement
+                        Activity
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="dailyActiveVehiclesChart"></canvas>
                     </div>
                 </div>
-            </div>
 
-            <!-- Bus Fleet Overview -->
-            <div class="dashboard-card bus-overview">
-                <h3><i class="fas fa-bus"></i> Bus Fleet Overview</h3>
-                <div id="busFleetContainer" class="bus-grid">
-                    <div class="loading-container">
-                        <div class="loading"></div>
-                        <p>Loading bus details...</p>
+                <!-- Real-time Bus Status -->
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-bus"></i> Real-time Bus Status</h3>
+                    <div class="bus-status-list" id="busStatus">
+                        <div class="loading-container">
+                            <div class="loading"></div>
+                            <p>Loading bus data...</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Connection Status -->
-            <div class="dashboard-card">
-                <h3><i class="fas fa-wifi"></i> Connection Status</h3>
-                <div id="connectionStatus" class="connection-status">
-                    <div class="status-indicator">
-                        <i class="fas fa-circle" id="firebaseStatus"></i>
-                        <span>Firebase Connection</span>
-                    </div>
-                    <div class="status-indicator">
-                        <i class="fas fa-circle" id="dataStatus"></i>
-                        <span>Data Sync</span>
-                    </div>
-                    <div class="last-update">
-                        <p>Last Update: <span id="lastUpdateTime">Never</span></p>
+                <!-- Recent Alerts -->
+                <div class="dashboard-card">
+                    <h3>
+                        <i class="fas fa-exclamation-triangle"></i> Recent
+                        Alerts
+                    </h3>
+                    <div class="feedback-list" id="recentFeedback">
+                        <div class="loading-container">
+                            <div class="loading"></div>
+                            <p>Loading alerts...</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Speed Analysis (Legacy) -->
-            <div class="dashboard-card">
-                <h3><i class="fas fa-tachometer-alt"></i> Speed Analysis</h3>
-                <div class="chart-container">
-                    <canvas id="speedChart"></canvas>
+                <!-- Bus Fleet Overview -->
+                <div class="dashboard-card bus-overview">
+                    <h3><i class="fas fa-bus"></i> Bus Fleet Overview</h3>
+                    <div id="busFleetContainer" class="bus-grid">
+                        <div class="loading-container">
+                            <div class="loading"></div>
+                            <p>Loading bus details...</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Route Analysis (Legacy) -->
-            <div class="dashboard-card">
-                <h3><i class="fas fa-route"></i> Route Analysis</h3>
-                <div class="chart-container">
-                    <canvas id="routeChart"></canvas>
+                <!-- Connection Status -->
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-wifi"></i> Connection Status</h3>
+                    <div id="connectionStatus" class="connection-status">
+                        <div class="status-indicator">
+                            <i class="fas fa-circle" id="firebaseStatus"></i>
+                            <span>Firebase Connection</span>
+                        </div>
+                        <div class="status-indicator">
+                            <i class="fas fa-circle" id="dataStatus"></i>
+                            <span>Data Sync</span>
+                        </div>
+                        <div class="last-update">
+                            <p>
+                                Last Update:
+                                <span id="lastUpdateTime">Never</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Speed Analysis (Legacy) -->
+                <div class="dashboard-card">
+                    <h3>
+                        <i class="fas fa-tachometer-alt"></i> Speed Analysis
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="speedChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Route Analysis (Legacy) -->
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-route"></i> Route Analysis</h3>
+                    <div class="chart-container">
+                        <canvas id="routeChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="../js/navbar.js"></script>
-    <script src="../js/live-dashboard.js"></script>
-    <script src="../js/charts.js"></script>
-    <script src="../js/dashboard.js"></script>
-    <script>
-        // Initialize navbar when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            navbarLoader.loadNavbar('navbar-container', 'Live Dashboard');
-            
-            // Update connection status
-            updateConnectionStatus();
-            
-            // Update last update time
-            setInterval(() => {
-                updateLastUpdateTime();
-            }, 1000);
-        });
-
-        // Update connection status
-        function updateConnectionStatus() {
-            const firebaseStatus = document.getElementById('firebaseStatus');
-            const dataStatus = document.getElementById('dataStatus');
-            
-            if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-                firebaseStatus.className = 'fas fa-circle status-active';
-                firebaseStatus.style.color = '#28a745';
-            } else {
-                firebaseStatus.className = 'fas fa-circle status-inactive';
-                firebaseStatus.style.color = '#dc3545';
-            }
-            
-            // Check if live dashboard is working
-            if (window.liveDashboard && window.liveDashboard.database) {
-                dataStatus.className = 'fas fa-circle status-active';
-                dataStatus.style.color = '#28a745';
-            } else {
-                dataStatus.className = 'fas fa-circle status-inactive';
-                dataStatus.style.color = '#dc3545';
-            }
-        }
-
-        // Update last update time
-        function updateLastUpdateTime() {
-            const lastUpdateElement = document.getElementById('lastUpdateTime');
-            if (lastUpdateElement) {
-                lastUpdateElement.textContent = new Date().toLocaleTimeString();
-            }
-        }
-
-        // Listen for Firebase connection changes
-        if (typeof firebase !== 'undefined') {
-            const connectedRef = firebase.database().ref(".info/connected");
-            connectedRef.on("value", (snap) => {
-                if (snap.val() === true) {
-                    console.log("Connected to Firebase");
-                    updateConnectionStatus();
-                } else {
-                    console.log("Disconnected from Firebase");
-                    updateConnectionStatus();
-                }
-            });
-        }
-
-        // Enhanced Bus Map Class with real-time Firebase integration
-        class EnhancedBusMap {
-            constructor() {
-                this.map = null;
-                this.markers = {};
-                this.polylines = {};
-                this.busData = {};
-                this.database = null;
-                this.currentFilter = 'all'; // 'all', 'active', 'inactive'
-                this.selectedBus = null;
-                this.todayStart = this.getTodayStart();
-                
-                this.init();
-            }
-
-            getTodayStart() {
-                const now = new Date();
-                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                return today.getTime();
-            }
-
-            async init() {
-                try {
-                    // Initialize Firebase if not already done
-                    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-                        const firebaseConfig = {
-                            apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
-                            authDomain: "v-track-gu999.firebaseapp.com",
-                            databaseURL: "https://v-track-gu999-default-rtdb.firebaseio.com",
-                            projectId: "v-track-gu999",
-                            storageBucket: "v-track-gu999.appspot.com",
-                            messagingSenderId: "1046512747961",
-                            appId: "1:1046512747961:web:80df40c48bca3159296268",
-                            measurementId: "G-38X29VT1YT"
-                        };
-                        firebase.initializeApp(firebaseConfig);
+        <!-- Spline Viewer Script -->
+        <script type="module" src="https://unpkg.com/@splinetool/viewer@1.10.99/build/spline-viewer.js"></script>
+        
+        <!-- Scripts -->
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+        <!-- Leaflet JS -->
+        <script
+            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""
+        ></script>
+        <script src="../js/navbar.js"></script>
+        <script src="../js/live-dashboard.js"></script>
+        <script src="../js/charts.js"></script>
+        <script src="../js/dashboard.js"></script>
+        <script src="../js/emergency-monitor.js"></script>
+        <script>
+            // Hide Spline logo and controls after load
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => {
+                    const splineViewer = document.querySelector('.spline-background spline-viewer');
+                    if (splineViewer) {
+                        // Hide logo and controls using shadow DOM access
+                        const shadowRoot = splineViewer.shadowRoot;
+                        if (shadowRoot) {
+                            const logo = shadowRoot.querySelector('[class*="logo"], [id*="logo"]');
+                            const controls = shadowRoot.querySelector('[class*="control"], [id*="control"], [class*="ui"]');
+                            if (logo) logo.style.display = 'none';
+                            if (controls) controls.style.display = 'none';
+                        }
+                        
+                        // Also hide using querySelector on the element itself
+                        const allElements = splineViewer.querySelectorAll('*');
+                        allElements.forEach(el => {
+                            const className = el.className || '';
+                            const id = el.id || '';
+                            if (className.includes('logo') || className.includes('control') || 
+                                id.includes('logo') || id.includes('control')) {
+                                el.style.display = 'none';
+                                el.style.opacity = '0';
+                                el.style.visibility = 'hidden';
+                            }
+                        });
                     }
-                    
-                    this.database = firebase.database();
-                    
-                    // Initialize map
-                    this.initializeMap();
-                    
-                    // Set up event listeners
-                    this.setupEventListeners();
-                    
-                    // Start listening to Firebase
-                    this.startFirebaseListener();
-                    
-                    // Initialize statistics
-                    this.initializeStatistics();
-                    
-                    console.log('Enhanced Bus Map initialized successfully');
-                } catch (error) {
-                    console.error('Error initializing Enhanced Bus Map:', error);
-                    this.showError('Failed to initialize map');
+                }, 2000); // Wait for Spline to load
+            });
+        </script>
+        <script>
+            // Initialize navbar when DOM is loaded
+            document.addEventListener("DOMContentLoaded", () => {
+                navbarLoader.loadNavbar("navbar-container", "Live Dashboard");
+
+                // Update connection status
+                updateConnectionStatus();
+
+                // Update last update time
+                setInterval(() => {
+                    updateLastUpdateTime();
+                }, 1000);
+            });
+
+            // Update connection status
+            function updateConnectionStatus() {
+                const firebaseStatus =
+                    document.getElementById("firebaseStatus");
+                const dataStatus = document.getElementById("dataStatus");
+
+                if (
+                    typeof firebase !== "undefined" &&
+                    firebase.apps.length > 0
+                ) {
+                    firebaseStatus.className = "fas fa-circle status-active";
+                    firebaseStatus.style.color = "#28a745";
+                } else {
+                    firebaseStatus.className = "fas fa-circle status-inactive";
+                    firebaseStatus.style.color = "#dc3545";
+                }
+
+                // Check if live dashboard is working
+                if (window.liveDashboard && window.liveDashboard.database) {
+                    dataStatus.className = "fas fa-circle status-active";
+                    dataStatus.style.color = "#28a745";
+                } else {
+                    dataStatus.className = "fas fa-circle status-inactive";
+                    dataStatus.style.color = "#dc3545";
                 }
             }
 
-            initializeMap() {
-                const mapContainer = document.getElementById('busMap');
-                if (!mapContainer) {
-                    console.error('Map container not found');
-                    return;
+            // Update last update time
+            function updateLastUpdateTime() {
+                const lastUpdateElement =
+                    document.getElementById("lastUpdateTime");
+                if (lastUpdateElement) {
+                    lastUpdateElement.textContent =
+                        new Date().toLocaleTimeString();
                 }
-
-                // Clear loading content
-                mapContainer.innerHTML = '';
-
-                // Initialize Leaflet map
-                this.map = L.map('busMap').setView([28.215176984699085, 83.98871119857192], 13);
-
-                // Add OpenStreetMap tiles
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 18
-                }).addTo(this.map);
-
-                // Add custom CSS for map controls
-                this.addMapStyles();
             }
 
-            addMapStyles() {
-                const style = document.createElement('style');
-                style.textContent = `
+            // Listen for Firebase connection changes
+            if (typeof firebase !== "undefined") {
+                const connectedRef = firebase.database().ref(".info/connected");
+                connectedRef.on("value", (snap) => {
+                    if (snap.val() === true) {
+                        console.log("Connected to Firebase");
+                        updateConnectionStatus();
+                    } else {
+                        console.log("Disconnected from Firebase");
+                        updateConnectionStatus();
+                    }
+                });
+            }
+
+            // Enhanced Bus Map Class with real-time Firebase integration
+            class EnhancedBusMap {
+                constructor() {
+                    this.map = null;
+                    this.markers = {};
+                    this.polylines = {};
+                    this.busData = {};
+                    this.database = null;
+                    this.currentFilter = "all"; // 'all', 'active', 'inactive'
+                    this.selectedBus = null;
+                    this.todayStart = this.getTodayStart();
+
+                    this.init();
+                }
+
+                getTodayStart() {
+                    const now = new Date();
+                    const today = new Date(
+                        now.getFullYear(),
+                        now.getMonth(),
+                        now.getDate(),
+                    );
+                    return today.getTime();
+                }
+
+                async init() {
+                    try {
+                        // Initialize Firebase if not already done
+                        if (
+                            typeof firebase !== "undefined" &&
+                            !firebase.apps.length
+                        ) {
+                            const firebaseConfig = {
+                                apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
+                                authDomain: "v-track-gu999.firebaseapp.com",
+                                databaseURL:
+                                    "https://v-track-gu999-default-rtdb.firebaseio.com",
+                                projectId: "v-track-gu999",
+                                storageBucket: "v-track-gu999.appspot.com",
+                                messagingSenderId: "1046512747961",
+                                appId: "1:1046512747961:web:80df40c48bca3159296268",
+                                measurementId: "G-38X29VT1YT",
+                            };
+                            firebase.initializeApp(firebaseConfig);
+                        }
+
+                        this.database = firebase.database();
+
+                        // Initialize map
+                        this.initializeMap();
+
+                        // Set up event listeners
+                        this.setupEventListeners();
+
+                        // Start listening to Firebase
+                        this.startFirebaseListener();
+
+                        // Initialize statistics
+                        this.initializeStatistics();
+
+                        console.log(
+                            "Enhanced Bus Map initialized successfully",
+                        );
+                    } catch (error) {
+                        console.error(
+                            "Error initializing Enhanced Bus Map:",
+                            error,
+                        );
+                        this.showError("Failed to initialize map");
+                    }
+                }
+
+                initializeMap() {
+                    const mapContainer = document.getElementById("busMap");
+                    if (!mapContainer) {
+                        console.error("Map container not found");
+                        return;
+                    }
+
+                    // Clear loading content
+                    mapContainer.innerHTML = "";
+
+                    // Initialize Leaflet map
+                    this.map = L.map("busMap").setView(
+                        [28.215176984699085, 83.98871119857192],
+                        13,
+                    );
+
+                    // Add OpenStreetMap tiles
+                    L.tileLayer(
+                        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        {
+                            attribution: "© OpenStreetMap contributors",
+                            maxZoom: 18,
+                        },
+                    ).addTo(this.map);
+
+                    // Add custom CSS for map controls
+                    this.addMapStyles();
+                }
+
+                addMapStyles() {
+                    const style = document.createElement("style");
+                    style.textContent = `
                     .bus-marker {
                         background: #28a745;
                         border: 2px solid white;
@@ -383,121 +634,146 @@
                         box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
                     }
                 `;
-                document.head.appendChild(style);
-            }
-
-            setupEventListeners() {
-                // Map control buttons
-                const buttons = {
-                    'showActiveBuses': () => this.filterBuses('active'),
-                    'showInactiveBuses': () => this.filterBuses('inactive'),
-                    'showRouteHistory': () => this.toggleRouteHistory(),
-                    'centerMap': () => this.centerMapOnBuses(),
-                    'clearMap': () => this.clearMap()
-                };
-
-                Object.keys(buttons).forEach(buttonId => {
-                    const button = document.getElementById(buttonId);
-                    if (button) {
-                        button.addEventListener('click', buttons[buttonId]);
-                    }
-                });
-            }
-
-            startFirebaseListener() {
-                const busLocationRef = this.database.ref('BusLocation');
-                
-                busLocationRef.on('value', (snapshot) => {
-                    this.handleBusLocationUpdate(snapshot);
-                }, (error) => {
-                    console.error('Firebase listener error:', error);
-                    this.showError('Failed to connect to bus location data');
-                });
-            }
-
-            handleBusLocationUpdate(snapshot) {
-                const busData = snapshot.val();
-                if (!busData) {
-                    console.log('No bus data available');
-                    return;
+                    document.head.appendChild(style);
                 }
 
-                this.busData = busData;
-                this.updateAllBuses();
-                this.updateStatistics();
-                this.updateBusList();
-            }
+                setupEventListeners() {
+                    // Map control buttons
+                    const buttons = {
+                        showActiveBuses: () => this.filterBuses("active"),
+                        showInactiveBuses: () => this.filterBuses("inactive"),
+                        showRouteHistory: () => this.toggleRouteHistory(),
+                        centerMap: () => this.centerMapOnBuses(),
+                        clearMap: () => this.clearMap(),
+                    };
 
-            updateAllBuses() {
-                Object.keys(this.busData).forEach(busId => {
-                    const busInfo = this.busData[busId];
-                    this.updateBusOnMap(busId, busInfo);
-                });
-            }
-
-            updateBusOnMap(busId, busInfo) {
-                // Get the latest location (most recent timestamp)
-                const timestamps = Object.keys(busInfo).filter(key => !isNaN(key));
-                if (timestamps.length === 0) return;
-
-                const latestTimestamp = Math.max(...timestamps.map(ts => parseInt(ts)));
-                const latestLocation = busInfo[latestTimestamp];
-
-                if (!latestLocation || !latestLocation.latitude || !latestLocation.longitude) {
-                    return;
-                }
-
-                const position = [latestLocation.latitude, latestLocation.longitude];
-                const timestamp = latestLocation.timestamp || latestTimestamp;
-                const isActive = this.isBusActive(timestamp);
-
-                // Check if bus should be shown based on current filter
-                if (!this.shouldShowBus(isActive)) {
-                    if (this.markers[busId]) {
-                        this.map.removeLayer(this.markers[busId]);
-                        delete this.markers[busId];
-                    }
-                    return;
-                }
-
-                // Update or create marker
-                this.updateMarker(busId, position, timestamp, isActive);
-            }
-
-            shouldShowBus(isActive) {
-                switch (this.currentFilter) {
-                    case 'active': return isActive;
-                    case 'inactive': return !isActive;
-                    default: return true; // 'all'
-                }
-            }
-
-            updateMarker(busId, position, timestamp, isActive) {
-                const markerColor = isActive ? '#28a745' : '#dc3545';
-                const markerClass = isActive ? 'bus-marker' : 'bus-marker bus-marker-inactive';
-
-                if (this.markers[busId]) {
-                    // Update existing marker
-                    this.markers[busId].setLatLng(position);
-                    this.markers[busId].getElement().style.background = markerColor;
-                    this.markers[busId].getElement().textContent = busId.replace('bus', '');
-                } else {
-                    // Create new marker
-                    const marker = L.marker(position, {
-                        icon: L.divIcon({
-                            className: markerClass,
-                            html: busId.replace('bus', ''),
-                            iconSize: [20, 20],
-                            iconAnchor: [10, 10]
-                        })
+                    Object.keys(buttons).forEach((buttonId) => {
+                        const button = document.getElementById(buttonId);
+                        if (button) {
+                            button.addEventListener("click", buttons[buttonId]);
+                        }
                     });
+                }
 
-                    // Add popup with bus info
-                    const popupContent = `
+                startFirebaseListener() {
+                    const busLocationRef = this.database.ref("BusLocation");
+
+                    busLocationRef.on(
+                        "value",
+                        (snapshot) => {
+                            this.handleBusLocationUpdate(snapshot);
+                        },
+                        (error) => {
+                            console.error("Firebase listener error:", error);
+                            this.showError(
+                                "Failed to connect to bus location data",
+                            );
+                        },
+                    );
+                }
+
+                handleBusLocationUpdate(snapshot) {
+                    const busData = snapshot.val();
+                    if (!busData) {
+                        console.log("No bus data available");
+                        return;
+                    }
+
+                    this.busData = busData;
+                    this.updateAllBuses();
+                    this.updateStatistics();
+                    this.updateBusList();
+                }
+
+                updateAllBuses() {
+                    Object.keys(this.busData).forEach((busId) => {
+                        const busInfo = this.busData[busId];
+                        this.updateBusOnMap(busId, busInfo);
+                    });
+                }
+
+                updateBusOnMap(busId, busInfo) {
+                    // Get the latest location (most recent timestamp)
+                    const timestamps = Object.keys(busInfo).filter(
+                        (key) => !isNaN(key),
+                    );
+                    if (timestamps.length === 0) return;
+
+                    const latestTimestamp = Math.max(
+                        ...timestamps.map((ts) => parseInt(ts)),
+                    );
+                    const latestLocation = busInfo[latestTimestamp];
+
+                    if (
+                        !latestLocation ||
+                        !latestLocation.latitude ||
+                        !latestLocation.longitude
+                    ) {
+                        return;
+                    }
+
+                    const position = [
+                        latestLocation.latitude,
+                        latestLocation.longitude,
+                    ];
+                    const timestamp =
+                        latestLocation.timestamp || latestTimestamp;
+                    const isActive = this.isBusActive(timestamp);
+
+                    // Check if bus should be shown based on current filter
+                    if (!this.shouldShowBus(isActive)) {
+                        if (this.markers[busId]) {
+                            this.map.removeLayer(this.markers[busId]);
+                            delete this.markers[busId];
+                        }
+                        return;
+                    }
+
+                    // Update or create marker
+                    this.updateMarker(busId, position, timestamp, isActive);
+                }
+
+                shouldShowBus(isActive) {
+                    switch (this.currentFilter) {
+                        case "active":
+                            return isActive;
+                        case "inactive":
+                            return !isActive;
+                        default:
+                            return true; // 'all'
+                    }
+                }
+
+                updateMarker(busId, position, timestamp, isActive) {
+                    const markerColor = isActive ? "#28a745" : "#dc3545";
+                    const markerClass = isActive
+                        ? "bus-marker"
+                        : "bus-marker bus-marker-inactive";
+
+                    if (this.markers[busId]) {
+                        // Update existing marker
+                        this.markers[busId].setLatLng(position);
+                        this.markers[busId].getElement().style.background =
+                            markerColor;
+                        this.markers[busId].getElement().textContent =
+                            busId.replace("bus", "");
+                    } else {
+                        // Create new marker
+                        const marker = L.marker(position, {
+                            icon: L.divIcon({
+                                className: markerClass,
+                                html: busId.replace("bus", ""),
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10],
+                            }),
+                        });
+
+                        // Add popup with bus info
+                        const popupContent = `
                         <div style="text-align: center; min-width: 150px;">
                             <h4 style="margin: 0 0 8px 0; color: #2c3e50;">${busId.toUpperCase()}</h4>
                             <p style="margin: 4px 0; font-size: 12px;">
-                                <strong>Status:</strong> ${isActive ? 'Active' : 'Inactive'}
+                                <strong>Status:</strong> ${isActive ? "Active" : "Inactive"}
                             </p>
                             <p style="margin: 4px 0; font-size: 12px;">
                                 <strong>Last Update:</strong> ${new Date(timestamp).toLocaleString()}
@@ -506,180 +782,220 @@
                                 <strong>Location:</strong><br>
                                 ${position[0].toFixed(6)}, ${position[1].toFixed(6)}
                             </p>
-                            <button onclick="window.busMap.selectBus('${busId}')" 
+                            <button onclick="window.busMap.selectBus('${busId}')"
                                     style="margin-top: 8px; padding: 4px 8px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">
                                 Show Route
                             </button>
                         </div>
                     `;
-                    marker.bindPopup(popupContent);
+                        marker.bindPopup(popupContent);
 
-                    // Add click event
-                    marker.on('click', () => {
-                        this.selectBus(busId);
+                        // Add click event
+                        marker.on("click", () => {
+                            this.selectBus(busId);
+                        });
+
+                        marker.addTo(this.map);
+                        this.markers[busId] = marker;
+                    }
+                }
+
+                selectBus(busId) {
+                    // Clear previous selection
+                    if (this.selectedBus && this.markers[this.selectedBus]) {
+                        const marker = this.markers[this.selectedBus];
+                        const isActive = this.isBusActive(
+                            this.getBusLastUpdate(this.selectedBus),
+                        );
+                        const markerClass = isActive
+                            ? "bus-marker"
+                            : "bus-marker bus-marker-inactive";
+                        marker.getElement().className = markerClass;
+                    }
+
+                    this.selectedBus = busId;
+
+                    // Highlight selected bus
+                    if (this.markers[busId]) {
+                        this.markers[busId].getElement().className =
+                            "bus-marker bus-marker-selected";
+                    }
+
+                    // Show route history for today
+                    this.showBusRouteHistory(busId);
+
+                    // Center map on selected bus
+                    this.centerMapOnBus(busId);
+                }
+
+                showBusRouteHistory(busId) {
+                    // Clear existing polylines
+                    this.clearPolylines();
+
+                    const busInfo = this.busData[busId];
+                    if (!busInfo) return;
+
+                    // Get today's data
+                    const todayData = this.getTodayBusData(busInfo);
+                    if (todayData.length < 2) return;
+
+                    // Create polyline
+                    const positions = todayData.map((point) => [
+                        point.latitude,
+                        point.longitude,
+                    ]);
+                    this.drawBusRoute(busId, positions, todayData);
+                }
+
+                getTodayBusData(busInfo) {
+                    const todayData = [];
+                    const timestamps = Object.keys(busInfo).filter(
+                        (key) => !isNaN(key),
+                    );
+
+                    timestamps.forEach((timestamp) => {
+                        const location = busInfo[timestamp];
+                        if (
+                            location &&
+                            location.latitude &&
+                            location.longitude
+                        ) {
+                            const ts = parseInt(timestamp);
+                            if (ts >= this.todayStart) {
+                                todayData.push({
+                                    ...location,
+                                    timestamp: ts,
+                                });
+                            }
+                        }
                     });
 
-                    marker.addTo(this.map);
-                    this.markers[busId] = marker;
-                }
-            }
-
-            selectBus(busId) {
-                // Clear previous selection
-                if (this.selectedBus && this.markers[this.selectedBus]) {
-                    const marker = this.markers[this.selectedBus];
-                    const isActive = this.isBusActive(this.getBusLastUpdate(this.selectedBus));
-                    const markerClass = isActive ? 'bus-marker' : 'bus-marker bus-marker-inactive';
-                    marker.getElement().className = markerClass;
+                    return todayData.sort((a, b) => a.timestamp - b.timestamp);
                 }
 
-                this.selectedBus = busId;
-                
-                // Highlight selected bus
-                if (this.markers[busId]) {
-                    this.markers[busId].getElement().className = 'bus-marker bus-marker-selected';
+                getBusLastUpdate(busId) {
+                    const busInfo = this.busData[busId];
+                    if (!busInfo) return 0;
+
+                    const timestamps = Object.keys(busInfo).filter(
+                        (key) => !isNaN(key),
+                    );
+                    return timestamps.length > 0
+                        ? Math.max(...timestamps.map((ts) => parseInt(ts)))
+                        : 0;
                 }
 
-                // Show route history for today
-                this.showBusRouteHistory(busId);
-                
-                // Center map on selected bus
-                this.centerMapOnBus(busId);
-            }
+                filterBuses(filter) {
+                    this.currentFilter = filter;
 
-            showBusRouteHistory(busId) {
-                // Clear existing polylines
-                this.clearPolylines();
+                    // Update button states
+                    document
+                        .querySelectorAll(".map-btn")
+                        .forEach((btn) => btn.classList.remove("active"));
+                    document
+                        .getElementById(
+                            `show${filter.charAt(0).toUpperCase() + filter.slice(1)}Buses`,
+                        )
+                        .classList.add("active");
 
-                const busInfo = this.busData[busId];
-                if (!busInfo) return;
+                    // Update map
+                    this.updateAllBuses();
+                }
 
-                // Get today's data
-                const todayData = this.getTodayBusData(busInfo);
-                if (todayData.length < 2) return;
-
-                // Create polyline
-                const positions = todayData.map(point => [point.latitude, point.longitude]);
-                this.drawBusRoute(busId, positions, todayData);
-            }
-
-            getTodayBusData(busInfo) {
-                const todayData = [];
-                const timestamps = Object.keys(busInfo).filter(key => !isNaN(key));
-                
-                timestamps.forEach(timestamp => {
-                    const location = busInfo[timestamp];
-                    if (location && location.latitude && location.longitude) {
-                        const ts = parseInt(timestamp);
-                        if (ts >= this.todayStart) {
-                            todayData.push({
-                                ...location,
-                                timestamp: ts
-                            });
-                        }
+                toggleRouteHistory() {
+                    if (this.selectedBus) {
+                        this.showBusRouteHistory(this.selectedBus);
+                    } else {
+                        alert(
+                            "Please select a bus first to view its route history",
+                        );
                     }
-                });
-
-                return todayData.sort((a, b) => a.timestamp - b.timestamp);
-            }
-
-            getBusLastUpdate(busId) {
-                const busInfo = this.busData[busId];
-                if (!busInfo) return 0;
-
-                const timestamps = Object.keys(busInfo).filter(key => !isNaN(key));
-                return timestamps.length > 0 ? Math.max(...timestamps.map(ts => parseInt(ts))) : 0;
-            }
-
-            filterBuses(filter) {
-                this.currentFilter = filter;
-                
-                // Update button states
-                document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('active'));
-                document.getElementById(`show${filter.charAt(0).toUpperCase() + filter.slice(1)}Buses`).classList.add('active');
-                
-                // Update map
-                this.updateAllBuses();
-            }
-
-            toggleRouteHistory() {
-                if (this.selectedBus) {
-                    this.showBusRouteHistory(this.selectedBus);
-                } else {
-                    alert('Please select a bus first to view its route history');
-                }
-            }
-
-            centerMapOnBuses() {
-                const visibleMarkers = Object.values(this.markers);
-                if (visibleMarkers.length === 0) {
-                    this.map.setView([28.215176984699085, 83.98871119857192], 13);
-                    return;
                 }
 
-                const group = new L.featureGroup(visibleMarkers);
-                this.map.fitBounds(group.getBounds(), { padding: [20, 20] });
-            }
-
-            centerMapOnBus(busId) {
-                if (this.markers[busId]) {
-                    this.map.setView(this.markers[busId].getLatLng(), 15);
-                }
-            }
-
-            clearMap() {
-                this.clearPolylines();
-                this.selectedBus = null;
-                
-                // Reset button states
-                document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('active'));
-            }
-
-            clearPolylines() {
-                Object.keys(this.polylines).forEach(key => {
-                    if (this.polylines[key]) {
-                        if (Array.isArray(this.polylines[key])) {
-                            this.polylines[key].forEach(arrow => {
-                                if (arrow && arrow.remove) {
-                                    this.map.removeLayer(arrow);
-                                }
-                            });
-                        } else {
-                            this.map.removeLayer(this.polylines[key]);
-                        }
-                        delete this.polylines[key];
+                centerMapOnBuses() {
+                    const visibleMarkers = Object.values(this.markers);
+                    if (visibleMarkers.length === 0) {
+                        this.map.setView(
+                            [28.215176984699085, 83.98871119857192],
+                            13,
+                        );
+                        return;
                     }
-                });
-            }
 
-            drawBusRoute(busId, positions, data) {
-                // Remove existing polyline for this bus
-                if (this.polylines[busId]) {
-                    this.map.removeLayer(this.polylines[busId]);
+                    const group = new L.featureGroup(visibleMarkers);
+                    this.map.fitBounds(group.getBounds(), {
+                        padding: [20, 20],
+                    });
                 }
 
-                // Create new polyline
-                const polyline = L.polyline(positions, {
-                    color: '#667eea',
-                    weight: 3,
-                    opacity: 0.8,
-                    dashArray: '5, 5'
-                });
+                centerMapOnBus(busId) {
+                    if (this.markers[busId]) {
+                        this.map.setView(this.markers[busId].getLatLng(), 15);
+                    }
+                }
 
-                // Add direction arrows
-                this.addDirectionArrows(positions, polyline);
+                clearMap() {
+                    this.clearPolylines();
+                    this.selectedBus = null;
 
-                polyline.addTo(this.map);
+                    // Reset button states
+                    document
+                        .querySelectorAll(".map-btn")
+                        .forEach((btn) => btn.classList.remove("active"));
+                }
 
-                // Store polyline reference
-                this.polylines[busId] = polyline;
+                clearPolylines() {
+                    Object.keys(this.polylines).forEach((key) => {
+                        if (this.polylines[key]) {
+                            if (Array.isArray(this.polylines[key])) {
+                                this.polylines[key].forEach((arrow) => {
+                                    if (arrow && arrow.remove) {
+                                        this.map.removeLayer(arrow);
+                                    }
+                                });
+                            } else {
+                                this.map.removeLayer(this.polylines[key]);
+                            }
+                            delete this.polylines[key];
+                        }
+                    });
+                }
 
-                // Add popup to polyline
-                const distance = this.calculateDistance(positions);
-                const duration = data.length > 1 ? 
-                    Math.round((data[data.length - 1].timestamp - data[0].timestamp) / 1000 / 60) : 0;
-                
-                const popupContent = `
+                drawBusRoute(busId, positions, data) {
+                    // Remove existing polyline for this bus
+                    if (this.polylines[busId]) {
+                        this.map.removeLayer(this.polylines[busId]);
+                    }
+
+                    // Create new polyline
+                    const polyline = L.polyline(positions, {
+                        color: "#667eea",
+                        weight: 3,
+                        opacity: 0.8,
+                        dashArray: "5, 5",
+                    });
+
+                    // Add direction arrows
+                    this.addDirectionArrows(positions, polyline);
+
+                    polyline.addTo(this.map);
+
+                    // Store polyline reference
+                    this.polylines[busId] = polyline;
+
+                    // Add popup to polyline
+                    const distance = this.calculateDistance(positions);
+                    const duration =
+                        data.length > 1
+                            ? Math.round(
+                                  (data[data.length - 1].timestamp -
+                                      data[0].timestamp) /
+                                      1000 /
+                                      60,
+                              )
+                            : 0;
+
+                    const popupContent = `
                     <div style="text-align: center; min-width: 150px;">
                         <h4 style="margin: 0 0 8px 0; color: #2c3e50;">${busId.toUpperCase()} Route (Today)</h4>
                         <p style="margin: 4px 0; font-size: 12px;">
@@ -699,158 +1015,201 @@
                         </p>
                     </div>
                 `;
-                polyline.bindPopup(popupContent);
-            }
+                    polyline.bindPopup(popupContent);
+                }
 
-            addDirectionArrows(positions, polyline) {
-                const step = Math.max(1, Math.floor(positions.length / 5));
-                for (let i = step; i < positions.length - 1; i += step) {
-                    const current = positions[i];
-                    const next = positions[i + 1];
-                    
-                    const angle = Math.atan2(next[0] - current[0], next[1] - current[1]) * 180 / Math.PI;
-                    
-                    const arrow = L.marker(current, {
-                        icon: L.divIcon({
-                            className: 'direction-arrow',
-                            html: '▶',
-                            iconSize: [12, 12],
-                            iconAnchor: [6, 6]
-                        })
+                addDirectionArrows(positions, polyline) {
+                    const step = Math.max(1, Math.floor(positions.length / 5));
+                    for (let i = step; i < positions.length - 1; i += step) {
+                        const current = positions[i];
+                        const next = positions[i + 1];
+
+                        const angle =
+                            (Math.atan2(
+                                next[0] - current[0],
+                                next[1] - current[1],
+                            ) *
+                                180) /
+                            Math.PI;
+
+                        const arrow = L.marker(current, {
+                            icon: L.divIcon({
+                                className: "direction-arrow",
+                                html: "▶",
+                                iconSize: [12, 12],
+                                iconAnchor: [6, 6],
+                            }),
+                        });
+
+                        arrow.getElement().style.transform += ` rotate(${angle}deg)`;
+                        arrow.addTo(this.map);
+
+                        if (!this.polylines[`${polyline._leaflet_id}_arrows`]) {
+                            this.polylines[`${polyline._leaflet_id}_arrows`] =
+                                [];
+                        }
+                        this.polylines[`${polyline._leaflet_id}_arrows`].push(
+                            arrow,
+                        );
+                    }
+                }
+
+                calculateDistance(positions) {
+                    let totalDistance = 0;
+                    for (let i = 1; i < positions.length; i++) {
+                        const lat1 = positions[i - 1][0];
+                        const lon1 = positions[i - 1][1];
+                        const lat2 = positions[i][0];
+                        const lon2 = positions[i][1];
+
+                        const R = 6371;
+                        const dLat = ((lat2 - lat1) * Math.PI) / 180;
+                        const dLon = ((lon2 - lon1) * Math.PI) / 180;
+                        const a =
+                            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                            Math.cos((lat1 * Math.PI) / 180) *
+                                Math.cos((lat2 * Math.PI) / 180) *
+                                Math.sin(dLon / 2) *
+                                Math.sin(dLon / 2);
+                        const c =
+                            2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                        totalDistance += R * c;
+                    }
+                    return totalDistance;
+                }
+
+                isBusActive(timestamp) {
+                    const now = Date.now();
+                    const fiveMinutes = 5 * 60 * 1000;
+                    return now - timestamp < fiveMinutes;
+                }
+
+                initializeStatistics() {
+                    // Initialize with zeros
+                    this.updateStatistics();
+                }
+
+                updateStatistics() {
+                    const stats = this.calculateStatistics();
+
+                    // Update DOM elements
+                    document.getElementById("total-buses").textContent =
+                        stats.totalBuses;
+                    document.getElementById("active-buses").textContent =
+                        stats.activeBuses;
+                    document.getElementById("inactive-buses").textContent =
+                        stats.inactiveBuses;
+                    document.getElementById("updates-24h").textContent =
+                        stats.updates24h;
+                    document.getElementById("most-active-bus").textContent =
+                        stats.mostActiveBus;
+                    document.getElementById("total-distance").textContent =
+                        stats.totalDistance.toFixed(1);
+                }
+
+                calculateStatistics() {
+                    const now = Date.now();
+                    const twentyFourHoursAgo = now - 24 * 60 * 60 * 1000;
+                    const fiveMinutesAgo = now - 5 * 60 * 1000;
+
+                    let totalBuses = 0;
+                    let activeBuses = 0;
+                    let inactiveBuses = 0;
+                    let updates24h = 0;
+                    let busUpdateCounts = {};
+                    let totalDistance = 0;
+
+                    Object.keys(this.busData).forEach((busId) => {
+                        const busInfo = this.busData[busId];
+                        if (!busInfo) return;
+
+                        totalBuses++;
+
+                        // Count updates in last 24 hours
+                        const timestamps = Object.keys(busInfo).filter(
+                            (key) => !isNaN(key),
+                        );
+                        const recentUpdates = timestamps.filter(
+                            (ts) => parseInt(ts) >= twentyFourHoursAgo,
+                        );
+                        updates24h += recentUpdates.length;
+
+                        // Track update count per bus
+                        busUpdateCounts[busId] = recentUpdates.length;
+
+                        // Check if bus is active
+                        const latestTimestamp = Math.max(
+                            ...timestamps.map((ts) => parseInt(ts)),
+                        );
+                        if (latestTimestamp >= fiveMinutesAgo) {
+                            activeBuses++;
+                        } else {
+                            inactiveBuses++;
+                        }
+
+                        // Calculate distance for today
+                        const todayData = this.getTodayBusData(busInfo);
+                        if (todayData.length > 1) {
+                            const positions = todayData.map((point) => [
+                                point.latitude,
+                                point.longitude,
+                            ]);
+                            totalDistance += this.calculateDistance(positions);
+                        }
                     });
-                    
-                    arrow.getElement().style.transform += ` rotate(${angle}deg)`;
-                    arrow.addTo(this.map);
-                    
-                    if (!this.polylines[`${polyline._leaflet_id}_arrows`]) {
-                        this.polylines[`${polyline._leaflet_id}_arrows`] = [];
-                    }
-                    this.polylines[`${polyline._leaflet_id}_arrows`].push(arrow);
+
+                    // Find most active bus
+                    const mostActiveBus = Object.keys(busUpdateCounts).reduce(
+                        (a, b) =>
+                            busUpdateCounts[a] > busUpdateCounts[b] ? a : b,
+                        "none",
+                    );
+
+                    const mostActiveBusName =
+                        mostActiveBus !== "none"
+                            ? mostActiveBus.replace("bus", "Bus ")
+                            : "-";
+
+                    return {
+                        totalBuses,
+                        activeBuses,
+                        inactiveBuses,
+                        updates24h,
+                        mostActiveBus: mostActiveBusName,
+                        totalDistance,
+                    };
                 }
-            }
 
-            calculateDistance(positions) {
-                let totalDistance = 0;
-                for (let i = 1; i < positions.length; i++) {
-                    const lat1 = positions[i-1][0];
-                    const lon1 = positions[i-1][1];
-                    const lat2 = positions[i][0];
-                    const lon2 = positions[i][1];
-                    
-                    const R = 6371;
-                    const dLat = (lat2 - lat1) * Math.PI / 180;
-                    const dLon = (lon2 - lon1) * Math.PI / 180;
-                    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                             Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                             Math.sin(dLon/2) * Math.sin(dLon/2);
-                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                    totalDistance += R * c;
-                }
-                return totalDistance;
-            }
+                updateBusList() {
+                    const busListContainer = document.getElementById("busList");
+                    if (!busListContainer) return;
 
-            isBusActive(timestamp) {
-                const now = Date.now();
-                const fiveMinutes = 5 * 60 * 1000;
-                return (now - timestamp) < fiveMinutes;
-            }
+                    let html = "";
+                    Object.keys(this.busData).forEach((busId) => {
+                        const busInfo = this.busData[busId];
+                        if (!busInfo) return;
 
-            initializeStatistics() {
-                // Initialize with zeros
-                this.updateStatistics();
-            }
+                        const timestamps = Object.keys(busInfo).filter(
+                            (key) => !isNaN(key),
+                        );
+                        const latestTimestamp =
+                            timestamps.length > 0
+                                ? Math.max(
+                                      ...timestamps.map((ts) => parseInt(ts)),
+                                  )
+                                : 0;
+                        const isActive = this.isBusActive(latestTimestamp);
+                        const statusClass = isActive
+                            ? "status-active"
+                            : "status-inactive";
+                        const statusText = isActive ? "Active" : "Inactive";
+                        const lastUpdate =
+                            latestTimestamp > 0
+                                ? new Date(latestTimestamp).toLocaleTimeString()
+                                : "Never";
 
-            updateStatistics() {
-                const stats = this.calculateStatistics();
-                
-                // Update DOM elements
-                document.getElementById('total-buses').textContent = stats.totalBuses;
-                document.getElementById('active-buses').textContent = stats.activeBuses;
-                document.getElementById('inactive-buses').textContent = stats.inactiveBuses;
-                document.getElementById('updates-24h').textContent = stats.updates24h;
-                document.getElementById('most-active-bus').textContent = stats.mostActiveBus;
-                document.getElementById('total-distance').textContent = stats.totalDistance.toFixed(1);
-            }
-
-            calculateStatistics() {
-                const now = Date.now();
-                const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
-                const fiveMinutesAgo = now - (5 * 60 * 1000);
-                
-                let totalBuses = 0;
-                let activeBuses = 0;
-                let inactiveBuses = 0;
-                let updates24h = 0;
-                let busUpdateCounts = {};
-                let totalDistance = 0;
-
-                Object.keys(this.busData).forEach(busId => {
-                    const busInfo = this.busData[busId];
-                    if (!busInfo) return;
-
-                    totalBuses++;
-                    
-                    // Count updates in last 24 hours
-                    const timestamps = Object.keys(busInfo).filter(key => !isNaN(key));
-                    const recentUpdates = timestamps.filter(ts => parseInt(ts) >= twentyFourHoursAgo);
-                    updates24h += recentUpdates.length;
-                    
-                    // Track update count per bus
-                    busUpdateCounts[busId] = recentUpdates.length;
-                    
-                    // Check if bus is active
-                    const latestTimestamp = Math.max(...timestamps.map(ts => parseInt(ts)));
-                    if (latestTimestamp >= fiveMinutesAgo) {
-                        activeBuses++;
-                    } else {
-                        inactiveBuses++;
-                    }
-                    
-                    // Calculate distance for today
-                    const todayData = this.getTodayBusData(busInfo);
-                    if (todayData.length > 1) {
-                        const positions = todayData.map(point => [point.latitude, point.longitude]);
-                        totalDistance += this.calculateDistance(positions);
-                    }
-                });
-
-                // Find most active bus
-                const mostActiveBus = Object.keys(busUpdateCounts).reduce((a, b) => 
-                    busUpdateCounts[a] > busUpdateCounts[b] ? a : b, 'none');
-                
-                const mostActiveBusName = mostActiveBus !== 'none' ? 
-                    mostActiveBus.replace('bus', 'Bus ') : '-';
-
-                return {
-                    totalBuses,
-                    activeBuses,
-                    inactiveBuses,
-                    updates24h,
-                    mostActiveBus: mostActiveBusName,
-                    totalDistance
-                };
-            }
-
-            updateBusList() {
-                const busListContainer = document.getElementById('busList');
-                if (!busListContainer) return;
-
-                let html = '';
-                Object.keys(this.busData).forEach(busId => {
-                    const busInfo = this.busData[busId];
-                    if (!busInfo) return;
-
-                    const timestamps = Object.keys(busInfo).filter(key => !isNaN(key));
-                    const latestTimestamp = timestamps.length > 0 ? 
-                        Math.max(...timestamps.map(ts => parseInt(ts))) : 0;
-                    const isActive = this.isBusActive(latestTimestamp);
-                    const statusClass = isActive ? 'status-active' : 'status-inactive';
-                    const statusText = isActive ? 'Active' : 'Inactive';
-                    const lastUpdate = latestTimestamp > 0 ? 
-                        new Date(latestTimestamp).toLocaleTimeString() : 'Never';
-
-                    html += `
-                        <div class="bus-list-item ${this.selectedBus === busId ? 'selected' : ''}" 
+                        html += `
+                        <div class="bus-list-item ${this.selectedBus === busId ? "selected" : ""}"
                              onclick="window.busMap.selectBus('${busId}')">
                             <div class="bus-info">
                                 <h4>${busId.toUpperCase()}</h4>
@@ -858,26 +1217,26 @@
                                 <p>Last Update: ${lastUpdate}</p>
                             </div>
                             <div class="bus-actions">
-                                <button onclick="event.stopPropagation(); window.busMap.showBusRouteHistory('${busId}')" 
+                                <button onclick="event.stopPropagation(); window.busMap.showBusRouteHistory('${busId}')"
                                         class="btn-route">
                                     <i class="fas fa-route"></i>
                                 </button>
                             </div>
                         </div>
                     `;
-                });
+                    });
 
-                if (html === '') {
-                    html = '<p>No bus data available</p>';
+                    if (html === "") {
+                        html = "<p>No bus data available</p>";
+                    }
+
+                    busListContainer.innerHTML = html;
                 }
 
-                busListContainer.innerHTML = html;
-            }
-
-            showError(message) {
-                const mapContainer = document.getElementById('busMap');
-                if (mapContainer) {
-                    mapContainer.innerHTML = `
+                showError(message) {
+                    const mapContainer = document.getElementById("busMap");
+                    if (mapContainer) {
+                        mapContainer.innerHTML = `
                         <div class="loading-container">
                             <i class="fas fa-exclamation-triangle" style="color: #dc3545; font-size: 2rem; margin-bottom: 10px;"></i>
                             <p style="color: #dc3545; font-weight: 500;">${message}</p>
@@ -886,39 +1245,91 @@
                             </button>
                         </div>
                     `;
+                    }
+                }
+
+                cleanup() {
+                    if (this.database) {
+                        this.database.ref("BusLocation").off();
+                    }
+
+                    if (this.map) {
+                        this.map.remove();
+                    }
                 }
             }
 
-            cleanup() {
-                if (this.database) {
-                    this.database.ref('BusLocation').off();
-                }
-                
-                if (this.map) {
-                    this.map.remove();
-                }
-            }
-        }
+            // Initialize map when DOM is loaded
+            let busMap = null;
+            document.addEventListener("DOMContentLoaded", () => {
+                setTimeout(() => {
+                    if (typeof L !== "undefined") {
+                        busMap = new EnhancedBusMap();
+                        window.busMap = busMap;
+                    } else {
+                        console.error("Leaflet not loaded");
+                    }
+                }, 1000);
+            });
 
-        // Initialize map when DOM is loaded
-        let busMap = null;
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                if (typeof L !== 'undefined') {
-                    busMap = new EnhancedBusMap();
-                    window.busMap = busMap;
-                } else {
-                    console.error('Leaflet not loaded');
+            // Cleanup on page unload
+            window.addEventListener("beforeunload", () => {
+                if (busMap) {
+                    busMap.cleanup();
                 }
-            }, 1000);
-        });
+            });
+            function showEmergencyPopup(emergency) {
+                // Create popup element
+                const popup = document.createElement("div");
+                popup.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: linear-gradient(135deg, #ef4444, #dc2626);
+                    color: white;
+                    padding: 20px 30px;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+                    z-index: 10002;
+                    font-family: sans-serif;
+                    text-align: center;
+                    animation: slideDown 0.5s ease-out;
+                `;
 
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            if (busMap) {
-                busMap.cleanup();
+                popup.innerHTML = `
+                    <h2 style="margin: 0 0 10px 0; font-size: 24px;">🚨 EMERGENCY ALERT 🚨</h2>
+                    <p style="margin: 0; font-size: 16px;">
+                        Bus <strong>${emergency.busId}</strong> has triggered an emergency alert.
+                    </p>
+                    <p style="margin-top: 5px; font-size: 14px; opacity: 0.9;">
+                        Description: ${emergency.description || "No description provided."}
+                    </p>
+                    <button id="closeEmergencyPopup" style="
+                        margin-top: 15px;
+                        padding: 8px 16px;
+                        background: rgba(255, 255, 255, 0.2);
+                        border: 1px solid white;
+                        color: white;
+                        border-radius: 6px;
+                        cursor: pointer;
+                    ">Dismiss</button>
+                `;
+
+                document.body.appendChild(popup);
+
+                document
+                    .getElementById("closeEmergencyPopup")
+                    .addEventListener("click", () => {
+                        popup.style.animation = "slideUp 0.3s ease-in";
+                        setTimeout(() => popup.remove(), 300);
+                    });
             }
-        });
-    </script>
-</body>
-</html> 
+
+            // Start listening when the page loads
+            window.addEventListener("DOMContentLoaded", () => {
+                listenForEmergencies();
+            });
+        </script>
+    </body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VTrack Login</title>
+  <link rel="stylesheet" href="./user/html/login.css" />
+  <style>
+    /* Fullscreen video overlay */
+    #transitionVideo {
+      display: none;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 999;
+      background: black;
+    }
+
+    /* Skip Button */
+  /* Skip Button */
+#skipBtn {
+  display: none;
+  position: fixed;
+  bottom: 1px;   /* stick to bottom */
+  right: 1px;    /* stick to right */
+  padding: 10px 22px;  
+  font-size: 20px;
+  font-weight: 900;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 255, 120, 0.95);
+  color: #041107;
+  cursor: pointer;
+  z-index: 10000; /* ABOVE video */
+  box-shadow: 0 0 40px rgba(0, 255, 120, 0.7);
+  transition: background 0.25s ease, transform 0.2s ease;
+}
+
+#skipBtn:hover {
+  background: rgba(0, 255, 120, 1);
+  transform: scale(1.05);
+}
+
+  </style>
+</head>
+<body>
+  <!-- EARTH (Spline) -->
+  <div class="earth-wrapper" id="earthWrapper" data-earth-x="0.72" data-earth-y="0.50">
+    <spline-viewer 
+      url="https://prod.spline.design/uVbNe0IBVvasqAql/scene.splinecode">
+    </spline-viewer>
+  </div>
+
+  <!-- EFFECT LAYERS -->
+  <div id="bubble-layer"></div>
+  <div id="impact-layer"></div>
+
+  <!-- LOGIN -->
+  <div class="login-container" id="loginContainer">
+    <div class="login-content">
+      <h2>Login</h2>
+      <form id="loginForm" autocomplete="off">
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit" id="loginBtn"><span>Login</span></button>
+        <button type="button" id="resetBtn" class="secondary">Forgot Password?</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Transition Video -->
+  <video id="transitionVideo" preload="auto">
+    <source src="./user/html/transition.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+  <button id="skipBtn">Skip</button>
+
+  <!-- Spline Script -->
+  <script type="module" src="https://unpkg.com/@splinetool/viewer/build/spline-viewer.js"></script>
+
+  <script>
+    const loginContainer = document.getElementById('loginContainer');
+    const loginBtn = document.getElementById('loginBtn');
+    const earthWrapper = document.getElementById('earthWrapper');
+    const bubbleLayer = document.getElementById('bubble-layer');
+    const impactLayer = document.getElementById('impact-layer');
+    const transitionVideo = document.getElementById('transitionVideo');
+    const skipBtn = document.getElementById('skipBtn');
+    let chargeLevel = 0;
+
+    // Target: center of login box
+    function getLoginTarget() {
+      const r = loginContainer.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
+
+    // Source: approx center of Earth
+    function getEarthSource() {
+      const r = earthWrapper.getBoundingClientRect();
+      const fx = parseFloat(earthWrapper.dataset.earthX || '0.72');
+      const fy = parseFloat(earthWrapper.dataset.earthY || '0.50');
+      return { x: r.left + r.width * fx, y: r.top + r.height * fy };
+    }
+
+    // Bubble traveling Earth → Login
+    function releaseBubble() {
+      const { x: startX, y: startY } = getEarthSource();
+      const { x: targetX, y: targetY } = getLoginTarget();
+      const dx = targetX - startX, dy = targetY - startY;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'energy-bubble';
+      const dur = 2500 + Math.random() * 1000;
+      bubble.style.left = startX + 'px';
+      bubble.style.top = startY + 'px';
+      bubble.style.setProperty('--dx', dx + 'px');
+      bubble.style.setProperty('--dy', dy + 'px');
+      bubble.style.setProperty('--dur', dur + 'ms');
+      bubbleLayer.appendChild(bubble);
+
+      setTimeout(() => createImpact(targetX, targetY), dur - 200);
+      setTimeout(() => bubble.remove(), dur + 200);
+    }
+
+    // Glow + charge when bubble absorbed
+    function createImpact(x, y) {
+      const impact = document.createElement('div');
+      impact.className = 'impact';
+      impact.style.left = x + 'px';
+      impact.style.top = y + 'px';
+      impactLayer.appendChild(impact);
+
+      loginContainer.classList.add('charging');
+      setTimeout(() => loginContainer.classList.remove('charging'), 800);
+
+      chargeLevel = Math.min(100, chargeLevel + 5);
+      loginBtn.style.setProperty('--charge-width', chargeLevel + "%");
+
+      if (chargeLevel >= 100) loginBtn.classList.add("charged");
+
+      setTimeout(() => impact.remove(), 200);
+    }
+
+    setInterval(releaseBubble, 2500);
+
+    // Handle login
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (!email || !password) return alert("Please fill in all fields");
+
+      // Hide login
+      loginContainer.style.opacity = '0';
+
+      // Show video + skip
+      transitionVideo.style.display = "block";
+      skipBtn.style.display = "block";
+      transitionVideo.play();
+
+      // Redirect after video
+      transitionVideo.onended = () => {
+        window.location.href = "dashboard.html";
+      };
+
+      // Skip handler
+      skipBtn.onclick = () => {
+        transitionVideo.pause();
+        window.location.href = "dashboard.html";
+      };
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      const email = document.getElementById("email").value.trim();
+      if (!email) return alert("Enter your email first");
+      alert(`Password reset link sent to ${email}`);
+    });
+  </script>
+</body>
+</html>

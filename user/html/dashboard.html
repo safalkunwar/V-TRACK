@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>V-TRACK - Live Bus Tracking</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -24,7 +25,7 @@
             height: 100vh;
         }
 
-        /* New Search Bar */
+        /* Enhanced Search Bar with Animations */
         .new-search-bar {
             position: fixed;
             top: 20px;
@@ -33,22 +34,42 @@
             z-index: 1000;
             width: 90%;
             max-width: 600px;
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
-            padding: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .new-search-bar:focus-within {
+            transform: translateX(-50%) scale(1.02);
+            filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.15));
         }
 
         .search-container {
             flex: 1;
             display: flex;
             align-items: center;
-            background: #f8f9fa;
-            border-radius: 16px;
-            padding: 8px 12px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            padding: 8px 16px;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .new-search-bar:focus-within .search-container {
+            box-shadow: 0 8px 32px rgba(26, 115, 232, 0.3);
+            border-color: #1a73e8;
+            transform: translateY(-2px);
+        }
+
+        .search-container i.fa-search {
+            color: #5f6368;
+            transition: transform 0.3s, color 0.3s;
+        }
+
+        .new-search-bar:focus-within .search-container i.fa-search {
+            transform: scale(1.1) rotate(15deg);
+            color: #1a73e8;
         }
 
         .new-search-input {
@@ -58,6 +79,11 @@
             padding: 8px 12px;
             font-size: 16px;
             background: transparent;
+            color: #202124;
+        }
+
+        .new-search-input::placeholder {
+            color: #9aa0a6;
         }
 
         .direction-btn {
@@ -72,46 +98,114 @@
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            transition: all 0.2s;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3);
         }
 
         .direction-btn:hover {
             background: #1557b0;
-            transform: scale(1.05);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
         }
 
-        /* Search Results */
+        .direction-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Search Results with Animations */
         .search-results {
             position: absolute;
-            top: 100%;
+            top: calc(100% + 8px);
             left: 0;
             right: 0;
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            margin-top: 8px;
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
             z-index: 1001;
             display: none;
+            animation: slideDownFade 0.3s ease-out;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes slideDownFade {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .search-result {
-            padding: 12px 16px;
+            padding: 16px;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 12px;
             border-bottom: 1px solid #f1f3f4;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .search-result::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0;
+            background: #1a73e8;
+            transition: width 0.3s;
+            opacity: 0.1;
+        }
+
+        .search-result:hover::before {
+            width: 100%;
         }
 
         .search-result:hover {
             background: #f8f9fa;
+            transform: translateX(4px);
         }
 
         .search-result:last-child {
             border-bottom: none;
+        }
+
+        .search-result i {
+            color: #1a73e8;
+            font-size: 18px;
+        }
+
+        .search-clear-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #f1f3f4;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #5f6368;
+            transition: all 0.2s;
+            padding: 0;
+        }
+
+        .search-clear-btn:hover {
+            background: #e8eaed;
+            transform: scale(1.1);
+        }
+
+        .search-clear-btn:active {
+            transform: scale(0.95);
         }
 
         /* Left Sidebar */
@@ -168,6 +262,42 @@
             margin-bottom: 12px;
         }
 
+        /* Notices List Scrollbar */
+        #noticesList {
+            scrollbar-width: thin;
+            scrollbar-color: #c1c1c1 #f1f1f1;
+        }
+
+        #noticesList::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #noticesList::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        #noticesList::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        #noticesList::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        .notice-item {
+            transition: all 0.2s ease;
+        }
+
+        .notice-item:hover {
+            background: #f0f0f0 !important;
+        }
+
+        .notice-hide-btn:hover {
+            color: #1a73e8 !important;
+        }
+
         .sidebar-item {
             display: flex;
             align-items: center;
@@ -208,19 +338,35 @@
             height: 100%;
         }
 
-        /* Map Type Selector */
+        /* Map Type Selector - Hidden by default, shuffled on click */
         .map-type-selector {
             position: fixed;
             right: 20px;
             top: 20px;
             z-index: 800;
-            display: flex;
+            display: none; /* Hidden by default */
             flex-direction: column;
             gap: 8px;
             background: white;
             border-radius: 12px;
             padding: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .map-type-selector.show {
+            display: flex;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .map-type-btn {
@@ -246,6 +392,32 @@
         .map-type-btn.active {
             background: #1a73e8;
             color: white;
+        }
+
+        /* Map Type Toggle Button */
+        .map-type-toggle {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            z-index: 801;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #5f6368;
+            transition: all 0.2s;
+        }
+
+        .map-type-toggle:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
         }
 
         /* Floating Buttons */
@@ -284,6 +456,327 @@
         .floating-btn.active {
             background: #1a73e8;
             color: white;
+        }
+
+        /* Marker Button */
+        .marker-btn {
+            background: #10b981;
+        }
+
+        .marker-btn.active {
+            background: #059669;
+        }
+
+        /* Logout & Report Buttons */
+        .action-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 800;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .action-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 24px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #202124;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .action-btn.logout {
+            background: #ef4444;
+            color: white;
+        }
+
+        .action-btn.report {
+            background: #f59e0b;
+            color: white;
+        }
+
+        /* Bus Selection Modal */
+        .bus-selection-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bus-selection-modal.show {
+            display: flex;
+        }
+
+        .bus-selection-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .bus-selection-content h3 {
+            margin: 0 0 16px 0;
+            font-size: 18px;
+            color: #202124;
+        }
+
+        .bus-option {
+            padding: 12px;
+            border: 2px solid #e8eaed;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bus-option:hover {
+            border-color: #1a73e8;
+            background: #e8f0fe;
+        }
+
+        .bus-option.selected {
+            border-color: #1a73e8;
+            background: #e8f0fe;
+        }
+
+        /* Alert Marker */
+        .alert-marker {
+            background: #f59e0b;
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 40px !important;
+            height: 40px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        /* Location Request Modal */
+        .location-request-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .location-request-content {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .location-request-content h3 {
+            margin: 0 0 16px 0;
+            font-size: 20px;
+            color: #202124;
+        }
+
+        .location-request-content p {
+            margin: 0 0 24px 0;
+            color: #5f6368;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .location-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: #e8f0fe;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #1a73e8;
+            animation: locationPulse 2s infinite;
+        }
+
+        @keyframes locationPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 20px rgba(26, 115, 232, 0);
+            }
+        }
+
+        /* Route Animation */
+        .route-loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1500;
+            background: white;
+            padding: 24px 32px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: none;
+            align-items: center;
+            gap: 16px;
+            animation: fadeIn 0.3s;
+        }
+
+        .route-loading.show {
+            display: flex;
+        }
+
+        .route-spinner {
+            width: 32px;
+            height: 32px;
+            border: 4px solid #e8eaed;
+            border-top-color: #1a73e8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Search Animation */
+        .search-animation {
+            position: relative;
+        }
+
+        .search-animation::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(26, 115, 232, 0.1);
+            animation: searchRipple 1s ease-out;
+        }
+
+        @keyframes searchRipple {
+            to {
+                width: 200px;
+                height: 200px;
+                opacity: 0;
+            }
+        }
+
+        /* Bus Suggestion Badge */
+        .bus-suggestion-badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+            animation: badgePulse 2s infinite;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        /* Route Path Animation */
+        .route-path {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawRoute 2s ease-out forwards;
+        }
+
+        @keyframes drawRoute {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* Marker Drop Animation */
+        .marker-drop {
+            animation: markerDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes markerDrop {
+            0% {
+                transform: translateY(-50px) scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(10px) scale(1.2);
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
         }
 
         /* Bottom Notification Bar */
@@ -457,7 +950,7 @@
             color: #5f6368;
         }
 
-        /* Notices */
+        /* Notices - Latest 2 only */
         .notice-item {
             background: #fff3cd;
             border: 1px solid #ffeaa7;
@@ -466,11 +959,23 @@
             margin-bottom: 8px;
             cursor: pointer;
             transition: all 0.2s;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .notice-item.hidden {
+            display: none;
         }
 
         .notice-item:hover {
             background: #ffeaa7;
             transform: translateY(-1px);
+        }
+
+        .notice-content-wrapper {
+            flex: 1;
         }
 
         .notice-content {
@@ -489,6 +994,22 @@
         .notice-date {
             font-size: 11px;
             color: #6c757d;
+        }
+
+        .notice-hide-btn {
+            background: none;
+            border: none;
+            color: #856404;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background 0.2s;
+            margin-left: 8px;
+        }
+
+        .notice-hide-btn:hover {
+            background: rgba(133, 100, 4, 0.1);
         }
 
         /* Routes */
@@ -525,26 +1046,143 @@
             color: #6c757d;
         }
 
-        /* Responsive Design */
+        /* Connection Status */
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6b7280;
+            animation: pulse-dot 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.2);
+            }
+        }
+
+        .status-text {
+            font-weight: 500;
+            color: #6b7280;
+            transition: color 0.3s;
+        }
+
+        .status-text.connected {
+            color: #10b981;
+        }
+
+        .status-text.disconnected {
+            color: #ef4444;
+        }
+
+        /* Map Elevated Effect */
+        .map-container.map-elevated {
+            transform: scale(0.98);
+            filter: blur(2px);
+            transition: all 0.3s;
+        }
+
+        /* Responsive Design - Mobile First */
         @media (max-width: 768px) {
-            .top-search-bar {
+            .new-search-bar {
                 width: 95%;
                 max-width: none;
                 top: 10px;
             }
 
+            .search-container {
+                padding: 6px 12px;
+            }
+
+            .new-search-input {
+                font-size: 14px;
+                padding: 6px 8px;
+            }
+
+            .direction-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 16px;
+            }
+
             .sidebar {
-                width: 280px;
+                width: 85%;
+                max-width: 320px;
             }
 
             .floating-buttons {
                 right: 10px;
+                gap: 8px;
             }
 
             .floating-btn {
                 width: 44px;
                 height: 44px;
                 font-size: 16px;
+            }
+
+            .map-type-toggle {
+                right: 10px;
+                top: 10px;
+                width: 44px;
+                height: 44px;
+            }
+
+            .map-type-selector {
+                right: 10px;
+                top: 60px;
+                padding: 6px;
+            }
+
+            .map-type-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+            }
+
+            .action-buttons {
+                bottom: 10px;
+                left: 10px;
+                gap: 8px;
+            }
+
+            .action-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            .action-btn span {
+                display: none;
             }
 
             .bottom-notification {
@@ -554,11 +1192,56 @@
                 transform: none;
                 max-width: none;
                 min-width: auto;
+                padding: 12px 16px;
             }
 
             .sidebar-toggle {
                 left: 10px;
                 top: 10px;
+                width: 44px;
+                height: 44px;
+            }
+
+            .connection-status {
+                top: 10px;
+                right: 10px;
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+
+            .search-results {
+                max-height: 300px;
+            }
+
+            .search-result {
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .new-search-bar {
+                width: calc(100% - 20px);
+                left: 10px;
+                transform: none;
+            }
+
+            .new-search-bar:focus-within {
+                transform: scale(1.02);
+            }
+
+            .sidebar {
+                width: 90%;
+            }
+
+            .floating-buttons {
+                right: 8px;
+                gap: 6px;
+            }
+
+            .floating-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
             }
         }
 
@@ -600,13 +1283,28 @@
             align-items: center;
             justify-content: center;
             font-size: 24px;
-            animation: busBounce 0.5s ease-in-out infinite alternate;
             z-index: 1000;
         }
 
+        .animated-bus-marker div {
+            animation: busBounce 0.5s ease-in-out infinite alternate;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
         @keyframes busBounce {
-            0% { transform: translateY(0px); }
-            100% { transform: translateY(-5px); }
+            0% { 
+                transform: translateY(0px) scale(1);
+            }
+            100% { 
+                transform: translateY(-5px) scale(1.1);
+            }
+        }
+
+        /* Bus Travel Path */
+        .bus-travel-path {
+            stroke: #3b82f6 !important;
+            stroke-width: 4 !important;
+            stroke-opacity: 0.7 !important;
         }
 
         /* Loading Animation */
@@ -625,61 +1323,335 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Route Polyline */
-        .route-polyline {
-            stroke: #1a73e8;
-            stroke-width: 4;
-            stroke-opacity: 0.8;
-            fill: none;
+        /* Marker Button */
+        .marker-btn {
+            background: #10b981;
+            color: white;
         }
 
-        /* Popup Styles */
-        .leaflet-popup-content {
-            min-width: 200px;
-            font-family: 'Inter', sans-serif;
+        .marker-btn.active {
+            background: #059669;
         }
 
-        .leaflet-popup-content h3 {
-            color: #1a73e8;
-            margin-bottom: 8px;
-            font-size: 16px;
-            font-weight: 600;
+        /* Notify Driver Button */
+        .notify-driver-btn {
+            background: #f59e0b;
+            color: white;
         }
 
-        .leaflet-popup-content p {
-            margin: 4px 0;
-            font-size: 14px;
-            color: #5f6368;
-        }
-
-        .popup-button {
+        /* Floating Directions Button */
+        #floatingDirectionsBtn {
             background: #1a73e8;
             color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-top: 8px;
-            margin-right: 8px;
-            transition: background 0.2s;
         }
 
-        .popup-button:hover {
+        #floatingDirectionsBtn:hover {
             background: #1557b0;
+        }
+
+        /* Report Button */
+        .report-btn {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Logout Button */
+        .logout-btn {
+            background: #6b7280;
+            color: white;
+        }
+
+        /* Location Request Modal */
+        .location-request-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .location-request-modal.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .location-request-content {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .location-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: #e8f0fe;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #1a73e8;
+            animation: locationPulse 2s infinite;
+        }
+
+        @keyframes locationPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 20px rgba(26, 115, 232, 0);
+            }
+        }
+
+        /* Bus Selection Modal */
+        .bus-selection-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bus-selection-modal.show {
+            display: flex;
+        }
+
+        .bus-selection-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .bus-option {
+            padding: 12px;
+            border: 2px solid #e8eaed;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bus-option:hover {
+            border-color: #1a73e8;
+            background: #e8f0fe;
+        }
+
+        .bus-option.selected {
+            border-color: #1a73e8;
+            background: #e8f0fe;
+        }
+
+        /* Report Modal */
+        .report-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .report-modal.show {
+            display: flex;
+        }
+
+        .report-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Map Type Toggle Button */
+        .map-type-toggle {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            z-index: 801;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #5f6368;
+            transition: all 0.2s;
+        }
+
+        .map-type-toggle:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* Map Type Selector - Hidden by default */
+        .map-type-selector {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            z-index: 800;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .map-type-selector.show {
+            display: flex;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .map-type-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: none;
+            background: #f8f9fa;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #5f6368;
+            transition: all 0.2s;
+        }
+
+        .map-type-btn:hover {
+            background: #e8eaed;
+            transform: scale(1.05);
+        }
+
+        .map-type-btn.active {
+            background: #1a73e8;
+            color: white;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 800;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .action-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 24px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #202124;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .action-btn.logout {
+            background: #ef4444;
+            color: white;
+        }
+
+        .action-btn.report {
+            background: #f59e0b;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <!-- New Search Bar -->
-    <div class="new-search-bar">
+    <!-- Enhanced Search Bar -->
+    <div class="new-search-bar" id="searchBarContainer">
         <div class="search-container">
-            <i class="fas fa-search" style="color: #5f6368; margin-left: 12px;"></i>
-            <input type="text" class="new-search-input" placeholder="Search for places..." id="newSearchInput">
+            <i class="fas fa-search"></i>
+            <input type="text" class="new-search-input" placeholder="Search for places..." id="newSearchInput" autocomplete="off">
+            <button class="search-clear-btn" id="searchClearBtn" style="display: none;" title="Clear">✕</button>
         </div>
         <button class="direction-btn" id="directionBtn" title="Get Directions">
             <i class="fas fa-directions"></i>
         </button>
+        <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="connection-status" id="connectionStatus">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Connecting...</span>
     </div>
 
     <!-- Sidebar Toggle Button -->
@@ -742,10 +1714,10 @@
             </div>
         </div>
 
-        <!-- Notices -->
+        <!-- Notices - Latest 2 Only -->
         <div class="sidebar-section">
             <h3>📢 Notices</h3>
-            <div id="noticesList">
+            <div id="noticesList" style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">
                 <div class="loading-spinner"></div>
                 <span style="margin-left: 8px; color: #5f6368;">Loading notices...</span>
             </div>
@@ -781,39 +1753,121 @@
         <div id="live-map"></div>
     </div>
 
-    <!-- Map Type Selector -->
-    <div class="map-type-selector">
-        <button class="map-type-btn active" id="streetViewBtn" title="Street View">
+    <!-- Map Type Toggle Button -->
+    <button class="map-type-toggle" id="mapTypeToggle" title="Map Type">
+        <i class="fas fa-layer-group"></i>
+    </button>
+
+    <!-- Map Type Selector (Hidden by default) -->
+    <div class="map-type-selector" id="mapTypeSelector">
+        <button class="map-type-btn active" data-type="street" title="Street View">
             <i class="fas fa-road"></i>
         </button>
-        <button class="map-type-btn" id="satelliteViewBtn" title="Satellite View">
+        <button class="map-type-btn" data-type="satellite" title="Satellite View">
             <i class="fas fa-satellite"></i>
         </button>
-        <button class="map-type-btn" id="terrainViewBtn" title="Terrain View">
+        <button class="map-type-btn" data-type="terrain" title="Terrain View">
             <i class="fas fa-mountain"></i>
         </button>
-        <button class="map-type-btn" id="darkViewBtn" title="Dark View">
+        <button class="map-type-btn" data-type="dark" title="Dark View">
             <i class="fas fa-moon"></i>
         </button>
     </div>
 
     <!-- Floating Buttons -->
     <div class="floating-buttons">
-        <button class="floating-btn" id="currentLocationBtn" title="My Location">
-            <i class="fas fa-crosshairs"></i>
+        <button class="floating-btn marker-btn" id="markerBtn" title="Mark Location">
+            <i class="fas fa-map-marker-alt"></i>
         </button>
-        <button class="floating-btn" id="activeBusesBtn" title="Active Buses">
-            <i class="fas fa-bus"></i>
+        <button class="floating-btn notify-driver-btn" id="notifyDriverBtn" title="Notify Bus/Driver">
+            <i class="fas fa-bell"></i>
         </button>
-        <button class="floating-btn" id="inactiveBusesBtn" title="Inactive Buses">
-            <i class="fas fa-bus"></i>
-        </button>
-        <button class="floating-btn" id="routeHistoryBtn" title="Route History">
+        <button class="floating-btn" id="floatingDirectionsBtn" title="Get Directions">
             <i class="fas fa-route"></i>
         </button>
-        <button class="floating-btn" id="directionsBtn" title="Get Directions">
-            <i class="fas fa-directions"></i>
+    </div>
+
+    <!-- Action Buttons (Logout & Report) -->
+    <div class="action-buttons">
+        <button class="action-btn report" id="reportBtn" title="Report Issue">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Report</span>
         </button>
+        <button class="action-btn logout" id="logoutBtn" title="Logout">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </button>
+    </div>
+
+    <!-- Bus Selection Modal for Directions -->
+    <div class="bus-selection-modal" id="busSelectionModal">
+        <div class="bus-selection-content">
+            <h3>Select Bus for Directions</h3>
+            <div id="busSelectionList">
+                <div class="loading-spinner"></div>
+                <span style="margin-left: 8px; color: #5f6368;">Loading buses...</span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 16px;">
+                <button class="btn-primary" id="confirmBusSelection" style="flex: 1; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Get Directions</button>
+                <button class="btn-secondary" id="cancelBusSelection" style="flex: 1; padding: 12px; background: #f1f3f4; color: #202124; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div class="bus-selection-modal" id="reportModal">
+        <div class="bus-selection-content">
+            <h3>Report Issue</h3>
+            <form id="reportForm">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #202124;">Issue Type</label>
+                    <select id="reportType" required style="width: 100%; padding: 12px; border: 1px solid #e8eaed; border-radius: 8px; font-size: 14px;">
+                        <option value="">Select type...</option>
+                        <option value="bus_delay">Bus Delay</option>
+                        <option value="bus_breakdown">Bus Breakdown</option>
+                        <option value="driver_issue">Driver Issue</option>
+                        <option value="route_issue">Route Issue</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #202124;">Description</label>
+                    <textarea id="reportDescription" rows="4" placeholder="Describe the issue..." required style="width: 100%; padding: 12px; border: 1px solid #e8eaed; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #202124;">Bus ID (if applicable)</label>
+                    <input type="text" id="reportBusId" placeholder="Optional" style="width: 100%; padding: 12px; border: 1px solid #e8eaed; border-radius: 8px; font-size: 14px;" />
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn-primary" style="flex: 1; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Submit</button>
+                    <button type="button" class="btn-secondary" onclick="closeReportModal()" style="flex: 1; padding: 12px; background: #f1f3f4; color: #202124; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Location Request Modal -->
+    <div class="location-request-modal" id="locationRequestModal">
+        <div class="location-request-content">
+            <div class="location-icon">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <h3>Enable Location Services</h3>
+            <p>We need your location to provide better bus suggestions and optimal routes. Your location data is only used for this purpose.</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button class="btn-primary" id="allowLocationBtn" style="padding: 12px 24px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">Allow</button>
+                <button class="btn-secondary" id="denyLocationBtn" style="padding: 12px 24px; background: #f1f3f4; color: #202124; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">Not Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Route Loading Indicator -->
+    <div class="route-loading" id="routeLoading">
+        <div class="route-spinner"></div>
+        <div>
+            <div style="font-weight: 600; color: #202124; margin-bottom: 4px;">Calculating Route...</div>
+            <div style="font-size: 12px; color: #5f6368;">Finding the best path</div>
+        </div>
     </div>
 
     <!-- Bottom Notification Bar -->
@@ -863,6 +1917,1603 @@
             console.log('Google Maps API loaded successfully');
             // The dashboard will initialize when DOM is ready
         }
+
+        // Enhanced Search Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('newSearchInput');
+            const searchClearBtn = document.getElementById('searchClearBtn');
+            const searchResults = document.getElementById('searchResults');
+            const searchBarContainer = document.getElementById('searchBarContainer');
+            const mapContainer = document.querySelector('.map-container');
+            
+            let searchTimeout;
+            let recentSearches = JSON.parse(localStorage.getItem('vtrack_recent_searches') || '[]');
+            let userLocation = null;
+            let locationPermissionGranted = false;
+
+            // Request User Location on Page Load
+            function requestUserLocation() {
+                const locationModal = document.getElementById('locationRequestModal');
+                const allowBtn = document.getElementById('allowLocationBtn');
+                const denyBtn = document.getElementById('denyLocationBtn');
+
+                // Check if already granted
+                if (localStorage.getItem('vtrack_location_permission') === 'granted') {
+                    getCurrentLocation();
+                    return;
+                }
+
+                // Show modal if not denied
+                if (localStorage.getItem('vtrack_location_permission') !== 'denied' && locationModal) {
+                    locationModal.style.display = 'flex';
+                }
+
+                if (allowBtn) {
+                    allowBtn.addEventListener('click', function() {
+                        localStorage.setItem('vtrack_location_permission', 'granted');
+                        if (locationModal) locationModal.style.display = 'none';
+                        getCurrentLocation();
+                    });
+                }
+
+                if (denyBtn) {
+                    denyBtn.addEventListener('click', function() {
+                        localStorage.setItem('vtrack_location_permission', 'denied');
+                        if (locationModal) locationModal.style.display = 'none';
+                    });
+                }
+            }
+
+            async function getCurrentLocation() {
+                return new Promise((resolve) => {
+                    if (!navigator.geolocation) {
+                        console.warn('Geolocation not supported');
+                        resolve(null);
+                        return;
+                    }
+
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            userLocation = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                            };
+                            locationPermissionGranted = true;
+                            
+                            if (window.mapManager) {
+                                window.mapManager.currentLocation = [userLocation.lat, userLocation.lng];
+                                window.mapManager.map.setView([userLocation.lat, userLocation.lng], 15);
+                                
+                                // Add user location marker
+                                if (window.mapManager.userMarker) {
+                                    window.mapManager.map.removeLayer(window.mapManager.userMarker);
+                                }
+                                
+                                window.mapManager.userMarker = L.marker([userLocation.lat, userLocation.lng], {
+                                    icon: L.divIcon({
+                                        className: 'user-location-marker',
+                                        html: '<div style="background: #22c55e; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
+                                        iconSize: [20, 20],
+                                        iconAnchor: [10, 10]
+                                    })
+                                }).addTo(window.mapManager.map);
+                                
+                                window.mapManager.userMarker.bindPopup('Your Location').openPopup();
+                            }
+                            
+                            resolve(userLocation);
+                        },
+                        (error) => {
+                            console.warn('Location error:', error);
+                            resolve(null);
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 60000
+                        }
+                    );
+                });
+            }
+
+            // Request location on page load
+            setTimeout(() => {
+                requestUserLocation();
+            }, 1000);
+
+            // Show/hide clear button
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const value = e.target.value.trim();
+                    if (searchClearBtn) {
+                        searchClearBtn.style.display = value ? 'flex' : 'none';
+                    }
+                    
+                    // Debounced search
+                    clearTimeout(searchTimeout);
+                    if (value.length >= 2) {
+                        searchTimeout = setTimeout(() => {
+                            performSearch(value);
+                        }, 300);
+                    } else if (value.length === 0) {
+                        if (searchResults) searchResults.style.display = 'none';
+                    }
+                });
+
+                // Focus effects
+                searchInput.addEventListener('focus', function() {
+                    if (mapContainer) mapContainer.classList.add('map-elevated');
+                    if (searchInput.value.length === 0 && recentSearches.length > 0) {
+                        showRecentSearches();
+                    }
+                });
+
+                searchInput.addEventListener('blur', function() {
+                    setTimeout(() => {
+                        if (mapContainer) mapContainer.classList.remove('map-elevated');
+                        if (searchResults) searchResults.style.display = 'none';
+                    }, 200);
+                });
+
+                // Enter key
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const query = searchInput.value.trim();
+                        if (query) {
+                            performSearch(query, true);
+                        }
+                    }
+                });
+            }
+
+            // Clear button
+            if (searchClearBtn) {
+                searchClearBtn.addEventListener('click', function() {
+                    if (searchInput) {
+                        searchInput.value = '';
+                        searchInput.focus();
+                    }
+                    if (searchClearBtn) searchClearBtn.style.display = 'none';
+                    if (searchResults) searchResults.style.display = 'none';
+                });
+            }
+
+            // Perform search using Nominatim (make globally accessible)
+            window.performSearch = async function(query, isEnter = false) {
+                if (!query || query.trim() === '') return;
+                
+                // Add search animation
+                if (searchInput) {
+                    searchInput.classList.add('search-animation');
+                    setTimeout(() => searchInput.classList.remove('search-animation'), 1000);
+                }
+                
+                if (searchResults) {
+                    searchResults.innerHTML = '<div style="padding: 20px; text-align: center; color: #5f6368;"><div class="loading-spinner" style="margin: 0 auto 8px;"></div>Searching...</div>';
+                    searchResults.style.display = 'block';
+                    searchResults.style.animation = 'slideDownFade 0.3s ease-out';
+                }
+
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
+                        {
+                            headers: {
+                                'User-Agent': 'V-Track Dashboard'
+                            }
+                        }
+                    );
+                    
+                    const results = await response.json();
+                    
+                    if (results.length === 0) {
+                        if (searchResults) {
+                            searchResults.innerHTML = '<div style="padding: 20px; text-align: center; color: #5f6368;">No results found</div>';
+                        }
+                        return;
+                    }
+
+                    // Add to recent searches
+                    recentSearches = recentSearches.filter(s => s !== query);
+                    recentSearches.unshift(query);
+                    recentSearches = recentSearches.slice(0, 10);
+                    localStorage.setItem('vtrack_recent_searches', JSON.stringify(recentSearches));
+
+                    if (searchResults) {
+                        // Sort results by distance if user location available
+                        let sortedResults = results;
+                        if (userLocation) {
+                            sortedResults = results.map(result => ({
+                                ...result,
+                                distance: calculateDistance(
+                                    userLocation.lat,
+                                    userLocation.lng,
+                                    parseFloat(result.lat),
+                                    parseFloat(result.lon)
+                                )
+                            })).sort((a, b) => a.distance - b.distance);
+                        }
+                        
+                        searchResults.innerHTML = sortedResults.map((result, index) => {
+                            const lat = parseFloat(result.lat) || 0;
+                            const lon = parseFloat(result.lon) || 0;
+                            const distanceText = userLocation && result.distance 
+                                ? `<span style="font-size: 11px; color: #10b981; font-weight: 600;">${(result.distance / 1000).toFixed(1)} km away</span>`
+                                : '';
+                            
+                            return `
+                                <div class="search-result" onclick="selectSearchLocation(${lat}, ${lon}, '${result.display_name.replace(/'/g, "\\'")}')" style="animation: slideDownFade 0.3s ease-out ${index * 0.05}s both;">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; color: #202124; margin-bottom: 4px;">${result.display_name}</div>
+                                        <div style="font-size: 12px; color: #5f6368; display: flex; align-items: center; gap: 8px;">
+                                            ${lat.toFixed(4)}, ${lon.toFixed(4)}
+                                            ${distanceText}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+
+                    // If Enter was pressed, select first result
+                    if (isEnter && results.length > 0) {
+                        const first = results[0];
+                        selectSearchLocation(parseFloat(first.lat), parseFloat(first.lon), first.display_name);
+                    }
+                } catch (error) {
+                    console.error('Search error:', error);
+                    if (searchResults) {
+                        searchResults.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Search failed. Please try again.</div>';
+                    }
+                }
+            };
+
+            function showRecentSearches() {
+                if (recentSearches.length === 0 || !searchResults) return;
+                
+                searchResults.innerHTML = `
+                    <div style="padding: 12px; font-size: 12px; color: #5f6368; font-weight: 600; border-bottom: 1px solid #f1f3f4;">
+                        Recent Searches
+                    </div>
+                    ${recentSearches.slice(0, 5).map(item => `
+                        <div class="search-result" onclick="document.getElementById('newSearchInput').value='${item.replace(/'/g, "\\'")}'; performSearch('${item.replace(/'/g, "\\'")}', true);">
+                            <i class="fas fa-history"></i>
+                            <div style="flex: 1; font-weight: 500;">${item}</div>
+                        </div>
+                    `).join('')}
+                `;
+                searchResults.style.display = 'block';
+            }
+
+            // Select search location with animation
+            window.selectSearchLocation = function(lat, lng, name) {
+                if (window.mapManager && window.mapManager.map) {
+                    const location = [lat, lng];
+                    
+                    // Animate map movement
+                    window.mapManager.map.setView(location, 15, { 
+                        animate: true,
+                        duration: 0.8,
+                        easeLinearity: 0.25
+                    });
+                    
+                    // Remove old marker with fade
+                    if (window.mapManager.destinationMarker) {
+                        window.mapManager.map.removeLayer(window.mapManager.destinationMarker);
+                    }
+                    
+                    // Add new marker with drop animation
+                    window.mapManager.destinationMarker = L.marker(location, {
+                        icon: L.divIcon({
+                            className: 'destination-marker marker-drop',
+                            html: '<div style="background: #f59e0b; color: white; padding: 10px; border-radius: 50%; font-size: 18px; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">📍</div>',
+                            iconSize: [36, 36],
+                            iconAnchor: [18, 18]
+                        })
+                    }).addTo(window.mapManager.map);
+                    
+                    window.mapManager.destinationMarker.bindPopup(`<b>${name}</b>`).openPopup();
+                    
+                    // Store destination for directions
+                    window.mapManager.destinationLocation = location;
+                    
+                    if (searchInput) searchInput.value = name;
+                    if (searchResults) {
+                        searchResults.style.animation = 'slideDownFade 0.3s ease-out reverse';
+                        setTimeout(() => {
+                            searchResults.style.display = 'none';
+                        }, 300);
+                    }
+                    if (mapContainer) mapContainer.classList.remove('map-elevated');
+                } else {
+                    // Fallback if mapManager not ready
+                    console.warn('Map manager not ready');
+                }
+            };
+
+            // Calculate distance between two coordinates (Haversine formula)
+            function calculateDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371000; // Earth radius in meters
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
+
+            // Enhanced directions button - Ask for bus selection first (replaced floating button)
+            const directionBtn = document.getElementById('directionBtn');
+            if (directionBtn) {
+                directionBtn.addEventListener('click', async function() {
+                    // Add animation
+                    this.classList.add('search-animation');
+                    setTimeout(() => this.classList.remove('search-animation'), 1000);
+                    
+                    const searchInput = document.getElementById('newSearchInput');
+                    if (!searchInput || !searchInput.value.trim()) {
+                        alert('Please enter a destination first');
+                        return;
+                    }
+
+                    // Ensure we have user location
+                    if (!userLocation) {
+                        const gotLocation = await getCurrentLocation();
+                        if (!gotLocation) {
+                            if (confirm('Location is needed for optimal routes. Would you like to enable location services?')) {
+                                requestUserLocation();
+                            }
+                            return;
+                        }
+                    }
+
+                    // Show bus selection modal for directions
+                    showBusSelectionModal('direction');
+                });
+            }
+
+            // ========== LOCATION MODAL LOGIC (FIXED) ==========
+            let requestingLocation = false;
+            const locationModal = document.getElementById('locationRequestModal');
+            const allowLocationBtn = document.getElementById('allowLocationBtn');
+            const denyLocationBtn = document.getElementById('denyLocationBtn');
+
+            function showLocationModal() {
+                if (localStorage.getItem('vtrack_location_permission') === 'granted') return;
+                if (locationModal) {
+                    locationModal.classList.add('show');
+                    resetLocationModal();
+                }
+            }
+
+            function closeLocationModal() {
+                if (locationModal) {
+                    locationModal.classList.remove('show');
+                }
+                resetLocationModal();
+            }
+
+            function resetLocationModal() {
+                requestingLocation = false;
+                if (allowLocationBtn) {
+                    allowLocationBtn.disabled = false;
+                    allowLocationBtn.innerHTML = 'Allow';
+                }
+            }
+
+            async function getCurrentLocation(forceShow = false) {
+                return new Promise((resolve) => {
+                    if (userLocation && !forceShow) {
+                        resolve(userLocation);
+                        return;
+                    }
+
+                    if (!navigator.geolocation) {
+                        console.warn('Geolocation not supported');
+                        resolve(null);
+                        return;
+                    }
+
+                    if (localStorage.getItem('vtrack_location_permission') === 'granted' || forceShow) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                userLocation = {
+                                    lat: position.coords.latitude,
+                                    lng: position.coords.longitude
+                                };
+                                
+                                if (window.mapManager && window.mapManager.map) {
+                                    window.mapManager.currentLocation = [userLocation.lat, userLocation.lng];
+                                    window.mapManager.map.setView([userLocation.lat, userLocation.lng], 15, { animate: true });
+                                    
+                                    if (window.mapManager.userMarker) {
+                                        window.mapManager.map.removeLayer(window.mapManager.userMarker);
+                                    }
+                                    
+                                    window.mapManager.userMarker = L.marker([userLocation.lat, userLocation.lng], {
+                                        icon: L.divIcon({
+                                            className: 'user-location-marker',
+                                            html: '<div style="background: #22c55e; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
+                                            iconSize: [20, 20],
+                                            iconAnchor: [10, 10]
+                                        })
+                                    }).addTo(window.mapManager.map);
+                                    
+                                    window.mapManager.userMarker.bindPopup('Your Location').openPopup();
+                                }
+                                
+                                resolve(userLocation);
+                            },
+                            (error) => {
+                                console.warn('Location error:', error);
+                                resolve(null);
+                            },
+                            {
+                                enableHighAccuracy: true,
+                                timeout: 12000,
+                                maximumAge: 60000
+                            }
+                        );
+                    } else {
+                        showLocationModal();
+                        resolve(null);
+                    }
+                });
+            }
+
+            window.getCurrentLocation = getCurrentLocation;
+
+            if (allowLocationBtn) {
+                allowLocationBtn.addEventListener('click', async function() {
+                    if (requestingLocation) return;
+                    requestingLocation = true;
+                    allowLocationBtn.disabled = true;
+                    allowLocationBtn.innerHTML = '<span class="loading-spinner"></span> Getting location...';
+                    
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            userLocation = {
+                                lat: pos.coords.latitude,
+                                lng: pos.coords.longitude
+                            };
+                            localStorage.setItem('vtrack_location_permission', 'granted');
+                            
+                            if (window.mapManager && window.mapManager.map) {
+                                window.mapManager.currentLocation = [userLocation.lat, userLocation.lng];
+                                window.mapManager.map.setView([userLocation.lat, userLocation.lng], 15, { animate: true });
+                                
+                                if (window.mapManager.userMarker) {
+                                    window.mapManager.map.removeLayer(window.mapManager.userMarker);
+                                }
+                                
+                                window.mapManager.userMarker = L.marker([userLocation.lat, userLocation.lng], {
+                                    icon: L.divIcon({
+                                        className: 'user-location-marker',
+                                        html: '<div style="background: #22c55e; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
+                                        iconSize: [20, 20],
+                                        iconAnchor: [10, 10]
+                                    })
+                                }).addTo(window.mapManager.map);
+                                
+                                window.mapManager.userMarker.bindPopup('Your Location').openPopup();
+                            }
+                            
+                            closeLocationModal();
+                        },
+                        (err) => {
+                            alert('Could not get your location: ' + (err.message || 'Please check your browser settings'));
+                            resetLocationModal();
+                        },
+                        { enableHighAccuracy: true, timeout: 12000 }
+                    );
+                });
+            }
+
+            if (denyLocationBtn) {
+                denyLocationBtn.addEventListener('click', function() {
+                    localStorage.setItem('vtrack_location_permission', 'denied');
+                    closeLocationModal();
+                });
+            }
+
+            // Show modal on page load if needed
+            setTimeout(() => {
+                if (localStorage.getItem('vtrack_location_permission') !== 'granted' && 
+                    localStorage.getItem('vtrack_location_permission') !== 'denied') {
+                    showLocationModal();
+                } else if (localStorage.getItem('vtrack_location_permission') === 'granted') {
+                    getCurrentLocation();
+                }
+            }, 1000);
+
+            // ========== FLOATING BUTTONS FUNCTIONALITY ==========
+            
+            // Marker Button
+            let markerMode = false;
+            const markerBtn = document.getElementById('markerBtn');
+            if (markerBtn) {
+                markerBtn.addEventListener('click', function() {
+                    markerMode = !markerMode;
+                    if (markerMode) {
+                        this.classList.add('active');
+                        if (window.mapManager && window.mapManager.map) {
+                            window.mapManager.map.getContainer().style.cursor = 'crosshair';
+                            window.mapManager.map.on('click', handleMapClickForMarker);
+                        }
+                    } else {
+                        this.classList.remove('active');
+                        if (window.mapManager && window.mapManager.map) {
+                            window.mapManager.map.getContainer().style.cursor = '';
+                            window.mapManager.map.off('click', handleMapClickForMarker);
+                        }
+                    }
+                });
+            }
+
+            function handleMapClickForMarker(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+                
+                const name = prompt('Enter a name for this marker:');
+                if (!name) return;
+
+                const busOption = prompt('Select bus:\n1. All Buses\n2. Specific Bus\n\nEnter "1" or bus ID:');
+                if (!busOption) return;
+
+                const marker = {
+                    id: Date.now().toString(),
+                    name: name,
+                    lat: lat,
+                    lng: lng,
+                    busId: busOption === '1' ? 'all' : busOption,
+                    distance: 100,
+                    createdAt: Date.now()
+                };
+
+                let markedLocations = JSON.parse(localStorage.getItem('vtrack_marked_locations') || '[]');
+                markedLocations.push(marker);
+                localStorage.setItem('vtrack_marked_locations', JSON.stringify(markedLocations));
+
+                if (window.mapManager && window.mapManager.map) {
+                    const mapMarker = L.marker([lat, lng], {
+                        icon: L.divIcon({
+                            className: 'alert-marker',
+                            html: '🔔',
+                            iconSize: [40, 40],
+                            iconAnchor: [20, 20]
+                        })
+                    }).addTo(window.mapManager.map);
+
+                    mapMarker.bindPopup(`<b>${name}</b><br>Bus: ${busOption === '1' ? 'All' : busOption}`);
+                }
+
+                markerMode = false;
+                if (markerBtn) markerBtn.classList.remove('active');
+                if (window.mapManager && window.mapManager.map) {
+                    window.mapManager.map.getContainer().style.cursor = '';
+                    window.mapManager.map.off('click', handleMapClickForMarker);
+                }
+
+                alert('Marker set! You will be notified when the bus arrives.');
+            }
+
+            // Notify Driver Button
+            const notifyDriverBtn = document.getElementById('notifyDriverBtn');
+            let selectedBusForDirections = null;
+            let currentBusSelectionMode = 'notify'; // Track current mode
+
+            function showBusSelectionModal(mode = 'notify') {
+                const modal = document.getElementById('busSelectionModal');
+                const list = document.getElementById('busSelectionList');
+                
+                if (!modal || !list) return;
+                
+                currentBusSelectionMode = mode; // Store current mode
+                loadBusesForSelection(list, mode);
+                modal.classList.add('show');
+                
+                // Update modal title based on mode
+                const modalTitle = modal.querySelector('h3');
+                if (modalTitle) {
+                    modalTitle.textContent = mode === 'direction' ? 'Select Bus for Directions' : 'Select Bus to Notify';
+                }
+            }
+
+            function closeBusSelectionModal() {
+                const modal = document.getElementById('busSelectionModal');
+                if (modal) {
+                    modal.classList.remove('show');
+                    selectedBusForDirections = null;
+                }
+            }
+
+            async function loadBusesForSelection(container, mode) {
+                container.innerHTML = '<div class="loading-spinner"></div><span style="margin-left: 8px; color: #5f6368;">Loading buses...</span>';
+                
+                try {
+                    if (window.firebase && window.firebase.database) {
+                        const db = firebase.database();
+                        const [busesSnapshot, locationsSnapshot] = await Promise.all([
+                            db.ref('busDetails').once('value'),
+                            db.ref('BusLocation').once('value')
+                        ]);
+                        
+                        const buses = busesSnapshot.val() || {};
+                        const busLocations = locationsSnapshot.val() || {};
+                        
+                        if (Object.keys(buses).length === 0) {
+                            container.innerHTML = '<div style="padding: 20px; text-align: center; color: #5f6368;">No buses available</div>';
+                            return;
+                        }
+                        
+                        let busesWithDistance = Object.entries(buses).map(([busId, busData]) => {
+                            let distance = Infinity;
+                            
+                            const busLocationData = busLocations[busId];
+                            if (busLocationData && typeof busLocationData === 'object' && userLocation) {
+                                const timestamps = Object.keys(busLocationData).filter(k => !isNaN(k)).map(k => parseInt(k));
+                                if (timestamps.length > 0) {
+                                    const latest = Math.max(...timestamps);
+                                    const loc = busLocationData[latest];
+                                    if (loc && loc.latitude && loc.longitude) {
+                                        const R = 6371000;
+                                        const dLat = (parseFloat(loc.latitude) - userLocation.lat) * Math.PI / 180;
+                                        const dLon = (parseFloat(loc.longitude) - userLocation.lng) * Math.PI / 180;
+                                        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                                            Math.cos(userLocation.lat * Math.PI / 180) * Math.cos(parseFloat(loc.latitude) * Math.PI / 180) *
+                                            Math.sin(dLon/2) * Math.sin(dLon/2);
+                                        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                                        distance = R * c;
+                                    }
+                                }
+                            }
+                            
+                            return { busId, busData, distance };
+                        });
+                        
+                        busesWithDistance.sort((a, b) => a.distance - b.distance);
+                        
+                        container.innerHTML = busesWithDistance.map(({ busId, busData, distance }) => {
+                            const distanceText = distance !== Infinity 
+                                ? `<span style="font-size: 11px; color: #10b981; font-weight: 600;">${(distance / 1000).toFixed(1)} km away</span>`
+                                : '';
+                            
+                            return `
+                                <div class="bus-option" onclick="selectBusForAction('${busId}')">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div style="font-weight: 600; color: #202124;">${busData.busName || busId}</div>
+                                        ${distanceText}
+                                    </div>
+                                    <div style="font-size: 12px; color: #5f6368; margin-top: 4px;">
+                                        Driver: ${busData.driverName || 'Unknown'} • Route: ${busData.routeName || 'No route'}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        container.innerHTML = '<div style="padding: 20px; text-align: center; color: #5f6368;">Firebase not connected</div>';
+                    }
+                } catch (error) {
+                    console.error('Error loading buses:', error);
+                    container.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Error loading buses</div>';
+                }
+            }
+
+            window.selectBusForAction = function(busId) {
+                selectedBusForDirections = busId;
+                document.querySelectorAll('.bus-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                    if (opt.getAttribute('onclick') && opt.getAttribute('onclick').includes(busId)) {
+                        opt.classList.add('selected');
+                    }
+                });
+            };
+
+            const confirmBusBtn = document.getElementById('confirmBusSelection');
+            const cancelBusBtn = document.getElementById('cancelBusSelection');
+
+            if (confirmBusBtn) {
+                confirmBusBtn.addEventListener('click', async function() {
+                    if (!selectedBusForDirections) {
+                        alert('Please select a bus');
+                        return;
+                    }
+
+                    closeBusSelectionModal();
+
+                    if (currentBusSelectionMode === 'notify') {
+                        // Notify driver - get location only when needed
+                        let loc = userLocation;
+                        if (!loc) {
+                            loc = await getCurrentLocation(true);
+                            if (!loc) {
+                                if (confirm('Location is needed to notify the driver. Would you like to enable location services?')) {
+                                    const gotLoc = await getCurrentLocation(true);
+                                    if (!gotLoc) {
+                                        alert('Could not get your location. Please enable location services.');
+                                        return;
+                                    }
+                                    loc = gotLoc;
+                                } else {
+                                    return;
+                                }
+                            }
+                        }
+
+                        let userId = 'anon_' + Date.now();
+                        let userName = '';
+                        try {
+                            if (window.firebase && window.firebase.auth) {
+                                const user = firebase.auth().currentUser;
+                                if (user) {
+                                    userId = user.uid;
+                                    userName = user.displayName || user.email || user.uid;
+                                }
+                            }
+                        } catch (e) {}
+
+                        if (!userName) {
+                            userName = prompt('Enter your name:', 'Student');
+                            if (!userName) return;
+                        }
+
+                        const notification = {
+                            lat: loc.lat,
+                            lng: loc.lng,
+                            name: userName,
+                            timestamp: Date.now(),
+                            userId: userId
+                        };
+
+                        try {
+                            if (window.firebase && window.firebase.database) {
+                                const db = firebase.database();
+                                const notificationId = Date.now();
+                                await db.ref(`waitingNotifications/${selectedBusForDirections}/${notificationId}`).set(notification);
+                                alert('Driver notified successfully!');
+                            } else {
+                                alert('Firebase not available');
+                            }
+                        } catch (error) {
+                            console.error('Error notifying driver:', error);
+                            alert('Failed to notify driver. Please try again.');
+                        }
+                    } else if (currentBusSelectionMode === 'direction') {
+                        // Get directions to bus
+                        const searchInput = document.getElementById('newSearchInput');
+                        if (!searchInput || !searchInput.value.trim()) {
+                            alert('Please enter a destination first');
+                            return;
+                        }
+
+                        // Get directions using the destination from search input
+                        await getDirectionsToBus(selectedBusForDirections, searchInput.value.trim());
+                    }
+                });
+            }
+
+            if (cancelBusBtn) {
+                cancelBusBtn.addEventListener('click', closeBusSelectionModal);
+            }
+
+            if (notifyDriverBtn) {
+                notifyDriverBtn.addEventListener('click', async function() {
+                    // Just show bus selection modal for notification - no need to ask for location first
+                    showBusSelectionModal('notify');
+                });
+            }
+
+            // Floating Directions Button
+            const floatingDirectionsBtn = document.getElementById('floatingDirectionsBtn');
+            if (floatingDirectionsBtn) {
+                floatingDirectionsBtn.addEventListener('click', async function() {
+                    const searchInput = document.getElementById('newSearchInput');
+                    if (!searchInput || !searchInput.value.trim()) {
+                        alert('Please enter a destination in the search bar first');
+                        return;
+                    }
+
+                    // Ensure we have user location
+                    if (!userLocation) {
+                        const gotLocation = await getCurrentLocation(true);
+                        if (!gotLocation) {
+                            if (confirm('Location is needed for optimal routes. Would you like to enable location services?')) {
+                                requestUserLocation();
+                            }
+                            return;
+                        }
+                    }
+
+                    // Show bus selection modal for directions
+                    showBusSelectionModal('direction');
+                });
+            }
+
+            // Get directions to bus using Leaflet Routing with optimal path
+            async function getDirectionsToBus(busId, destinationQuery) {
+                if (!window.mapManager || !window.mapManager.map) {
+                    alert('Map not ready. Please wait...');
+                    return;
+                }
+
+                // Show loading animation
+                const routeLoading = document.getElementById('routeLoading');
+                if (routeLoading) {
+                    routeLoading.classList.add('show');
+                }
+
+                try {
+                    // Get bus location from Firebase - use latest location
+                    let busLocation = null;
+                    if (window.firebase && window.firebase.database) {
+                        const db = firebase.database();
+                        const busLocationSnap = await db.ref(`BusLocation/${busId}`).once('value');
+                        const locations = busLocationSnap.val() || {};
+                        if (locations && typeof locations === 'object') {
+                            // Find latest timestamp
+                            const timestamps = Object.keys(locations).filter(k => !isNaN(k)).map(k => parseInt(k));
+                            if (timestamps.length > 0) {
+                                const latest = Math.max(...timestamps);
+                                const loc = locations[latest];
+                                if (loc && loc.latitude && loc.longitude) {
+                                    busLocation = [parseFloat(loc.latitude), parseFloat(loc.longitude)];
+                                }
+                            }
+                        }
+                    }
+
+                    // Also check if we have the bus path with last location
+                    if (!busLocation && busTravelPaths[busId] && busTravelPaths[busId].lastLocation) {
+                        busLocation = busTravelPaths[busId].lastLocation;
+                    }
+
+                    if (!busLocation) {
+                        if (routeLoading) routeLoading.classList.remove('show');
+                        alert('Bus location not available');
+                        return;
+                    }
+
+                    // Get user location
+                    let currentUserLocation = userLocation ? [userLocation.lat, userLocation.lng] : window.mapManager.currentLocation;
+                    if (!currentUserLocation) {
+                        const gotLocation = await getCurrentLocation(true);
+                        if (gotLocation) {
+                            currentUserLocation = [gotLocation.lat, gotLocation.lng];
+                        } else {
+                            if (routeLoading) routeLoading.classList.remove('show');
+                            alert('Could not get your location');
+                            return;
+                        }
+                    }
+
+                    // Search for destination
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destinationQuery)}&limit=1`,
+                        {
+                            headers: {
+                                'User-Agent': 'V-Track Dashboard'
+                            }
+                        }
+                    );
+                    
+                    const results = await response.json();
+                    if (results.length === 0) {
+                        if (routeLoading) routeLoading.classList.remove('show');
+                        alert('Destination not found');
+                        return;
+                    }
+
+                    const destination = [parseFloat(results[0].lat), parseFloat(results[0].lon)];
+
+                    // Remove existing routing
+                    if (window.mapManager.routingControl) {
+                        window.mapManager.map.removeControl(window.mapManager.routingControl);
+                        window.mapManager.routingControl = null;
+                    }
+
+                    // Hide animated bus for all buses when starting new directions
+                    Object.keys(busTravelPaths).forEach(bid => {
+                        activeDirectionsBuses.delete(bid);
+                        hideAnimatedBus(bid);
+                    });
+
+                    // Create waypoints plan with custom markers
+                    const waypoints = [
+                        L.latLng(currentUserLocation[0], currentUserLocation[1]),
+                        L.latLng(busLocation[0], busLocation[1]),
+                        L.latLng(destination[0], destination[1])
+                    ];
+
+                    const plan = L.Routing.plan(waypoints, {
+                        createMarker: function(i, wp) {
+                            let iconHtml, popupText;
+                            
+                            if (i === 0) {
+                                iconHtml = '<div style="background: #22c55e; color: white; padding: 10px; border-radius: 50%; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">📍</div>';
+                                popupText = 'Your Location';
+                            } else if (i === 1) {
+                                iconHtml = '<div style="background: #3b82f6; color: white; padding: 10px; border-radius: 50%; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">🚌</div>';
+                                popupText = 'Bus Location';
+                            } else {
+                                iconHtml = '<div style="background: #f59e0b; color: white; padding: 10px; border-radius: 50%; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">📍</div>';
+                                popupText = results[0].display_name;
+                            }
+                            
+                            return L.marker(wp.latLng, {
+                                icon: L.divIcon({
+                                    html: iconHtml,
+                                    iconSize: [36, 36],
+                                    iconAnchor: [18, 18],
+                                    className: 'marker-drop'
+                                })
+                            }).bindPopup(popupText);
+                        }
+                    });
+
+                    // Create optimal routing with Leaflet Routing Machine using OSRM
+                    window.mapManager.routingControl = L.Routing.control({
+                        plan: plan,
+                        routeWhileDragging: false,
+                        show: false,
+                        addWaypoints: false,
+                        router: L.Routing.osrmv1({
+                            serviceUrl: 'https://router.project-osrm.org/route/v1',
+                            profile: 'driving'
+                        }),
+                        lineOptions: {
+                            styles: [{ 
+                                color: '#1a73e8', 
+                                weight: 6, 
+                                opacity: 0.9,
+                                className: 'route-path'
+                            }]
+                        }
+                    }).addTo(window.mapManager.map);
+
+                    window.mapManager.routingControl.on('routesfound', function(e) {
+                        // Hide loading
+                        if (routeLoading) routeLoading.classList.remove('show');
+                        
+                        // Mark this bus as having active directions
+                        activeDirectionsBuses.add(busId);
+                        
+                        // Show animated bus for this bus
+                        if (busTravelPaths[busId] && busTravelPaths[busId].polyline) {
+                            showAnimatedBus(busId, busTravelPaths[busId].polyline, busLocation);
+                        }
+                        
+                        // Find optimal route (shortest time)
+                        const routes = e.routes.sort((a, b) => a.summary.totalTime - b.summary.totalTime);
+                        const route = routes[0];
+                        const distance = (route.summary.totalDistance / 1000).toFixed(2);
+                        const time = Math.round(route.summary.totalTime / 60);
+                        
+                        // Show notification with animation
+                        const notification = document.getElementById('bottomNotification');
+                        if (notification) {
+                            notification.style.display = 'flex';
+                            notification.style.animation = 'slideUp 0.4s ease-out';
+                            
+                            const title = notification.querySelector('.notification-title');
+                            const subtitle = notification.querySelector('.notification-subtitle');
+                            if (title) title.textContent = `✅ Optimal Route to ${results[0].display_name}`;
+                            if (subtitle) subtitle.textContent = `${distance} km • ~${time} min • Via Bus`;
+                        }
+                    });
+
+                    window.mapManager.routingControl.on('routingerror', function(e) {
+                        if (routeLoading) routeLoading.classList.remove('show');
+                        console.error('Routing error:', e);
+                        alert('Could not calculate route. Please try again.');
+                    });
+
+                    // Fit map to show entire route with animation
+                    setTimeout(() => {
+                        window.mapManager.map.fitBounds([
+                            [currentUserLocation[0], currentUserLocation[1]],
+                            [busLocation[0], busLocation[1]],
+                            [destination[0], destination[1]]
+                        ], { 
+                            padding: [50, 50],
+                            animate: true,
+                            duration: 1.0
+                        });
+                    }, 500);
+
+                } catch (error) {
+                    console.error('Directions error:', error);
+                    if (routeLoading) routeLoading.classList.remove('show');
+                    alert('Could not get directions. Please try again.');
+                }
+            }
+
+            // Report Button Functionality
+            const reportBtn = document.getElementById('reportBtn');
+            const reportModal = document.getElementById('reportModal');
+            const reportForm = document.getElementById('reportForm');
+
+            function showReportModal() {
+                if (reportModal) {
+                    reportModal.classList.add('show');
+                }
+            }
+
+            window.closeReportModal = function() {
+                if (reportModal) {
+                    reportModal.classList.remove('show');
+                    if (reportForm) reportForm.reset();
+                }
+            };
+
+            if (reportBtn) {
+                reportBtn.addEventListener('click', function() {
+                    // Check if user is logged in
+                    let isLoggedIn = false;
+                    try {
+                        if (window.firebase && window.firebase.auth) {
+                            const user = firebase.auth().currentUser;
+                            isLoggedIn = !!user;
+                        }
+                    } catch (e) {
+                        // Auth not available
+                    }
+
+                    if (!isLoggedIn) {
+                        if (confirm('You need to login to submit a report. Would you like to login now?')) {
+                            window.location.href = '../html/driver-login.html';
+                        }
+                        return;
+                    }
+
+                    showReportModal();
+                });
+            }
+
+            if (reportForm) {
+                reportForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+
+                    const type = document.getElementById('reportType').value;
+                    const description = document.getElementById('reportDescription').value;
+                    const busId = document.getElementById('reportBusId').value.trim();
+
+                    if (!type || !description) {
+                        alert('Please fill in all required fields');
+                        return;
+                    }
+
+                    let userId = 'anon_' + Date.now();
+                    try {
+                        if (window.firebase && window.firebase.auth) {
+                            const user = firebase.auth().currentUser;
+                            if (user) {
+                                userId = user.uid;
+                            }
+                        }
+                    } catch (e) {
+                        // Auth not available
+                    }
+
+                    const report = {
+                        type: type,
+                        description: description,
+                        busId: busId || null,
+                        timestamp: Date.now(),
+                        userAgent: navigator.userAgent
+                    };
+
+                    try {
+                        if (window.firebase && window.firebase.database) {
+                            const db = firebase.database();
+                            await db.ref(`reports/${userId}`).push(report);
+                            alert('Report submitted successfully!');
+                            closeReportModal();
+                        } else {
+                            // Fallback: save to localStorage
+                            const reports = JSON.parse(localStorage.getItem('vtrack_reports') || '[]');
+                            reports.push(report);
+                            localStorage.setItem('vtrack_reports', JSON.stringify(reports));
+                            alert('Report saved locally (offline mode)');
+                            closeReportModal();
+                        }
+                    } catch (error) {
+                        console.error('Error submitting report:', error);
+                        alert('Failed to submit report. Please try again.');
+                    }
+                });
+            }
+
+            // Map Type Toggle Functionality
+            const mapTypeToggle = document.getElementById('mapTypeToggle');
+            const mapTypeSelector = document.getElementById('mapTypeSelector');
+            const mapTypeButtons = mapTypeSelector ? Array.from(mapTypeSelector.querySelectorAll('.map-type-btn')) : [];
+            let mapTypeOrder = ['street', 'satellite', 'terrain', 'dark'];
+            
+            if (mapTypeToggle && mapTypeSelector) {
+                mapTypeToggle.addEventListener('click', function() {
+                    const isShowing = mapTypeSelector.classList.contains('show');
+                    if (isShowing) {
+                        mapTypeSelector.classList.remove('show');
+                    } else {
+                        // Shuffle buttons
+                        shuffleMapTypeButtons();
+                        mapTypeSelector.classList.add('show');
+                    }
+                });
+
+                // Close when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!mapTypeSelector.contains(e.target) && !mapTypeToggle.contains(e.target)) {
+                        mapTypeSelector.classList.remove('show');
+                    }
+                });
+
+                // Map type button clicks
+                mapTypeButtons.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const type = this.getAttribute('data-type');
+                        if (window.mapManager && window.mapManager.changeMapType) {
+                            window.mapManager.changeMapType(type);
+                        }
+                        mapTypeButtons.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        // Shuffle after selection
+                        setTimeout(() => shuffleMapTypeButtons(), 300);
+                    });
+                });
+            }
+
+            function shuffleMapTypeButtons() {
+                if (!mapTypeSelector) return;
+                
+                // Shuffle order
+                mapTypeOrder = mapTypeOrder.sort(() => Math.random() - 0.5);
+                
+                // Reorder buttons
+                mapTypeOrder.forEach(type => {
+                    const btn = mapTypeSelector.querySelector(`[data-type="${type}"]`);
+                    if (btn) {
+                        mapTypeSelector.appendChild(btn);
+                    }
+                });
+            }
+
+            // Hide notification function
+            window.hideNotification = function() {
+                const notification = document.getElementById('bottomNotification');
+                if (notification) {
+                    notification.style.display = 'none';
+                }
+            };
+
+            // ========== NOTICES FUNCTIONALITY ==========
+            function updateNoticesList(notices) {
+                const noticesList = document.getElementById('noticesList');
+                if (!noticesList) return;
+
+                if (!notices) {
+                    noticesList.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">No notices available</div>';
+                    return;
+                }
+
+                const noticesArray = Object.keys(notices).map(key => ({
+                    id: key,
+                    ...notices[key]
+                })).sort((a, b) => (b.createdAt || b.timestamp || 0) - (a.createdAt || a.timestamp || 0))
+                .slice(0, 2); // Only latest 2
+
+                if (noticesArray.length === 0) {
+                    noticesList.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">No notices available</div>';
+                    return;
+                }
+
+                const hiddenNotices = JSON.parse(localStorage.getItem('vtrack_hidden_notices') || '[]');
+
+                noticesList.innerHTML = noticesArray
+                    .filter(notice => !hiddenNotices.includes(notice.id))
+                    .map(notice => `
+                        <div class="notice-item" data-notice-id="${notice.id}" style="padding: 12px; margin-bottom: 8px; background: #f8f9fa; border-radius: 8px; border-left: 3px solid #1a73e8;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: #202124; margin-bottom: 4px; font-size: 14px;">${notice.title || notice.content || 'Notice'}</div>
+                                    <div style="font-size: 12px; color: #5f6368; line-height: 1.4;">${notice.description || notice.message || notice.content || ''}</div>
+                                </div>
+                                <button class="notice-hide-btn" onclick="hideNotice('${notice.id}')" title="Hide" style="background: none; border: none; color: #5f6368; cursor: pointer; padding: 4px; margin-left: 8px; font-size: 14px;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div style="font-size: 11px; color: #9aa0a6; margin-top: 8px;">
+                                ${notice.createdAt || notice.timestamp ? new Date(notice.createdAt || notice.timestamp).toLocaleDateString() : 'Unknown date'}
+                            </div>
+                        </div>
+                    `).join('');
+
+                if (noticesList.innerHTML === '') {
+                    noticesList.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">All notices hidden</div>';
+                }
+            }
+
+            window.hideNotice = function(noticeId) {
+                const hiddenNotices = JSON.parse(localStorage.getItem('vtrack_hidden_notices') || '[]');
+                if (!hiddenNotices.includes(noticeId)) {
+                    hiddenNotices.push(noticeId);
+                    localStorage.setItem('vtrack_hidden_notices', JSON.stringify(hiddenNotices));
+                    
+                    const noticeItem = document.querySelector(`[data-notice-id="${noticeId}"]`);
+                    if (noticeItem) {
+                        noticeItem.style.display = 'none';
+                    }
+                    
+                    // Reload notices
+                    if (window.firebase && window.firebase.database) {
+                        const db = firebase.database();
+                        db.ref('notices').once('value', function(snapshot) {
+                            updateNoticesList(snapshot.val());
+                        });
+                    }
+                }
+            };
+
+            // Load notices from Firebase
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                db.ref('notices').on('value', function(snapshot) {
+                    updateNoticesList(snapshot.val());
+                });
+            }
+
+            // ========== LOGOUT FUNCTIONALITY ==========
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to logout?')) {
+                        // Sign out from Firebase if authenticated
+                        if (window.firebase && window.firebase.auth) {
+                            try {
+                                firebase.auth().signOut().then(() => {
+                                    localStorage.clear();
+                                    window.location.href = '../html/driver-login.html';
+                                }).catch((error) => {
+                                    console.error('Logout error:', error);
+                                    // Even if signOut fails, clear local storage and redirect
+                                    localStorage.clear();
+                                    window.location.href = '../html/driver-login.html';
+                                });
+                            } catch (e) {
+                                console.error('Logout error:', e);
+                                localStorage.clear();
+                                window.location.href = '../html/driver-login.html';
+                            }
+                        } else {
+                            // If Firebase auth not available, just clear and redirect
+                            localStorage.clear();
+                            window.location.href = '../html/driver-login.html';
+                        }
+                    }
+                });
+            }
+
+            // ========== BUS TRAVEL PATH ANIMATION ==========
+            // Store bus travel paths
+            const busTravelPaths = {}; // busId -> {polyline, lastLocation, pathHistory, animatedMarker, animationInterval, showAnimatedMarker}
+            const activeDirectionsBuses = new Set(); // Track buses with active directions
+
+            // Function to hide animated bus marker
+            function hideAnimatedBus(busId) {
+                const busPath = busTravelPaths[busId];
+                if (busPath && busPath.animatedMarker) {
+                    window.mapManager.map.removeLayer(busPath.animatedMarker);
+                    busPath.animatedMarker = null;
+                    busPath.showAnimatedMarker = false;
+                }
+                if (busPath && busPath.animationInterval) {
+                    clearInterval(busPath.animationInterval);
+                    busPath.animationInterval = null;
+                }
+            }
+
+            // Function to show animated bus marker (only when directions are active)
+            function showAnimatedBus(busId, polyline, currentLocation) {
+                if (!activeDirectionsBuses.has(busId)) {
+                    hideAnimatedBus(busId);
+                    return;
+                }
+
+                const busPath = busTravelPaths[busId];
+                if (!busPath || !polyline) return;
+
+                // Get polyline coordinates
+                const coordinates = polyline.getLatLngs();
+                if (!coordinates || coordinates.length === 0) return;
+
+                // Find the index of current location in the path
+                let currentIndex = coordinates.length - 1;
+                let minDistance = Infinity;
+                coordinates.forEach((coord, index) => {
+                    const lat = coord.lat !== undefined ? coord.lat : coord[0];
+                    const lng = coord.lng !== undefined ? coord.lng : coord[1];
+                    const dist = calculateDistance(
+                        lat,
+                        lng,
+                        currentLocation[0],
+                        currentLocation[1]
+                    );
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        currentIndex = index;
+                    }
+                });
+
+                // Remove old animated marker if exists
+                if (busPath.animatedMarker) {
+                    window.mapManager.map.removeLayer(busPath.animatedMarker);
+                    busPath.animatedMarker = null;
+                }
+
+                // Clear old animation interval
+                if (busPath.animationInterval) {
+                    clearInterval(busPath.animationInterval);
+                    busPath.animationInterval = null;
+                }
+
+                // Create animated bus marker at current location
+                const busIcon = L.divIcon({
+                    className: 'animated-bus-marker',
+                    html: '<div style="font-size: 28px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); animation: busBounce 0.5s ease-in-out infinite alternate;">🚌</div>',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                busPath.animatedMarker = L.marker(currentLocation, {
+                    icon: busIcon,
+                    zIndexOffset: 1000
+                }).addTo(window.mapManager.map);
+
+                busPath.showAnimatedMarker = true;
+
+                // Animate bus along the path from current position to end
+                let animationIndex = currentIndex;
+                busPath.animationInterval = setInterval(() => {
+                    if (!activeDirectionsBuses.has(busId)) {
+                        hideAnimatedBus(busId);
+                        return;
+                    }
+
+                    if (animationIndex < coordinates.length - 1) {
+                        animationIndex++;
+                        const nextCoord = coordinates[animationIndex];
+                        const lat = nextCoord.lat !== undefined ? nextCoord.lat : nextCoord[0];
+                        const lng = nextCoord.lng !== undefined ? nextCoord.lng : nextCoord[1];
+                        
+                        if (busPath.animatedMarker) {
+                            busPath.animatedMarker.setLatLng([lat, lng], { animate: true, duration: 0.1 });
+                        }
+                    } else {
+                        // Reached end, keep marker at end position
+                        if (busPath.animatedMarker && currentLocation) {
+                            busPath.animatedMarker.setLatLng(currentLocation);
+                        }
+                    }
+                }, 100); // Update every 100ms for smooth animation
+            }
+
+            // Function to update bus location with smooth path animation
+            function updateBusLocationWithPath(busId, newLocation) {
+                if (!window.mapManager || !window.mapManager.map) return;
+
+                const lat = parseFloat(newLocation.latitude);
+                const lng = parseFloat(newLocation.longitude);
+
+                if (isNaN(lat) || isNaN(lng)) return;
+
+                // Initialize bus path if not exists
+                if (!busTravelPaths[busId]) {
+                    busTravelPaths[busId] = {
+                        polyline: null,
+                        lastLocation: null,
+                        pathHistory: [],
+                        animatedMarker: null,
+                        animationInterval: null
+                    };
+                }
+
+                const busPath = busTravelPaths[busId];
+                const currentLocation = [lat, lng];
+
+                // Add to path history (keep last 50 points for performance)
+                if (busPath.lastLocation) {
+                    busPath.pathHistory.push(busPath.lastLocation);
+                    if (busPath.pathHistory.length > 50) {
+                        busPath.pathHistory.shift();
+                    }
+
+                    // Calculate distance moved
+                    const distance = calculateDistance(
+                        busPath.lastLocation[0],
+                        busPath.lastLocation[1],
+                        lat,
+                        lng
+                    );
+
+                    // Only update path if bus moved significantly (more than 10 meters)
+                    if (distance > 10) {
+                        // Update or create polyline with smooth path
+                        const allPoints = [...busPath.pathHistory, currentLocation];
+                        
+                        // Remove old polyline
+                        if (busPath.polyline) {
+                            window.mapManager.map.removeLayer(busPath.polyline);
+                        }
+
+                        // Use OSRM routing for smooth path if we have enough points (3+)
+                        if (allPoints.length >= 3 && window.L) {
+                            // Use OSRM API directly for better performance
+                            const waypoints = allPoints.map(p => `${p[1]},${p[0]}`).join(';');
+                            fetch(`https://router.project-osrm.org/route/v1/driving/${waypoints}?overview=full&geometries=geojson`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                                        const route = data.routes[0];
+                                        const coordinates = route.geometry.coordinates.map(c => [c[1], c[0]]); // OSRM returns [lng, lat]
+                                        
+                                        // Create smooth polyline with blue color (not red)
+                                        busPath.polyline = L.polyline(coordinates, {
+                                            color: '#3b82f6',
+                                            weight: 4,
+                                            opacity: 0.7,
+                                            smoothFactor: 1.0
+                                        }).addTo(window.mapManager.map);
+
+                                        // Only show animated bus if directions are active for this bus
+                                        if (activeDirectionsBuses.has(busId)) {
+                                            showAnimatedBus(busId, busPath.polyline, currentLocation);
+                                        }
+                                    } else {
+                                        // Fallback: simple polyline
+                                        busPath.polyline = L.polyline(allPoints, {
+                                            color: '#3b82f6',
+                                            weight: 4,
+                                            opacity: 0.7,
+                                            smoothFactor: 1.0
+                                        }).addTo(window.mapManager.map);
+
+                                        // Only show animated bus if directions are active for this bus
+                                        if (activeDirectionsBuses.has(busId)) {
+                                            showAnimatedBus(busId, busPath.polyline, currentLocation);
+                                        }
+                                    }
+                                })
+                                .catch(() => {
+                                    // Fallback: simple polyline if routing fails
+                                    busPath.polyline = L.polyline(allPoints, {
+                                        color: '#3b82f6',
+                                        weight: 4,
+                                        opacity: 0.7,
+                                        smoothFactor: 1.0
+                                    }).addTo(window.mapManager.map);
+
+                                    // Only show animated bus if directions are active for this bus
+                                    if (activeDirectionsBuses.has(busId)) {
+                                        showAnimatedBus(busId, busPath.polyline, currentLocation);
+                                    }
+                                });
+                        } else {
+                            // Simple polyline for first few points or if routing not available
+                            busPath.polyline = L.polyline(allPoints, {
+                                color: '#3b82f6',
+                                weight: 4,
+                                opacity: 0.7,
+                                smoothFactor: 1.0
+                            }).addTo(window.mapManager.map);
+
+                            // Only show animated bus if directions are active for this bus
+                            if (activeDirectionsBuses.has(busId)) {
+                                showAnimatedBus(busId, busPath.polyline, currentLocation);
+                            }
+                        }
+                    } else {
+                        // Bus hasn't moved much, just update animated marker position (if shown)
+                        if (busPath.animatedMarker && activeDirectionsBuses.has(busId)) {
+                            busPath.animatedMarker.setLatLng(currentLocation);
+                        }
+                    }
+                } else {
+                    // First location - don't create animated marker unless directions are active
+                    if (activeDirectionsBuses.has(busId)) {
+                        const busIcon = L.divIcon({
+                            className: 'animated-bus-marker',
+                            html: '<div style="font-size: 28px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); animation: busBounce 0.5s ease-in-out infinite alternate;">🚌</div>',
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16]
+                        });
+
+                        busPath.animatedMarker = L.marker(currentLocation, {
+                            icon: busIcon,
+                            zIndexOffset: 1000
+                        }).addTo(window.mapManager.map);
+                        busPath.showAnimatedMarker = true;
+                    }
+                }
+
+                // Update last location
+                busPath.lastLocation = currentLocation;
+
+                // Update real bus marker position smoothly in real-time
+                if (window.mapManager.busMarkers && window.mapManager.busMarkers[busId]) {
+                    // Use smooth animation for real bus marker
+                    window.mapManager.busMarkers[busId].setLatLng(currentLocation, {
+                        animate: true,
+                        duration: 0.5
+                    });
+                }
+            }
+
+            // Override mapManager.getDirectionsToBus to use our function
+            // Wait for mapManager to be initialized
+            function overrideGetDirectionsToBus() {
+                if (window.mapManager && window.mapManager.getDirectionsToBus) {
+                    window.mapManager.getDirectionsToBus = function(busId) {
+                        // Check if user has entered a destination
+                        const searchInput = document.getElementById('newSearchInput');
+                        if (!searchInput || !searchInput.value.trim()) {
+                            // Prompt user to enter destination
+                            const destination = prompt('Please enter a destination:');
+                            if (!destination || !destination.trim()) {
+                                alert('Destination is required for directions');
+                                return;
+                            }
+                            searchInput.value = destination;
+                        }
+
+                        // Ensure we have user location
+                        if (!userLocation) {
+                            getCurrentLocation(true).then(loc => {
+                                if (loc) {
+                                    userLocation = loc;
+                                    getDirectionsToBus(busId, searchInput.value.trim());
+                                } else {
+                                    alert('Could not get your location. Please enable location services.');
+                                }
+                            });
+                        } else {
+                            // Use our getDirectionsToBus function
+                            getDirectionsToBus(busId, searchInput.value.trim());
+                        }
+                    };
+                } else {
+                    // Retry after a short delay
+                    setTimeout(overrideGetDirectionsToBus, 500);
+                }
+            }
+
+            // Start override attempt
+            overrideGetDirectionsToBus();
+
+            // Listen to bus location updates and apply path animation
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                db.ref('BusLocation').on('value', function(snapshot) {
+                    const busLocations = snapshot.val() || {};
+                    Object.keys(busLocations).forEach(busId => {
+                        const busData = busLocations[busId];
+                        if (!busData || typeof busData !== 'object') return;
+                        
+                        // Find latest timestamp
+                        const timestamps = Object.keys(busData).filter(k => !isNaN(k)).map(k => parseInt(k));
+                        if (timestamps.length === 0) return;
+                        
+                        const latestTimestamp = Math.max(...timestamps);
+                        const locationData = busData[latestTimestamp];
+                        
+                        if (locationData && locationData.latitude && locationData.longitude) {
+                            updateBusLocationWithPath(busId, locationData);
+                        }
+                    });
+                });
+            }
+        });
     </script>
 </body>
 </html>

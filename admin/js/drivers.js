@@ -20,6 +20,12 @@ const database = firebase.database();
 let currentDriverId = null;
 let buses = [];
 let routes = [];
+let driverStats = {
+    totalDrivers: 0,
+    activeDrivers: 0,
+    totalTrips: 0,
+    totalDistance: 0
+};
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -31,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             loadDrivers();
             loadBusesAndRoutes();
+            loadDriverStatistics();
             setupEventListeners();
         }, 500);
     }, 100);
@@ -127,14 +134,14 @@ function loadDrivers() {
     });
 
     // Load active drivers
-    database.ref('driverInfo').on('value', snapshot => {
+    database.ref('driverInfo').on('value', async snapshot => {
         const container = document.getElementById('activeDriversContainer');
         const countElement = document.getElementById('activeCount');
         
         if (!container) return;
         
         let count = 0;
-        let html = '';
+        const driverPromises = [];
         
         snapshot.forEach(child => {
             count++;
@@ -144,22 +151,45 @@ function loadDrivers() {
             const busName = getBusName(driver.assignedBusId);
             const routeName = getRouteName(driver.assignedRouteId);
             
+            // Create promise for driver stats
+            driverPromises.push(
+                loadDriverTripStats(child.key).then(stats => ({
+                    driver,
+                    driverId: child.key,
+                    busName,
+                    routeName,
+                    stats
+                }))
+            );
+        });
+        
+        // Wait for all stats to load
+        const driversWithStats = await Promise.all(driverPromises);
+        
+        let html = '';
+        driversWithStats.forEach(({ driver, driverId, busName, routeName, stats }) => {
             html += `
                 <div class="driver-card active">
                     <div class="driver-info">
                         <h4>${driver.name || 'Unknown'}</h4>
                         <p><i class="fas fa-id-card"></i> License: ${driver.licenseNumber || 'N/A'}</p>
                         <p><i class="fas fa-phone"></i> Phone: ${driver.phone || 'N/A'}</p>
+                        <p><i class="fas fa-envelope"></i> Email: ${driver.email || 'N/A'}</p>
                         <p><i class="fas fa-bus"></i> Bus: ${busName}</p>
                         <p><i class="fas fa-route"></i> Route: ${routeName}</p>
                         <p><i class="fas fa-star"></i> Rank: ${driver.rank || 'Bronze'}</p>
+                        <p><i class="fas fa-route"></i> Trips: ${stats.trips || 0}</p>
+                        <p><i class="fas fa-road"></i> Distance: ${(stats.distance || 0).toFixed(1)} km</p>
                         <span class="status-badge status-active">Active</span>
                     </div>
                     <div class="driver-actions">
-                        <button onclick="editDriver('${child.key}')" class="btn btn-edit">
+                        <button onclick="editDriver('${driverId}')" class="btn btn-edit">
                             <i class="fas fa-edit"></i> Edit
                         </button>
-                        <button onclick="removeDriver('${child.key}')" class="btn btn-remove">
+                        <button onclick="viewDriverStats('${driverId}')" class="btn btn-primary">
+                            <i class="fas fa-chart-line"></i> Stats
+                        </button>
+                        <button onclick="removeDriver('${driverId}')" class="btn btn-remove">
                             <i class="fas fa-trash"></i> Remove
                         </button>
                     </div>
@@ -184,6 +214,70 @@ function loadDrivers() {
             countElement.textContent = count;
         }
     });
+}
+
+// Load driver trip statistics
+async function loadDriverTripStats(driverId) {
+    try {
+        let trips = 0;
+        let distance = 0;
+        
+        // Check tripHistory/drivers/{driverId}
+        const driverTripsSnapshot = await database.ref(`tripHistory/drivers/${driverId}`).once('value');
+        driverTripsSnapshot.forEach(() => {
+            trips++;
+        });
+        
+        // Also check trips for this driver
+        const allTripsSnapshot = await database.ref('trips').once('value');
+        allTripsSnapshot.forEach(busSnapshot => {
+            busSnapshot.forEach(tripSnapshot => {
+                const trip = tripSnapshot.val();
+                if (trip.driverId === driverId) {
+                    trips++;
+                    distance += trip.distance || trip.totalDistance || 0;
+                }
+            });
+        });
+        
+        return { trips, distance };
+    } catch (error) {
+        console.error('Error loading driver trip stats:', error);
+        return { trips: 0, distance: 0 };
+    }
+}
+
+// View driver statistics
+async function viewDriverStats(driverId) {
+    try {
+        const driverSnapshot = await database.ref(`driverInfo/${driverId}`).once('value');
+        const driver = driverSnapshot.val();
+        
+        if (!driver) {
+            showNotification('Driver not found', 'error');
+            return;
+        }
+        
+        const stats = await loadDriverTripStats(driverId);
+        
+        const details = `
+Driver Statistics:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Name: ${driver.name || 'Unknown'}
+Email: ${driver.email || 'N/A'}
+License: ${driver.licenseNumber || 'N/A'}
+Phone: ${driver.phone || 'N/A'}
+Rank: ${driver.rank || 'Bronze'}
+Total Trips: ${stats.trips}
+Total Distance: ${stats.distance.toFixed(2)} km
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        `;
+        
+        alert(details);
+    } catch (error) {
+        console.error('Error loading driver stats:', error);
+        showNotification('Error loading driver statistics', 'error');
+    }
 }
 
 // Get bus name by ID
@@ -410,10 +504,82 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
+// Load driver statistics
+async function loadDriverStatistics() {
+    try {
+        // Count total drivers
+        const driversSnapshot = await database.ref('driverInfo').once('value');
+        let totalDrivers = 0;
+        let activeDrivers = 0;
+        
+        driversSnapshot.forEach(() => {
+            totalDrivers++;
+            activeDrivers++;
+        });
+        
+        // Count trips and distance
+        let totalTrips = 0;
+        let totalDistance = 0;
+        
+        const tripsSnapshot = await database.ref('tripHistory').once('value');
+        tripsSnapshot.forEach(busSnapshot => {
+            if (busSnapshot.key === 'drivers') {
+                // Handle driver-specific trips
+                busSnapshot.forEach(driverSnapshot => {
+                    driverSnapshot.forEach(tripSnapshot => {
+                        totalTrips++;
+                        const trip = tripSnapshot.val();
+                        totalDistance += trip.distance || trip.totalDistance || 0;
+                    });
+                });
+            } else {
+                // Handle bus-specific trips
+                busSnapshot.forEach(tripSnapshot => {
+                    totalTrips++;
+                    const trip = tripSnapshot.val();
+                    totalDistance += trip.distance || trip.totalDistance || 0;
+                });
+            }
+        });
+        
+        // Also check trips path
+        const activeTripsSnapshot = await database.ref('trips').once('value');
+        activeTripsSnapshot.forEach(busSnapshot => {
+            busSnapshot.forEach(tripSnapshot => {
+                const trip = tripSnapshot.val();
+                if (trip.status === 'active' || !trip.status) {
+                    totalTrips++;
+                    totalDistance += trip.distance || trip.totalDistance || 0;
+                }
+            });
+        });
+        
+        driverStats = {
+            totalDrivers,
+            activeDrivers,
+            totalTrips,
+            totalDistance
+        };
+        
+        updateDriverStatistics();
+    } catch (error) {
+        console.error('Error loading driver statistics:', error);
+    }
+}
+
+// Update driver statistics display
+function updateDriverStatistics() {
+    document.getElementById('totalDrivers').textContent = driverStats.totalDrivers;
+    document.getElementById('activeDriversCount').textContent = driverStats.activeDrivers;
+    document.getElementById('totalTrips').textContent = driverStats.totalTrips;
+    document.getElementById('totalDistance').textContent = driverStats.totalDistance.toFixed(1);
+}
+
 // Make functions globally available
 window.showTab = showTab;
 window.approveDriver = approveDriver;
 window.rejectDriver = rejectDriver;
 window.editDriver = editDriver;
 window.removeDriver = removeDriver;
-window.closeModal = closeModal; 
+window.closeModal = closeModal;
+window.viewDriverStats = viewDriverStats; 

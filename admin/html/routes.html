@@ -18,6 +18,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../css/routes.css">
     <link rel="stylesheet" href="../css/unified-admin.css">
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.10.99/build/spline-viewer.js"></script>
     
     <style>
         /* Additional styles to fix any missing elements */
@@ -306,17 +307,17 @@
     </style>
 </head>
 <body>
+    <!-- Spline Background Animation -->
+    <div class="spline-background">
+        <spline-viewer 
+            url="https://prod.spline.design/C8pSRp0aToPNslbt/scene.splinecode"
+            loading="lazy"
+            style="width: 100%; height: 100%;">
+        </spline-viewer>
+    </div>
     <div class="admin-container">
-        <!-- Header -->
-        <header class="admin-nav">
-            <h1><i class="fas fa-route"></i> Route Management</h1>
-            <div class="admin-nav-links">
-                <a href="../dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                <a href="routes.html" class="active"><i class="fas fa-route"></i> Routes</a>
-                <a href="drivers.html"><i class="fas fa-users"></i> Drivers</a>
-                <a href="feedback.html"><i class="fas fa-comments"></i> Feedback</a>
-            </div>
-        </header>
+        <!-- Navbar will be loaded here -->
+        <div id="navbar-container"></div>
 
         <div class="route-management">
             <!-- Route Creation -->
@@ -363,7 +364,20 @@
         };
     </script>
     
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <!-- Custom JavaScript -->
+    <script src="../js/navbar.js"></script>
     <script src="../js/routes.js"></script>
+    <script src="../js/emergency-monitor.js"></script>
+    <script>
+        // Initialize navbar when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            navbarLoader.loadNavbar('navbar-container', 'Route Management');
+        });
+    </script>
 </body>
 </html> 
