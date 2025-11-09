@@ -262,6 +262,42 @@
             margin-bottom: 12px;
         }
 
+        /* Notices List Scrollbar */
+        #noticesList {
+            scrollbar-width: thin;
+            scrollbar-color: #c1c1c1 #f1f1f1;
+        }
+
+        #noticesList::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #noticesList::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        #noticesList::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        #noticesList::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        .notice-item {
+            transition: all 0.2s ease;
+        }
+
+        .notice-item:hover {
+            background: #f0f0f0 !important;
+        }
+
+        .notice-hide-btn:hover {
+            color: #1a73e8 !important;
+        }
+
         .sidebar-item {
             display: flex;
             align-items: center;
@@ -1247,13 +1283,28 @@
             align-items: center;
             justify-content: center;
             font-size: 24px;
-            animation: busBounce 0.5s ease-in-out infinite alternate;
             z-index: 1000;
         }
 
+        .animated-bus-marker div {
+            animation: busBounce 0.5s ease-in-out infinite alternate;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
         @keyframes busBounce {
-            0% { transform: translateY(0px); }
-            100% { transform: translateY(-5px); }
+            0% { 
+                transform: translateY(0px) scale(1);
+            }
+            100% { 
+                transform: translateY(-5px) scale(1.1);
+            }
+        }
+
+        /* Bus Travel Path */
+        .bus-travel-path {
+            stroke: #3b82f6 !important;
+            stroke-width: 4 !important;
+            stroke-opacity: 0.7 !important;
         }
 
         /* Loading Animation */
@@ -1666,7 +1717,7 @@
         <!-- Notices - Latest 2 Only -->
         <div class="sidebar-section">
             <h3>📢 Notices</h3>
-            <div id="noticesList">
+            <div id="noticesList" style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">
                 <div class="loading-spinner"></div>
                 <span style="margin-left: 8px; color: #5f6368;">Loading notices...</span>
             </div>
@@ -2694,13 +2745,14 @@
                 }
 
                 try {
-                    // Get bus location from Firebase
+                    // Get bus location from Firebase - use latest location
                     let busLocation = null;
                     if (window.firebase && window.firebase.database) {
                         const db = firebase.database();
                         const busLocationSnap = await db.ref(`BusLocation/${busId}`).once('value');
                         const locations = busLocationSnap.val() || {};
                         if (locations && typeof locations === 'object') {
+                            // Find latest timestamp
                             const timestamps = Object.keys(locations).filter(k => !isNaN(k)).map(k => parseInt(k));
                             if (timestamps.length > 0) {
                                 const latest = Math.max(...timestamps);
@@ -2710,6 +2762,11 @@
                                 }
                             }
                         }
+                    }
+
+                    // Also check if we have the bus path with last location
+                    if (!busLocation && busTravelPaths[busId] && busTravelPaths[busId].lastLocation) {
+                        busLocation = busTravelPaths[busId].lastLocation;
                     }
 
                     if (!busLocation) {
@@ -2756,28 +2813,20 @@
                         window.mapManager.routingControl = null;
                     }
 
-                    // Create optimal routing with Leaflet Routing Machine using OSRM
-                    window.mapManager.routingControl = L.Routing.control({
-                        waypoints: [
-                            L.latLng(currentUserLocation[0], currentUserLocation[1]),
-                            L.latLng(busLocation[0], busLocation[1]),
-                            L.latLng(destination[0], destination[1])
-                        ],
-                        routeWhileDragging: false,
-                        show: false,
-                        addWaypoints: false,
-                        router: L.Routing.osrmv1({
-                            serviceUrl: 'https://router.project-osrm.org/route/v1',
-                            profile: 'driving'
-                        }),
-                        lineOptions: {
-                            styles: [{ 
-                                color: '#1a73e8', 
-                                weight: 6, 
-                                opacity: 0.9,
-                                className: 'route-path'
-                            }]
-                        },
+                    // Hide animated bus for all buses when starting new directions
+                    Object.keys(busTravelPaths).forEach(bid => {
+                        activeDirectionsBuses.delete(bid);
+                        hideAnimatedBus(bid);
+                    });
+
+                    // Create waypoints plan with custom markers
+                    const waypoints = [
+                        L.latLng(currentUserLocation[0], currentUserLocation[1]),
+                        L.latLng(busLocation[0], busLocation[1]),
+                        L.latLng(destination[0], destination[1])
+                    ];
+
+                    const plan = L.Routing.plan(waypoints, {
                         createMarker: function(i, wp) {
                             let iconHtml, popupText;
                             
@@ -2801,11 +2850,39 @@
                                 })
                             }).bindPopup(popupText);
                         }
+                    });
+
+                    // Create optimal routing with Leaflet Routing Machine using OSRM
+                    window.mapManager.routingControl = L.Routing.control({
+                        plan: plan,
+                        routeWhileDragging: false,
+                        show: false,
+                        addWaypoints: false,
+                        router: L.Routing.osrmv1({
+                            serviceUrl: 'https://router.project-osrm.org/route/v1',
+                            profile: 'driving'
+                        }),
+                        lineOptions: {
+                            styles: [{ 
+                                color: '#1a73e8', 
+                                weight: 6, 
+                                opacity: 0.9,
+                                className: 'route-path'
+                            }]
+                        }
                     }).addTo(window.mapManager.map);
 
                     window.mapManager.routingControl.on('routesfound', function(e) {
                         // Hide loading
                         if (routeLoading) routeLoading.classList.remove('show');
+                        
+                        // Mark this bus as having active directions
+                        activeDirectionsBuses.add(busId);
+                        
+                        // Show animated bus for this bus
+                        if (busTravelPaths[busId] && busTravelPaths[busId].polyline) {
+                            showAnimatedBus(busId, busTravelPaths[busId].polyline, busLocation);
+                        }
                         
                         // Find optimal route (shortest time)
                         const routes = e.routes.sort((a, b) => a.summary.totalTime - b.summary.totalTime);
@@ -3010,6 +3087,432 @@
                     notification.style.display = 'none';
                 }
             };
+
+            // ========== NOTICES FUNCTIONALITY ==========
+            function updateNoticesList(notices) {
+                const noticesList = document.getElementById('noticesList');
+                if (!noticesList) return;
+
+                if (!notices) {
+                    noticesList.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">No notices available</div>';
+                    return;
+                }
+
+                const noticesArray = Object.keys(notices).map(key => ({
+                    id: key,
+                    ...notices[key]
+                })).sort((a, b) => (b.createdAt || b.timestamp || 0) - (a.createdAt || a.timestamp || 0))
+                .slice(0, 2); // Only latest 2
+
+                if (noticesArray.length === 0) {
+                    noticesList.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">No notices available</div>';
+                    return;
+                }
+
+                const hiddenNotices = JSON.parse(localStorage.getItem('vtrack_hidden_notices') || '[]');
+
+                noticesList.innerHTML = noticesArray
+                    .filter(notice => !hiddenNotices.includes(notice.id))
+                    .map(notice => `
+                        <div class="notice-item" data-notice-id="${notice.id}" style="padding: 12px; margin-bottom: 8px; background: #f8f9fa; border-radius: 8px; border-left: 3px solid #1a73e8;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: #202124; margin-bottom: 4px; font-size: 14px;">${notice.title || notice.content || 'Notice'}</div>
+                                    <div style="font-size: 12px; color: #5f6368; line-height: 1.4;">${notice.description || notice.message || notice.content || ''}</div>
+                                </div>
+                                <button class="notice-hide-btn" onclick="hideNotice('${notice.id}')" title="Hide" style="background: none; border: none; color: #5f6368; cursor: pointer; padding: 4px; margin-left: 8px; font-size: 14px;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div style="font-size: 11px; color: #9aa0a6; margin-top: 8px;">
+                                ${notice.createdAt || notice.timestamp ? new Date(notice.createdAt || notice.timestamp).toLocaleDateString() : 'Unknown date'}
+                            </div>
+                        </div>
+                    `).join('');
+
+                if (noticesList.innerHTML === '') {
+                    noticesList.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">All notices hidden</div>';
+                }
+            }
+
+            window.hideNotice = function(noticeId) {
+                const hiddenNotices = JSON.parse(localStorage.getItem('vtrack_hidden_notices') || '[]');
+                if (!hiddenNotices.includes(noticeId)) {
+                    hiddenNotices.push(noticeId);
+                    localStorage.setItem('vtrack_hidden_notices', JSON.stringify(hiddenNotices));
+                    
+                    const noticeItem = document.querySelector(`[data-notice-id="${noticeId}"]`);
+                    if (noticeItem) {
+                        noticeItem.style.display = 'none';
+                    }
+                    
+                    // Reload notices
+                    if (window.firebase && window.firebase.database) {
+                        const db = firebase.database();
+                        db.ref('notices').once('value', function(snapshot) {
+                            updateNoticesList(snapshot.val());
+                        });
+                    }
+                }
+            };
+
+            // Load notices from Firebase
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                db.ref('notices').on('value', function(snapshot) {
+                    updateNoticesList(snapshot.val());
+                });
+            }
+
+            // ========== LOGOUT FUNCTIONALITY ==========
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to logout?')) {
+                        // Sign out from Firebase if authenticated
+                        if (window.firebase && window.firebase.auth) {
+                            try {
+                                firebase.auth().signOut().then(() => {
+                                    localStorage.clear();
+                                    window.location.href = '../html/driver-login.html';
+                                }).catch((error) => {
+                                    console.error('Logout error:', error);
+                                    // Even if signOut fails, clear local storage and redirect
+                                    localStorage.clear();
+                                    window.location.href = '../html/driver-login.html';
+                                });
+                            } catch (e) {
+                                console.error('Logout error:', e);
+                                localStorage.clear();
+                                window.location.href = '../html/driver-login.html';
+                            }
+                        } else {
+                            // If Firebase auth not available, just clear and redirect
+                            localStorage.clear();
+                            window.location.href = '../html/driver-login.html';
+                        }
+                    }
+                });
+            }
+
+            // ========== BUS TRAVEL PATH ANIMATION ==========
+            // Store bus travel paths
+            const busTravelPaths = {}; // busId -> {polyline, lastLocation, pathHistory, animatedMarker, animationInterval, showAnimatedMarker}
+            const activeDirectionsBuses = new Set(); // Track buses with active directions
+
+            // Function to hide animated bus marker
+            function hideAnimatedBus(busId) {
+                const busPath = busTravelPaths[busId];
+                if (busPath && busPath.animatedMarker) {
+                    window.mapManager.map.removeLayer(busPath.animatedMarker);
+                    busPath.animatedMarker = null;
+                    busPath.showAnimatedMarker = false;
+                }
+                if (busPath && busPath.animationInterval) {
+                    clearInterval(busPath.animationInterval);
+                    busPath.animationInterval = null;
+                }
+            }
+
+            // Function to show animated bus marker (only when directions are active)
+            function showAnimatedBus(busId, polyline, currentLocation) {
+                if (!activeDirectionsBuses.has(busId)) {
+                    hideAnimatedBus(busId);
+                    return;
+                }
+
+                const busPath = busTravelPaths[busId];
+                if (!busPath || !polyline) return;
+
+                // Get polyline coordinates
+                const coordinates = polyline.getLatLngs();
+                if (!coordinates || coordinates.length === 0) return;
+
+                // Find the index of current location in the path
+                let currentIndex = coordinates.length - 1;
+                let minDistance = Infinity;
+                coordinates.forEach((coord, index) => {
+                    const lat = coord.lat !== undefined ? coord.lat : coord[0];
+                    const lng = coord.lng !== undefined ? coord.lng : coord[1];
+                    const dist = calculateDistance(
+                        lat,
+                        lng,
+                        currentLocation[0],
+                        currentLocation[1]
+                    );
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        currentIndex = index;
+                    }
+                });
+
+                // Remove old animated marker if exists
+                if (busPath.animatedMarker) {
+                    window.mapManager.map.removeLayer(busPath.animatedMarker);
+                    busPath.animatedMarker = null;
+                }
+
+                // Clear old animation interval
+                if (busPath.animationInterval) {
+                    clearInterval(busPath.animationInterval);
+                    busPath.animationInterval = null;
+                }
+
+                // Create animated bus marker at current location
+                const busIcon = L.divIcon({
+                    className: 'animated-bus-marker',
+                    html: '<div style="font-size: 28px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); animation: busBounce 0.5s ease-in-out infinite alternate;">🚌</div>',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                busPath.animatedMarker = L.marker(currentLocation, {
+                    icon: busIcon,
+                    zIndexOffset: 1000
+                }).addTo(window.mapManager.map);
+
+                busPath.showAnimatedMarker = true;
+
+                // Animate bus along the path from current position to end
+                let animationIndex = currentIndex;
+                busPath.animationInterval = setInterval(() => {
+                    if (!activeDirectionsBuses.has(busId)) {
+                        hideAnimatedBus(busId);
+                        return;
+                    }
+
+                    if (animationIndex < coordinates.length - 1) {
+                        animationIndex++;
+                        const nextCoord = coordinates[animationIndex];
+                        const lat = nextCoord.lat !== undefined ? nextCoord.lat : nextCoord[0];
+                        const lng = nextCoord.lng !== undefined ? nextCoord.lng : nextCoord[1];
+                        
+                        if (busPath.animatedMarker) {
+                            busPath.animatedMarker.setLatLng([lat, lng], { animate: true, duration: 0.1 });
+                        }
+                    } else {
+                        // Reached end, keep marker at end position
+                        if (busPath.animatedMarker && currentLocation) {
+                            busPath.animatedMarker.setLatLng(currentLocation);
+                        }
+                    }
+                }, 100); // Update every 100ms for smooth animation
+            }
+
+            // Function to update bus location with smooth path animation
+            function updateBusLocationWithPath(busId, newLocation) {
+                if (!window.mapManager || !window.mapManager.map) return;
+
+                const lat = parseFloat(newLocation.latitude);
+                const lng = parseFloat(newLocation.longitude);
+
+                if (isNaN(lat) || isNaN(lng)) return;
+
+                // Initialize bus path if not exists
+                if (!busTravelPaths[busId]) {
+                    busTravelPaths[busId] = {
+                        polyline: null,
+                        lastLocation: null,
+                        pathHistory: [],
+                        animatedMarker: null,
+                        animationInterval: null
+                    };
+                }
+
+                const busPath = busTravelPaths[busId];
+                const currentLocation = [lat, lng];
+
+                // Add to path history (keep last 50 points for performance)
+                if (busPath.lastLocation) {
+                    busPath.pathHistory.push(busPath.lastLocation);
+                    if (busPath.pathHistory.length > 50) {
+                        busPath.pathHistory.shift();
+                    }
+
+                    // Calculate distance moved
+                    const distance = calculateDistance(
+                        busPath.lastLocation[0],
+                        busPath.lastLocation[1],
+                        lat,
+                        lng
+                    );
+
+                    // Only update path if bus moved significantly (more than 10 meters)
+                    if (distance > 10) {
+                        // Update or create polyline with smooth path
+                        const allPoints = [...busPath.pathHistory, currentLocation];
+                        
+                        // Remove old polyline
+                        if (busPath.polyline) {
+                            window.mapManager.map.removeLayer(busPath.polyline);
+                        }
+
+                        // Use OSRM routing for smooth path if we have enough points (3+)
+                        if (allPoints.length >= 3 && window.L) {
+                            // Use OSRM API directly for better performance
+                            const waypoints = allPoints.map(p => `${p[1]},${p[0]}`).join(';');
+                            fetch(`https://router.project-osrm.org/route/v1/driving/${waypoints}?overview=full&geometries=geojson`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                                        const route = data.routes[0];
+                                        const coordinates = route.geometry.coordinates.map(c => [c[1], c[0]]); // OSRM returns [lng, lat]
+                                        
+                                        // Create smooth polyline with blue color (not red)
+                                        busPath.polyline = L.polyline(coordinates, {
+                                            color: '#3b82f6',
+                                            weight: 4,
+                                            opacity: 0.7,
+                                            smoothFactor: 1.0
+                                        }).addTo(window.mapManager.map);
+
+                                        // Only show animated bus if directions are active for this bus
+                                        if (activeDirectionsBuses.has(busId)) {
+                                            showAnimatedBus(busId, busPath.polyline, currentLocation);
+                                        }
+                                    } else {
+                                        // Fallback: simple polyline
+                                        busPath.polyline = L.polyline(allPoints, {
+                                            color: '#3b82f6',
+                                            weight: 4,
+                                            opacity: 0.7,
+                                            smoothFactor: 1.0
+                                        }).addTo(window.mapManager.map);
+
+                                        // Only show animated bus if directions are active for this bus
+                                        if (activeDirectionsBuses.has(busId)) {
+                                            showAnimatedBus(busId, busPath.polyline, currentLocation);
+                                        }
+                                    }
+                                })
+                                .catch(() => {
+                                    // Fallback: simple polyline if routing fails
+                                    busPath.polyline = L.polyline(allPoints, {
+                                        color: '#3b82f6',
+                                        weight: 4,
+                                        opacity: 0.7,
+                                        smoothFactor: 1.0
+                                    }).addTo(window.mapManager.map);
+
+                                    // Only show animated bus if directions are active for this bus
+                                    if (activeDirectionsBuses.has(busId)) {
+                                        showAnimatedBus(busId, busPath.polyline, currentLocation);
+                                    }
+                                });
+                        } else {
+                            // Simple polyline for first few points or if routing not available
+                            busPath.polyline = L.polyline(allPoints, {
+                                color: '#3b82f6',
+                                weight: 4,
+                                opacity: 0.7,
+                                smoothFactor: 1.0
+                            }).addTo(window.mapManager.map);
+
+                            // Only show animated bus if directions are active for this bus
+                            if (activeDirectionsBuses.has(busId)) {
+                                showAnimatedBus(busId, busPath.polyline, currentLocation);
+                            }
+                        }
+                    } else {
+                        // Bus hasn't moved much, just update animated marker position (if shown)
+                        if (busPath.animatedMarker && activeDirectionsBuses.has(busId)) {
+                            busPath.animatedMarker.setLatLng(currentLocation);
+                        }
+                    }
+                } else {
+                    // First location - don't create animated marker unless directions are active
+                    if (activeDirectionsBuses.has(busId)) {
+                        const busIcon = L.divIcon({
+                            className: 'animated-bus-marker',
+                            html: '<div style="font-size: 28px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); animation: busBounce 0.5s ease-in-out infinite alternate;">🚌</div>',
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16]
+                        });
+
+                        busPath.animatedMarker = L.marker(currentLocation, {
+                            icon: busIcon,
+                            zIndexOffset: 1000
+                        }).addTo(window.mapManager.map);
+                        busPath.showAnimatedMarker = true;
+                    }
+                }
+
+                // Update last location
+                busPath.lastLocation = currentLocation;
+
+                // Update real bus marker position smoothly in real-time
+                if (window.mapManager.busMarkers && window.mapManager.busMarkers[busId]) {
+                    // Use smooth animation for real bus marker
+                    window.mapManager.busMarkers[busId].setLatLng(currentLocation, {
+                        animate: true,
+                        duration: 0.5
+                    });
+                }
+            }
+
+            // Override mapManager.getDirectionsToBus to use our function
+            // Wait for mapManager to be initialized
+            function overrideGetDirectionsToBus() {
+                if (window.mapManager && window.mapManager.getDirectionsToBus) {
+                    window.mapManager.getDirectionsToBus = function(busId) {
+                        // Check if user has entered a destination
+                        const searchInput = document.getElementById('newSearchInput');
+                        if (!searchInput || !searchInput.value.trim()) {
+                            // Prompt user to enter destination
+                            const destination = prompt('Please enter a destination:');
+                            if (!destination || !destination.trim()) {
+                                alert('Destination is required for directions');
+                                return;
+                            }
+                            searchInput.value = destination;
+                        }
+
+                        // Ensure we have user location
+                        if (!userLocation) {
+                            getCurrentLocation(true).then(loc => {
+                                if (loc) {
+                                    userLocation = loc;
+                                    getDirectionsToBus(busId, searchInput.value.trim());
+                                } else {
+                                    alert('Could not get your location. Please enable location services.');
+                                }
+                            });
+                        } else {
+                            // Use our getDirectionsToBus function
+                            getDirectionsToBus(busId, searchInput.value.trim());
+                        }
+                    };
+                } else {
+                    // Retry after a short delay
+                    setTimeout(overrideGetDirectionsToBus, 500);
+                }
+            }
+
+            // Start override attempt
+            overrideGetDirectionsToBus();
+
+            // Listen to bus location updates and apply path animation
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                db.ref('BusLocation').on('value', function(snapshot) {
+                    const busLocations = snapshot.val() || {};
+                    Object.keys(busLocations).forEach(busId => {
+                        const busData = busLocations[busId];
+                        if (!busData || typeof busData !== 'object') return;
+                        
+                        // Find latest timestamp
+                        const timestamps = Object.keys(busData).filter(k => !isNaN(k)).map(k => parseInt(k));
+                        if (timestamps.length === 0) return;
+                        
+                        const latestTimestamp = Math.max(...timestamps);
+                        const locationData = busData[latestTimestamp];
+                        
+                        if (locationData && locationData.latitude && locationData.longitude) {
+                            updateBusLocationWithPath(busId, locationData);
+                        }
+                    });
+                });
+            }
         });
     </script>
 </body>
