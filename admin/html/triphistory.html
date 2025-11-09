@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trip History - Admin</title>
+    <link rel="stylesheet" href="../css/unified-admin.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.10.99/build/spline-viewer.js"></script>
+    <style>
+        .trip-filters {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .trip-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        
+        .stat-card p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .trip-list {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .trip-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-left: 4px solid #667eea;
+        }
+        
+        .trip-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .trip-card.completed {
+            border-left-color: #28a745;
+        }
+        
+        .trip-card.active {
+            border-left-color: #ffc107;
+        }
+        
+        .trip-card.cancelled {
+            border-left-color: #dc3545;
+        }
+        
+        .trip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        
+        .trip-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .trip-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-active {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .trip-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .trip-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .trip-detail-item i {
+            color: #667eea;
+            width: 20px;
+        }
+        
+        .trip-detail-item span {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .trip-detail-item strong {
+            color: #2c3e50;
+        }
+        
+        .trip-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+        
+        .empty-state h3 {
+            margin: 0 0 10px 0;
+            color: #999;
+        }
+        
+        .trip-map-container {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        #tripMap {
+            height: 400px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .loading i {
+            font-size: 48px;
+            color: #667eea;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .trip-timeline {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .timeline-item i {
+            color: #667eea;
+            width: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Spline Background Animation -->
+    <div class="spline-background">
+        <spline-viewer 
+            url="https://prod.spline.design/C8pSRp0aToPNslbt/scene.splinecode"
+            loading="lazy"
+            style="width: 100%; height: 100%;">
+        </spline-viewer>
+    </div>
+    <div class="admin-container">
+        <!-- Navbar will be loaded here -->
+        <div id="navbar-container"></div>
+
+        <div class="admin-content">
+            <section class="admin-section">
+                <h2><i class="fas fa-route"></i> Trip History</h2>
+                
+                <!-- Statistics Cards -->
+                <div class="trip-stats">
+                    <div class="stat-card">
+                        <h3 id="totalTrips">0</h3>
+                        <p><i class="fas fa-list"></i> Total Trips</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="activeTrips">0</h3>
+                        <p><i class="fas fa-play-circle"></i> Active Trips</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="completedTrips">0</h3>
+                        <p><i class="fas fa-check-circle"></i> Completed</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="totalDistance">0</h3>
+                        <p><i class="fas fa-road"></i> Total Distance (km)</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="totalStudents">0</h3>
+                        <p><i class="fas fa-users"></i> Total Students</p>
+                    </div>
+                </div>
+                
+                <!-- Filters -->
+                <div class="trip-filters">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label><i class="fas fa-bus"></i> Bus</label>
+                            <select id="busFilter" onchange="filterTrips()">
+                                <option value="">All Buses</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label><i class="fas fa-user-tie"></i> Driver</label>
+                            <select id="driverFilter" onchange="filterTrips()">
+                                <option value="">All Drivers</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label><i class="fas fa-route"></i> Route</label>
+                            <select id="routeFilter" onchange="filterTrips()">
+                                <option value="">All Routes</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label><i class="fas fa-calendar"></i> Status</label>
+                            <select id="statusFilter" onchange="filterTrips()">
+                                <option value="">All Status</option>
+                                <option value="completed">Completed</option>
+                                <option value="active">Active</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label><i class="fas fa-calendar-alt"></i> Start Date</label>
+                            <input type="date" id="startDateFilter" onchange="filterTrips()">
+                        </div>
+                        <div class="filter-group">
+                            <label><i class="fas fa-calendar-alt"></i> End Date</label>
+                            <input type="date" id="endDateFilter" onchange="filterTrips()">
+                        </div>
+                        <div class="filter-group" style="justify-content: flex-end;">
+                            <button class="btn btn-primary" onclick="loadAllTrips()" style="margin-top: 24px;">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Trip List -->
+                <div id="tripList" class="trip-list">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p>Loading trips...</p>
+                    </div>
+                </div>
+                
+                <!-- Trip Map (hidden by default, shown when viewing trip details) -->
+                <div id="tripMapContainer" class="trip-map-container" style="display: none;">
+                    <h3><i class="fas fa-map-marked-alt"></i> Trip Route</h3>
+                    <div id="tripMap"></div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="../js/navbar.js"></script>
+    <script src="../js/triphistory.js"></script>
+    <script src="../js/emergency-monitor.js"></script>
+</body>
+</html>
+

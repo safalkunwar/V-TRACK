@@ -6,6 +6,7 @@
     <title>Driver Management - Admin</title>
     <link rel="stylesheet" href="../css/unified-admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.10.99/build/spline-viewer.js"></script>
     <style>
         .driver-tabs {
             display: flex;
@@ -270,6 +271,14 @@
     </style>
 </head>
 <body>
+    <!-- Spline Background Animation -->
+    <div class="spline-background">
+        <spline-viewer 
+            url="https://prod.spline.design/C8pSRp0aToPNslbt/scene.splinecode"
+            loading="lazy"
+            style="width: 100%; height: 100%;">
+        </spline-viewer>
+    </div>
     <div class="admin-container">
         <!-- Navbar will be loaded here -->
         <div id="navbar-container"></div>
@@ -277,7 +286,27 @@
         <div class="admin-content">
             <!-- Driver Management -->
             <section class="admin-section">
-                <h2><i class="fas fa-user-tie"></i> Driver Management</h2>
+                <h2><i class="fas fa-user-tie"></i> Driver Management & Monitoring</h2>
+                
+                <!-- Driver Statistics -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                        <h3 style="margin: 0 0 10px 0; font-size: 32px; font-weight: 700;" id="totalDrivers">0</h3>
+                        <p style="margin: 0; font-size: 14px; opacity: 0.9;"><i class="fas fa-users"></i> Total Drivers</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                        <h3 style="margin: 0 0 10px 0; font-size: 32px; font-weight: 700;" id="activeDriversCount">0</h3>
+                        <p style="margin: 0; font-size: 14px; opacity: 0.9;"><i class="fas fa-user-check"></i> Active Drivers</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                        <h3 style="margin: 0 0 10px 0; font-size: 32px; font-weight: 700;" id="totalTrips">0</h3>
+                        <p style="margin: 0; font-size: 14px; opacity: 0.9;"><i class="fas fa-route"></i> Total Trips</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                        <h3 style="margin: 0 0 10px 0; font-size: 32px; font-weight: 700;" id="totalDistance">0</h3>
+                        <p style="margin: 0; font-size: 14px; opacity: 0.9;"><i class="fas fa-road"></i> Total Distance (km)</p>
+                    </div>
+                </div>
                 
                 <!-- Tab Navigation -->
                 <div class="driver-tabs">
@@ -373,5 +402,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="../js/navbar.js"></script>
     <script src="../js/drivers.js"></script>
+    <script src="../js/emergency-monitor.js"></script>
 </body>
 </html> 

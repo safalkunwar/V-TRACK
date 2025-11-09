@@ -251,8 +251,6 @@
 
 /* Enhanced Bus Fleet Overview with Scroll View */
 .bus-overview {
-    max-height: 600px;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
@@ -264,34 +262,34 @@
     flex-shrink: 0;
 }
 
-.bus-fleet-grid {
+/* Bus Grid - Scrollable like Real-time Bus Status */
+.bus-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 15px;
-    margin-top: 15px;
+    max-height: 400px;
     overflow-y: auto;
-    max-height: 500px;
     padding-right: 10px;
     scrollbar-width: thin;
-    scrollbar-color: #007bff #f8f9fa;
+    scrollbar-color: #667eea #f8f9fa;
 }
 
-.bus-fleet-grid::-webkit-scrollbar {
+.bus-grid::-webkit-scrollbar {
     width: 8px;
 }
 
-.bus-fleet-grid::-webkit-scrollbar-track {
+.bus-grid::-webkit-scrollbar-track {
     background: #f8f9fa;
-    border-radius: 4px;
+    border-radius: 10px;
 }
 
-.bus-fleet-grid::-webkit-scrollbar-thumb {
-    background: #007bff;
-    border-radius: 4px;
+.bus-grid::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
 }
 
-.bus-fleet-grid::-webkit-scrollbar-thumb:hover {
-    background: #0056b3;
+.bus-grid::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2, #667eea);
 }
 
 .bus-card {

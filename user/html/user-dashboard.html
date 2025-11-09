@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>V-Track | User Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <link rel="stylesheet" href="../css/user-dashboard.css" />
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <h1>V-Track</h1>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot" id="statusDot"></span>
+                <span class="status-text" id="statusText">Connecting...</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <button id="toggleMapType" class="icon-btn" title="Toggle Map Type">🗺️</button>
+            <button id="toggleNightMode" class="icon-btn" title="Toggle Night Mode">🌙</button>
+        </div>
+    </header>
+
+    <!-- Google Maps Style Search Bar -->
+    <div class="top-search-bar" id="topSearchBar">
+        <div class="search-bar-container">
+            <div class="search-icon">🔍</div>
+            <input 
+                type="text" 
+                id="topSearchInput" 
+                class="top-search-input" 
+                placeholder="Search places, addresses, or locations..."
+                autocomplete="off"
+            />
+            <button class="search-clear-btn" id="searchClearBtn" style="display: none;">✕</button>
+            <button class="search-voice-btn" id="searchVoiceBtn" title="Voice Search">🎤</button>
+        </div>
+        <div class="search-suggestions" id="searchSuggestions" style="display: none;"></div>
+    </div>
+
+    <!-- Main Map Area -->
+    <main class="map-container">
+        <div id="map"></div>
+        
+        <!-- Floating Action Buttons -->
+        <div class="fab-container">
+            <button id="trackBusBtn" class="fab primary" title="Track My Bus">
+                <span class="fab-icon">🚌</span>
+                <span class="fab-label">Track</span>
+            </button>
+            <button id="placeMarkerBtn" class="fab secondary" title="Place Marker">
+                <span class="fab-icon">📍</span>
+                <span class="fab-label">Mark</span>
+            </button>
+            <button id="searchBtn" class="fab secondary" title="Search">
+                <span class="fab-icon">🔍</span>
+                <span class="fab-label">Search</span>
+            </button>
+            <button id="setAlertBtn" class="fab secondary" title="Set Arrival Alert">
+                <span class="fab-icon">🔔</span>
+                <span class="fab-label">Alert</span>
+            </button>
+            <button id="trackFromLocationBtn" class="fab secondary" title="Track from My Location">
+                <span class="fab-icon">🧭</span>
+                <span class="fab-label">Track</span>
+            </button>
+        </div>
+
+        <!-- Proximity Alert Banner -->
+        <div id="proximityAlert" class="proximity-alert" style="display: none;">
+            <span class="alert-icon">🔔</span>
+            <span class="alert-text">Your bus is nearby!</span>
+            <button class="alert-close" onclick="this.parentElement.style.display='none'">✕</button>
+        </div>
+    </main>
+
+    <!-- Sliding Panels -->
+    <!-- Bus List Panel -->
+    <aside id="busListPanel" class="slide-panel left">
+        <div class="panel-header">
+            <h2>Available Buses</h2>
+            <button class="panel-close" onclick="closePanel('busListPanel')">✕</button>
+        </div>
+        <div class="panel-content">
+            <div id="busList" class="bus-list">
+                <div class="loading">Loading buses...</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Saved Places Panel -->
+    <aside id="savedPlacesPanel" class="slide-panel left">
+        <div class="panel-header">
+            <h2>Saved Places</h2>
+            <button class="panel-close" onclick="closePanel('savedPlacesPanel')">✕</button>
+        </div>
+        <div class="panel-content">
+            <div id="savedPlacesList" class="saved-places-list">
+                <div class="empty-state">No saved places yet. Tap "Mark" to save a location.</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Search Panel -->
+    <aside id="searchPanel" class="slide-panel bottom">
+        <div class="panel-header">
+            <h2>Search</h2>
+            <button class="panel-close" onclick="closePanel('searchPanel')">✕</button>
+        </div>
+        <div class="panel-content">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search address or place..." />
+                <button id="searchSubmitBtn">Search</button>
+            </div>
+            <div id="searchResults" class="search-results"></div>
+        </div>
+    </aside>
+
+    <!-- Directions Panel -->
+    <aside id="directionsPanel" class="slide-panel bottom">
+        <div class="panel-header">
+            <h2>Directions</h2>
+            <button class="panel-close" onclick="closePanel('directionsPanel')">✕</button>
+        </div>
+        <div class="panel-content">
+            <div id="directionsContent" class="directions-content">
+                <p>Select a destination to get directions.</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Report Issue Panel -->
+    <aside id="reportPanel" class="slide-panel bottom">
+        <div class="panel-header">
+            <h2>Report Issue</h2>
+            <button class="panel-close" onclick="closePanel('reportPanel')">✕</button>
+        </div>
+        <div class="panel-content">
+            <form id="reportForm" class="report-form">
+                <div class="form-group">
+                    <label>Issue Type</label>
+                    <select id="reportType" required>
+                        <option value="">Select type...</option>
+                        <option value="bus_delay">Bus Delay</option>
+                        <option value="bus_breakdown">Bus Breakdown</option>
+                        <option value="driver_issue">Driver Issue</option>
+                        <option value="route_issue">Route Issue</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="reportDescription" rows="4" placeholder="Describe the issue..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Bus ID (if applicable)</label>
+                    <input type="text" id="reportBusId" placeholder="Optional" />
+                </div>
+                <button type="submit" class="btn-primary">Submit Report</button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Notices Panel -->
+    <aside id="noticesPanel" class="slide-panel right">
+        <div class="panel-header">
+            <h2>Notices</h2>
+            <button class="panel-close" onclick="closePanel('noticesPanel')">✕</button>
+        </div>
+        <div class="panel-content">
+            <div id="noticesList" class="notices-list">
+                <div class="loading">Loading notices...</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Routes Panel -->
+    <aside id="routesPanel" class="slide-panel left">
+        <div class="panel-header">
+            <h2>Routes</h2>
+            <button class="panel-close" onclick="closePanel('routesPanel')">✕</button>
+        </div>
+        <div class="panel-content">
+            <div id="routesList" class="routes-list">
+                <div class="loading">Loading routes...</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Bus Arrival Alert Setup Panel -->
+    <aside id="alertSetupPanel" class="slide-panel bottom">
+        <div class="panel-header">
+            <h2>Set Bus Arrival Alert</h2>
+            <button class="panel-close" onclick="closePanel('alertSetupPanel')">✕</button>
+        </div>
+        <div class="panel-content">
+            <form id="alertSetupForm" class="alert-setup-form">
+                <div class="form-group">
+                    <label>Alert Location</label>
+                    <div class="location-picker">
+                        <button type="button" class="btn-secondary" onclick="pickAlertLocation()">
+                            📍 Pick Location on Map
+                        </button>
+                        <div id="alertLocationDisplay" class="location-display">No location selected</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Bus Selection</label>
+                    <select id="alertBusSelect" required>
+                        <option value="">Select bus...</option>
+                        <option value="all">All Buses</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Alert Name</label>
+                    <input type="text" id="alertName" placeholder="e.g., Home, Work, Bus Stop" required />
+                </div>
+                <div class="form-group">
+                    <label>Proximity Distance (meters)</label>
+                    <input type="number" id="alertDistance" value="100" min="50" max="1000" step="50" required />
+                </div>
+                <button type="submit" class="btn-primary">Set Alert</button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Active Alerts Panel -->
+    <aside id="activeAlertsPanel" class="slide-panel left">
+        <div class="panel-header">
+            <h2>Active Alerts</h2>
+            <button class="panel-close" onclick="closePanel('activeAlertsPanel')">✕</button>
+        </div>
+        <div class="panel-content">
+            <div id="activeAlertsList" class="alerts-list">
+                <div class="empty-state">No active alerts. Set an alert to be notified when a bus arrives.</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Bus Info Popup (Custom) -->
+    <div id="busInfoPopup" class="custom-popup" style="display: none;">
+        <div class="popup-header">
+            <h3 id="popupBusName">Bus Name</h3>
+            <button class="popup-close" onclick="closeBusInfoPopup()">✕</button>
+        </div>
+        <div class="popup-content">
+            <div class="info-row">
+                <span class="info-label">Driver:</span>
+                <span id="popupDriverName">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Route:</span>
+                <span id="popupRouteName">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Status:</span>
+                <span id="popupStatus" class="status-badge">—</span>
+            </div>
+            <div class="popup-actions">
+                <a id="popupCallBtn" href="#" class="btn-action call">📞 Call Driver</a>
+                <button id="popupTrackBtn" class="btn-action track">📍 Track Bus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-panel="busListPanel" onclick="togglePanel('busListPanel')">
+            <span class="nav-icon">🚌</span>
+            <span class="nav-label">Buses</span>
+        </button>
+        <button class="nav-btn" data-panel="savedPlacesPanel" onclick="togglePanel('savedPlacesPanel')">
+            <span class="nav-icon">⭐</span>
+            <span class="nav-label">Saved</span>
+        </button>
+        <button class="nav-btn" data-panel="reportPanel" onclick="togglePanel('reportPanel')">
+            <span class="nav-icon">⚠️</span>
+            <span class="nav-label">Report</span>
+        </button>
+        <button class="nav-btn" data-panel="routesPanel" onclick="togglePanel('routesPanel')">
+            <span class="nav-icon">🛣️</span>
+            <span class="nav-label">Routes</span>
+        </button>
+        <button class="nav-btn" data-panel="noticesPanel" onclick="togglePanel('noticesPanel')">
+            <span class="nav-icon">🔔</span>
+            <span class="nav-label">Notices</span>
+        </button>
+        <button class="nav-btn" data-panel="activeAlertsPanel" onclick="togglePanel('activeAlertsPanel')">
+            <span class="nav-icon">⚠️</span>
+            <span class="nav-label">Alerts</span>
+        </button>
+    </nav>
+
+    <!-- Menu Dropdown -->
+    <div id="menuDropdown" class="menu-dropdown" style="display: none;">
+        <button onclick="showNearbyStops()">📍 Nearby Stops</button>
+        <button onclick="togglePanel('alertSetupPanel')">🔔 Set Arrival Alert</button>
+        <button onclick="togglePanel('activeAlertsPanel')">📋 View Active Alerts</button>
+        <button onclick="clearSavedPlaces()">🗑️ Clear Saved</button>
+        <button onclick="resetMap()">🔄 Reset Map</button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="../js/user-dashboard.js"></script>
+</body>
+</html>
+

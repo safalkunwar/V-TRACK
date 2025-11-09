@@ -6,8 +6,71 @@
     <title>Feedback - Admin</title>
     <link rel="stylesheet" href="../css/unified-admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.10.99/build/spline-viewer.js"></script>
+    <style>
+        .feedback-table-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        
+        .feedback-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .feedback-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .feedback-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .feedback-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        
+        .feedback-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .feedback-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .empty-feedback {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .empty-feedback i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+    </style>
 </head>
 <body>
+    <!-- Spline Background Animation -->
+    <div class="spline-background">
+        <spline-viewer 
+            url="https://prod.spline.design/C8pSRp0aToPNslbt/scene.splinecode"
+            loading="lazy"
+            style="width: 100%; height: 100%;">
+        </spline-viewer>
+    </div>
     <div class="admin-container">
         <!-- Navbar will be loaded here -->
         <div id="navbar-container"></div>
@@ -35,9 +98,11 @@
 
     <!-- Include Firebase JavaScript SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="../js/navbar.js"></script>
     <script src="../js/backfeedback.js"></script>
+    <script src="../js/emergency-monitor.js"></script>
     <script>
         // Initialize navbar when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {

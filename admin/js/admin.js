@@ -697,3 +697,55 @@ function addEndpointMarkers(locations) {
         console.error('Error adding endpoint markers:', error);
     }
 } 
+       function showEmergencyPopup(emergency) {
+                // Create popup element
+                const popup = document.createElement("div");
+                popup.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: linear-gradient(135deg, #ef4444, #dc2626);
+                    color: white;
+                    padding: 20px 30px;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+                    z-index: 10002;
+                    font-family: sans-serif;
+                    text-align: center;
+                    animation: slideDown 0.5s ease-out;
+                `;
+
+                popup.innerHTML = `
+                    <h2 style="margin: 0 0 10px 0; font-size: 24px;">🚨 EMERGENCY ALERT 🚨</h2>
+                    <p style="margin: 0; font-size: 16px;">
+                        Bus <strong>${emergency.busId}</strong> has triggered an emergency alert.
+                    </p>
+                    <p style="margin-top: 5px; font-size: 14px; opacity: 0.9;">
+                        Description: ${emergency.description || "No description provided."}
+                    </p>
+                    <button id="closeEmergencyPopup" style="
+                        margin-top: 15px;
+                        padding: 8px 16px;
+                        background: rgba(255, 255, 255, 0.2);
+                        border: 1px solid white;
+                        color: white;
+                        border-radius: 6px;
+                        cursor: pointer;
+                    ">Dismiss</button>
+                `;
+
+                document.body.appendChild(popup);
+
+                document
+                    .getElementById("closeEmergencyPopup")
+                    .addEventListener("click", () => {
+                        popup.style.animation = "slideUp 0.3s ease-in";
+                        setTimeout(() => popup.remove(), 300);
+                    });
+            }
+
+            // Start listening when the page loads
+            window.addEventListener("DOMContentLoaded", () => {
+                listenForEmergencies();
+            });

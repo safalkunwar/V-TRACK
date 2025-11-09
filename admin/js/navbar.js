@@ -81,13 +81,15 @@ class NavbarLoader {
             <nav class="admin-nav">
                 <h1>${pageTitle}</h1>
                 <div class="admin-nav-links">
-                    <a href="dashboard.html">Dashboard</a>
-                    <a href="adminpanel.html">Bus Management</a>
-                    <a href="routes.html">Route Management</a>
-                    <a href="bushistory.html">Bus History</a>
-                    <a href="drivers.html">Drivers</a>
-                    <a href="backendfeedback.html">Feedback</a>
-                    <button onclick="logout()" class="logout-btn">Logout</button>
+                    <a href="dashboard.html"><span><i class="fas fa-tachometer-alt"></i> Dashboard</span></a>
+                    <a href="adminpanel.html"><span><i class="fas fa-bus"></i> Buses</span></a>
+                    <a href="routes.html"><span><i class="fas fa-route"></i> Routes</span></a>
+                    <a href="bushistory.html"><span><i class="fas fa-history"></i> History</span></a>
+                    <a href="triphistory.html"><span><i class="fas fa-route"></i> Trips</span></a>
+                    <a href="drivers.html"><span><i class="fas fa-user-tie"></i> Drivers</span></a>
+                    <a href="users.html"><span><i class="fas fa-users"></i> Users</span></a>
+                    <a href="backendfeedback.html"><span><i class="fas fa-comments"></i> Feedback</span></a>
+                    <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
                 </div>
             </nav>
         `;

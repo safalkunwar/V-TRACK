@@ -111,7 +111,15 @@ class MapManager {
         document.querySelectorAll('.map-type-btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        document.getElementById(mapType + 'ViewBtn').classList.add('active');
+        const mapTypeBtn = document.getElementById(mapType + 'ViewBtn');
+        if (mapTypeBtn) {
+            mapTypeBtn.classList.add('active');
+        }
+        // Also update data-type attribute buttons
+        const dataTypeBtn = document.querySelector(`.map-type-btn[data-type="${mapType}"]`);
+        if (dataTypeBtn) {
+            dataTypeBtn.classList.add('active');
+        }
     }
 
     // Initialize predefined routes for buses (3-4km realistic paths)
@@ -447,11 +455,29 @@ class MapManager {
         if (!busData) return;
 
         Object.keys(busData).forEach(busId => {
-            const bus = busData[busId];
+            const busLocationData = busData[busId];
+            
+            // Handle BusLocation structure: BusLocation/{busId}/{timestamp}/latitude, longitude
+            if (!busLocationData || typeof busLocationData !== 'object') return;
+            
+            // Find latest timestamp
+            const timestamps = Object.keys(busLocationData)
+                .filter(k => !isNaN(k) && k !== 'currentRoute')
+                .map(k => parseInt(k))
+                .sort((a, b) => b - a); // Sort descending to get latest first
+            
+            if (timestamps.length === 0) return;
+            
+            const latestTimestamp = timestamps[0];
+            const latestLocation = busLocationData[latestTimestamp];
+            
+            if (!latestLocation || !latestLocation.latitude || !latestLocation.longitude) {
+                return;
+            }
             
             // Enhanced coordinate validation
-            const lat = parseFloat(bus.latitude);
-            const lng = parseFloat(bus.longitude);
+            const lat = parseFloat(latestLocation.latitude);
+            const lng = parseFloat(latestLocation.longitude);
             
             if (!this.isValidCoordinates(lat, lng)) {
                 console.warn(`Invalid coordinates for bus ${busId}:`, lat, lng);
@@ -459,13 +485,23 @@ class MapManager {
             }
 
             const location = [lat, lng];
-            const isActive = this.firebaseManager.isBusActive(bus.timestamp);
+            const isActive = this.firebaseManager.isBusActive(latestTimestamp);
+
+            // Prepare bus info for popup
+            const busInfo = {
+                latitude: lat,
+                longitude: lng,
+                timestamp: latestTimestamp,
+                ...latestLocation
+            };
 
             if (this.busMarkers[busId]) {
                 // Update existing marker
                 try {
                     this.busMarkers[busId].setLatLng(location);
                     this.updateMarkerStyle(busId, isActive);
+                    // Update popup content
+                    this.busMarkers[busId].setPopupContent(this.createBusPopup(busId, busInfo));
                 } catch (error) {
                     console.error(`Error updating marker for bus ${busId}:`, error);
                 }
@@ -476,7 +512,7 @@ class MapManager {
                         icon: this.createBusIcon(busId, isActive)
                     }).addTo(this.map);
 
-                    marker.bindPopup(this.createBusPopup(busId, bus));
+                    marker.bindPopup(this.createBusPopup(busId, busInfo));
                     this.busMarkers[busId] = marker;
                 } catch (error) {
                     console.error(`Error creating marker for bus ${busId}:`, error);
