@@ -19,376 +19,164 @@
     }
 
     /* Skip Button */
-    #skipBtn {
-      display: none;
-      position: fixed;
-      bottom: 12px;   /* give touch-friendly spacing */
-      right: 12px;    /* give touch-friendly spacing */
-      padding: 12px 20px;
-      font-size: 16px;
-      font-weight: 700;
-      border: none;
-      border-radius: 8px;
-      background: rgba(0, 255, 120, 0.95);
-      color: #041107;
-      cursor: pointer;
-      z-index: 10000; /* ABOVE video */
-      box-shadow: 0 0 24px rgba(0, 255, 120, 0.7);
-      transition: background 0.25s ease, transform 0.12s ease;
-    }
+  /* Skip Button */
+#skipBtn {
+  display: none;
+  position: fixed;
+  bottom: 1px;   /* stick to bottom */
+  right: 1px;    /* stick to right */
+  padding: 10px 22px;  
+  font-size: 20px;
+  font-weight: 900;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 255, 120, 0.95);
+  color: #041107;
+  cursor: pointer;
+  z-index: 10000; /* ABOVE video */
+  box-shadow: 0 0 40px rgba(0, 255, 120, 0.7);
+  transition: background 0.25s ease, transform 0.2s ease;
+}
 
-    #skipBtn:hover { transform: scale(1.03); }
-
-    /* small helpers for signup state */
-    .login-container.signing-up .login-content h2 { content: "Sign Up"; }
-    .login-container .secondary { margin-left: 8px; }
-
-    /* Energy bubble + impact styles (in case login.css doesn't provide them) */
-    #bubble-layer, #impact-layer {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 500;
-    }
-
-    .energy-bubble {
-      position: fixed;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 40% 30%, rgba(255,255,255,0.95), rgba(0,255,180,0.9));
-      box-shadow: 0 0 18px rgba(0,255,180,0.9), 0 0 40px rgba(0,255,120,0.25) inset;
-      transform: translate(-50%, -50%);
-      animation: bubbleMove var(--dur) cubic-bezier(.22,.9,.35,1) forwards, bubbleFlicker 1200ms infinite;
-      opacity: 0.95;
-    }
-
-    @keyframes bubbleMove {
-      from { transform: translate(-50%, -50%) translate(0,0) scale(1); }
-      to { transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(0.55); opacity: 0.0; }
-    }
-
-    @keyframes bubbleFlicker {
-      0%{filter:brightness(1);} 50%{filter:brightness(0.85);} 100%{filter:brightness(1);}
-    }
-
-    .impact {
-      position: fixed;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      transform: translate(-50%, -50%) scale(0.6);
-      background: radial-gradient(circle, rgba(0,255,180,0.9) 0%, rgba(0,255,120,0.35) 40%, rgba(0,0,0,0) 60%);
-      box-shadow: 0 0 28px rgba(0,255,120,0.6);
-      animation: impactPulse 480ms ease-out forwards;
-      pointer-events: none;
-    }
-
-    @keyframes impactPulse {
-      from { transform: translate(-50%, -50%) scale(0.5); opacity: 1 }
-      to { transform: translate(-50%, -50%) scale(1.6); opacity: 0 }
-    }
-
-    /* Minimal accessible improvements */
-    .login-content input { font-size: 16px; padding: 10px; margin: 8px 0; width: 100%; box-sizing: border-box; }
-    .login-content button { margin-right: 8px; }
-
-    /* charging effect for login button */
-    #loginBtn { position: relative; overflow: hidden; }
-    #loginBtn::after {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: var(--charge-width, 0%);
-      background: linear-gradient(90deg, rgba(0,255,120,0.12), rgba(0,255,120,0.22));
-      z-index: 0; transition: width 300ms ease;
-    }
-    #loginBtn span { position: relative; z-index: 1; }
+#skipBtn:hover {
+  background: rgba(0, 255, 120, 1);
+  transform: scale(1.05);
+}
 
   </style>
 </head>
 <body>
   <!-- EARTH (Spline) -->
   <div class="earth-wrapper" id="earthWrapper" data-earth-x="0.72" data-earth-y="0.50">
-    <spline-viewer url="https://prod.spline.design/uVbNe0IBVvasqAql/scene.splinecode"></spline-viewer>
+    <spline-viewer 
+      url="https://prod.spline.design/uVbNe0IBVvasqAql/scene.splinecode">
+    </spline-viewer>
   </div>
 
   <!-- EFFECT LAYERS -->
-  <div id="bubble-layer" aria-hidden="true"></div>
-  <div id="impact-layer" aria-hidden="true"></div>
+  <div id="bubble-layer"></div>
+  <div id="impact-layer"></div>
 
   <!-- LOGIN -->
   <div class="login-container" id="loginContainer">
     <div class="login-content">
       <h2>Login</h2>
       <form id="loginForm" autocomplete="off">
-        <label for="email" class="sr-only">Email</label>
-        <input type="email" id="email" name="email" placeholder="Email" required aria-required="true" />
-        <label for="password" class="sr-only">Password</label>
-        <input type="password" id="password" name="password" placeholder="Password" required aria-required="true" />
-        <div style="display:flex; align-items:center; margin-top:12px;">
-          <button type="submit" id="loginBtn"><span>Login</span></button>
-          <button type="button" id="signupBtn" class="secondary">Sign Up</button>
-          <button type="button" id="resetBtn" class="secondary">Forgot Password?</button>
-        </div>
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit" id="loginBtn"><span>Login</span></button>
+        <button type="button" id="resetBtn" class="secondary">Forgot Password?</button>
       </form>
     </div>
   </div>
 
   <!-- Transition Video -->
-  <video id="transitionVideo" preload="auto" muted playsinline aria-hidden="true">
+  <video id="transitionVideo" preload="auto">
     <source src="./user/html/transition.mp4" type="video/mp4" />
     Your browser does not support the video tag.
   </video>
-  <button id="skipBtn" aria-label="Skip transition">Skip</button>
+  <button id="skipBtn">Skip</button>
 
   <!-- Spline Script -->
-  <script type="module" src="https://unpkg.com/@splinetool/viewer/build/spline-viewer.js" defer></script>
-
-  <!-- Firebase SDKs (compat builds used for simple migrations and similarity with other sections) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" defer></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" defer></script>
-  <!-- Optional: load your firebase initialization here if present in repo (example path). If your project uses a different path, update accordingly. -->
-  <script src="./user/html/firebase-init.js" defer></script>
+  <script type="module" src="https://unpkg.com/@splinetool/viewer/build/spline-viewer.js"></script>
 
   <script>
-    (function(){
-      // Run once DOM has loaded to ensure layout is stable
-      document.addEventListener('DOMContentLoaded', () => {
-        const loginContainer = document.getElementById('loginContainer');
-        const loginBtn = document.getElementById('loginBtn');
-        const signupBtn = document.getElementById('signupBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const earthWrapper = document.getElementById('earthWrapper');
-        const bubbleLayer = document.getElementById('bubble-layer');
-        const impactLayer = document.getElementById('impact-layer');
-        const transitionVideo = document.getElementById('transitionVideo');
-        const skipBtn = document.getElementById('skipBtn');
-        let chargeLevel = 0;
-        let bubbleIntervalId = null;
+    const loginContainer = document.getElementById('loginContainer');
+    const loginBtn = document.getElementById('loginBtn');
+    const earthWrapper = document.getElementById('earthWrapper');
+    const bubbleLayer = document.getElementById('bubble-layer');
+    const impactLayer = document.getElementById('impact-layer');
+    const transitionVideo = document.getElementById('transitionVideo');
+    const skipBtn = document.getElementById('skipBtn');
+    let chargeLevel = 0;
 
-        // Utility: check firebase availability
-        function hasFirebaseAuth() {
-          try {
-            return typeof firebase !== 'undefined' && firebase && (typeof firebase.auth === 'function' || typeof firebase.auth === 'object');
-          } catch (e) { return false; }
-        }
+    // Target: center of login box
+    function getLoginTarget() {
+      const r = loginContainer.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
 
-        // Target: center of login box
-        function getLoginTarget() {
-          const r = loginContainer.getBoundingClientRect();
-          return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-        }
+    // Source: approx center of Earth
+    function getEarthSource() {
+      const r = earthWrapper.getBoundingClientRect();
+      const fx = parseFloat(earthWrapper.dataset.earthX || '0.72');
+      const fy = parseFloat(earthWrapper.dataset.earthY || '0.50');
+      return { x: r.left + r.width * fx, y: r.top + r.height * fy };
+    }
 
-        // Source: approx center of Earth
-        function getEarthSource() {
-          const r = earthWrapper.getBoundingClientRect();
-          const fx = parseFloat(earthWrapper.dataset.earthX || '0.72');
-          const fy = parseFloat(earthWrapper.dataset.earthY || '0.50');
-          return { x: r.left + r.width * fx, y: r.top + r.height * fy };
-        }
+    // Bubble traveling Earth → Login
+    function releaseBubble() {
+      const { x: startX, y: startY } = getEarthSource();
+      const { x: targetX, y: targetY } = getLoginTarget();
+      const dx = targetX - startX, dy = targetY - startY;
 
-        // Bubble traveling Earth → Login
-        function releaseBubble() {
-          const { x: startX, y: startY } = getEarthSource();
-          const { x: targetX, y: targetY } = getLoginTarget();
-          const dx = targetX - startX, dy = targetY - startY;
+      const bubble = document.createElement('div');
+      bubble.className = 'energy-bubble';
+      const dur = 2500 + Math.random() * 1000;
+      bubble.style.left = startX + 'px';
+      bubble.style.top = startY + 'px';
+      bubble.style.setProperty('--dx', dx + 'px');
+      bubble.style.setProperty('--dy', dy + 'px');
+      bubble.style.setProperty('--dur', dur + 'ms');
+      bubbleLayer.appendChild(bubble);
 
-          const bubble = document.createElement('div');
-          bubble.className = 'energy-bubble';
-          const dur = 2000 + Math.random() * 1200;
-          bubble.style.left = startX + 'px';
-          bubble.style.top = startY + 'px';
-          bubble.style.setProperty('--dx', dx + 'px');
-          bubble.style.setProperty('--dy', dy + 'px');
-          bubble.style.setProperty('--dur', dur + 'ms');
-          bubbleLayer.appendChild(bubble);
+      setTimeout(() => createImpact(targetX, targetY), dur - 200);
+      setTimeout(() => bubble.remove(), dur + 200);
+    }
 
-          setTimeout(() => createImpact(targetX, targetY), dur - 220);
-          setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, dur + 300);
-        }
+    // Glow + charge when bubble absorbed
+    function createImpact(x, y) {
+      const impact = document.createElement('div');
+      impact.className = 'impact';
+      impact.style.left = x + 'px';
+      impact.style.top = y + 'px';
+      impactLayer.appendChild(impact);
 
-        // Glow + charge when bubble absorbed
-        function createImpact(x, y) {
-          const impact = document.createElement('div');
-          impact.className = 'impact';
-          impact.style.left = x + 'px';
-          impact.style.top = y + 'px';
-          impactLayer.appendChild(impact);
+      loginContainer.classList.add('charging');
+      setTimeout(() => loginContainer.classList.remove('charging'), 800);
 
-          loginContainer.classList.add('charging');
-          setTimeout(() => loginContainer.classList.remove('charging'), 800);
+      chargeLevel = Math.min(100, chargeLevel + 5);
+      loginBtn.style.setProperty('--charge-width', chargeLevel + "%");
 
-          chargeLevel = Math.min(100, chargeLevel + 5);
-          loginBtn.style.setProperty('--charge-width', chargeLevel + "%");
+      if (chargeLevel >= 100) loginBtn.classList.add("charged");
 
-          if (chargeLevel >= 100) loginBtn.classList.add("charged");
+      setTimeout(() => impact.remove(), 200);
+    }
 
-          setTimeout(() => { if (impact.parentNode) impact.remove(); }, 520);
-        }
+    setInterval(releaseBubble, 2500);
 
-        function startBubbles() {
-          if (bubbleIntervalId) return;
-          releaseBubble();
-          bubbleIntervalId = setInterval(releaseBubble, 2500);
-        }
-        function stopBubbles() {
-          if (bubbleIntervalId) { clearInterval(bubbleIntervalId); bubbleIntervalId = null; }
-        }
+    // Handle login
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (!email || !password) return alert("Please fill in all fields");
 
-        // Start animations after a short delay so layout has stabilized
-        setTimeout(startBubbles, 300);
+      // Hide login
+      loginContainer.style.opacity = '0';
 
-        // Pause/resume when tab hidden to save CPU
-        document.addEventListener('visibilitychange', () => {
-          if (document.hidden) stopBubbles(); else startBubbles();
-        });
+      // Show video + skip
+      transitionVideo.style.display = "block";
+      skipBtn.style.display = "block";
+      transitionVideo.play();
 
-        // Recalculate on resize
-        window.addEventListener('resize', () => { /* positions read from DOM when each bubble is created */ });
+      // Redirect after video
+      transitionVideo.onended = () => {
+        window.location.href = "user/html/dashboard.html";
+      };
 
-        // Helper to play transition and redirect to dashboard
-        function playTransitionAndRedirect() {
-          // Hide login
-          loginContainer.style.opacity = '0';
+      // Skip handler
+      skipBtn.onclick = () => {
+        transitionVideo.pause();
+        window.location.href = "user/html/dashboard.html";
+      };
+    });
 
-          // Show video + skip
-          transitionVideo.style.display = "block";
-          skipBtn.style.display = "block";
-          transitionVideo.currentTime = 0;
-
-          // Some browsers block autoplay with sound; we keep video muted for reliability
-          transitionVideo.muted = true;
-
-          const onEnded = () => {
-            cleanupVideoHandlers();
-            window.location.href = "dashboard.html";
-          };
-          const onPlayError = (err) => {
-            // fallback immediate redirect if video fails to play
-            console.warn('transition video play blocked or failed', err);
-            cleanupVideoHandlers();
-            window.location.href = "dashboard.html";
-          };
-
-          function cleanupVideoHandlers() {
-            transitionVideo.removeEventListener('ended', onEnded);
-            transitionVideo.removeEventListener('error', onPlayError);
-            skipBtn.removeEventListener('click', onSkip);
-          }
-
-          function onSkip() {
-            transitionVideo.pause();
-            cleanupVideoHandlers();
-            window.location.href = "dashboard.html";
-          }
-
-          transitionVideo.addEventListener('ended', onEnded);
-          transitionVideo.addEventListener('error', onPlayError);
-          skipBtn.addEventListener('click', onSkip);
-
-          const p = transitionVideo.play();
-          if (p && typeof p.catch === 'function') p.catch(onPlayError);
-        }
-
-        // LOGIN using Firebase if available, otherwise fallback to previous behavior
-        document.getElementById("loginForm").addEventListener("submit", (e) => {
-          e.preventDefault();
-          const email = document.getElementById("email").value.trim();
-          const password = document.getElementById("password").value.trim();
-          if (!email || !password) return alert("Please fill in all fields");
-
-          // disable buttons to prevent double submits
-          loginBtn.disabled = true;
-
-          if (hasFirebaseAuth()) {
-            try {
-              firebase.auth().signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                  playTransitionAndRedirect();
-                })
-                .catch((error) => {
-                  console.error("Firebase signIn error:", error);
-                  alert(error.message || "Failed to sign in");
-                })
-                .finally(() => { loginBtn.disabled = false; });
-            } catch (e) { console.error(e); loginBtn.disabled = false; alert('Auth error'); }
-          } else {
-            // Fallback: no firebase available, keep previous behavior
-            loginBtn.disabled = false;
-            playTransitionAndRedirect();
-          }
-        });
-
-        // SIGN UP using Firebase
-        signupBtn.addEventListener("click", async () => {
-          const emailField = document.getElementById("email");
-          const passwordField = document.getElementById("password");
-          let email = emailField.value.trim();
-          let password = passwordField.value.trim();
-
-          // If user hasn't filled fields, prompt for them (legacy fallback)
-          if (!email) {
-            const enteredEmail = prompt("Enter your email for sign up:");
-            if (!enteredEmail) return;
-            emailField.value = enteredEmail;
-            email = enteredEmail.trim();
-          }
-          if (!password) {
-            const enteredPassword = prompt("Enter a password (6+ chars):");
-            if (!enteredPassword) return;
-            passwordField.value = enteredPassword;
-            password = enteredPassword.trim();
-          }
-
-          if (!email || !password) return alert("Please provide email and password to sign up");
-
-          signupBtn.disabled = true;
-
-          if (hasFirebaseAuth()) {
-            firebase.auth().createUserWithEmailAndPassword(email, password)
-              .then((userCredential) => {
-                if (userCredential.user && typeof userCredential.user.sendEmailVerification === 'function') {
-                  userCredential.user.sendEmailVerification().catch(() => {});
-                }
-                alert("Sign up successful. Redirecting...");
-                playTransitionAndRedirect();
-              })
-              .catch((error) => {
-                console.error("Firebase signup error:", error);
-                alert(error.message || "Failed to sign up");
-              })
-              .finally(() => { signupBtn.disabled = false; });
-          } else {
-            signupBtn.disabled = false;
-            alert("Sign up (fallback) — no Firebase configured. Redirecting...");
-            playTransitionAndRedirect();
-          }
-        });
-
-        // RESET / FORGOT PASSWORD using Firebase
-        resetBtn.addEventListener("click", () => {
-          const email = document.getElementById("email").value.trim();
-          if (!email) {
-            return alert("Enter your email first");
-          }
-
-          if (hasFirebaseAuth()) {
-            firebase.auth().sendPasswordResetEmail(email)
-              .then(() => {
-                alert(`Password reset link sent to ${email}`);
-              })
-              .catch((error) => {
-                console.error("Firebase reset error:", error);
-                alert(error.message || "Failed to send password reset email");
-              });
-          } else {
-            alert(`Password reset link (fallback) sent to ${email} — no Firebase configured`);
-          }
-        });
-
-      }); // DOMContentLoaded
-    })();
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      const email = document.getElementById("email").value.trim();
+      if (!email) return alert("Enter your email first");
+      alert(`Password reset link sent to ${email}`);
+    });
   </script>
 </body>
 </html>
