@@ -6,7 +6,6 @@
   <title>VTrack Login</title>
   <link rel="stylesheet" href="./user/html/login.css" />
   <style>
-    /* Fullscreen video overlay */
     #transitionVideo {
       display: none;
       position: fixed;
@@ -18,42 +17,73 @@
       background: black;
     }
 
-    /* Skip Button */
-  /* Skip Button */
-#skipBtn {
-  display: none;
-  position: fixed;
-  bottom: 1px;   /* stick to bottom */
-  right: 1px;    /* stick to right */
-  padding: 10px 22px;  
-  font-size: 20px;
-  font-weight: 900;
-  border: none;
-  border-radius: 6px;
-  background: rgba(0, 255, 120, 0.95);
-  color: #041107;
-  cursor: pointer;
-  z-index: 10000; /* ABOVE video */
-  box-shadow: 0 0 40px rgba(0, 255, 120, 0.7);
-  transition: background 0.25s ease, transform 0.2s ease;
-}
+    #skipBtn {
+      display: none;
+      position: fixed;
+      bottom: 1px;
+      right: 1px;
+      padding: 10px 22px;
+      font-size: 20px;
+      font-weight: 900;
+      border: none;
+      border-radius: 6px;
+      background: rgba(0, 255, 120, 0.95);
+      color: #041107;
+      cursor: pointer;
+      z-index: 10000;
+      box-shadow: 0 0 40px rgba(0, 255, 120, 0.7);
+      transition: background 0.25s ease, transform 0.2s ease;
+    }
+    #skipBtn:hover { background: rgba(0, 255, 120, 1); transform: scale(1.05); }
 
-#skipBtn:hover {
-  background: rgba(0, 255, 120, 1);
-  transform: scale(1.05);
-}
-
+    /* Modals */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.7);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #111;
+      color: #fff;
+      border-radius: 10px;
+      padding: 24px;
+      width: 90%;
+      max-width: 340px;
+    }
+    .modal-content input {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #151515;
+      color: #fff;
+    }
+    .modal-content button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
+
 <body>
-  <!-- EARTH (Spline) -->
+  <!-- Earth (Spline) -->
   <div class="earth-wrapper" id="earthWrapper" data-earth-x="0.72" data-earth-y="0.50">
-    <spline-viewer 
-      url="https://prod.spline.design/uVbNe0IBVvasqAql/scene.splinecode">
-    </spline-viewer>
+    <spline-viewer url="https://prod.spline.design/uVbNe0IBVvasqAql/scene.splinecode"></spline-viewer>
   </div>
 
-  <!-- EFFECT LAYERS -->
+  <!-- Layers -->
   <div id="bubble-layer"></div>
   <div id="impact-layer"></div>
 
@@ -65,118 +95,136 @@
         <input type="email" id="email" placeholder="Email" required />
         <input type="password" id="password" placeholder="Password" required />
         <button type="submit" id="loginBtn"><span>Login</span></button>
-        <button type="button" id="resetBtn" class="secondary">Forgot Password?</button>
       </form>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;">
+        <a href="#" id="forgotPwLink" style="color:#0f0;">Forgot Password?</a>
+        <a href="#" id="signupLink" style="color:#89CFF0;">Sign Up</a>
+      </div>
     </div>
   </div>
 
   <!-- Transition Video -->
   <video id="transitionVideo" preload="auto">
     <source src="./user/html/transition.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
   </video>
   <button id="skipBtn">Skip</button>
 
-  <!-- Spline Script -->
+  <!-- Forgot Password Modal -->
+  <div class="modal" id="forgotPwModal">
+    <div class="modal-content">
+      <h3>Reset Password</h3>
+      <input type="email" id="forgotPwEmail" placeholder="Enter your email" />
+      <div id="forgotPwMsg" style="color:#69f;min-height:20px;"></div>
+      <button id="forgotPwSendBtn" style="background:#4CAF50;color:#fff;">Send Reset Link</button>
+      <button id="forgotPwCancelBtn" style="background:#333;color:#fff;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Signup Modal -->
+  <div class="modal" id="signupModal">
+    <div class="modal-content">
+      <h3>Create Account</h3>
+      <input id="signupName" type="text" placeholder="Full Name" />
+      <input id="signupPhone" type="tel" placeholder="Phone Number" />
+      <input id="signupEmail" type="email" placeholder="Email" />
+      <input id="signupPassword" type="password" placeholder="Password" />
+      <div id="signupMsg" style="color:#69f;min-height:20px;"></div>
+      <button id="signupBtn" style="background:#4CAF50;color:#fff;">Sign Up</button>
+      <button id="signupCancelBtn" style="background:#333;color:#fff;">Cancel</button>
+    </div>
+  </div>
+
   <script type="module" src="https://unpkg.com/@splinetool/viewer/build/spline-viewer.js"></script>
 
   <script>
+    /* ---------- FIREBASE ---------- */
+    const firebaseConfig = {
+      apiKey: "AIzaSyBZpFhPq1pFpvTmyndOnA6SRs9_ftb4jfI",
+      authDomain: "v-track-gu999.firebaseapp.com",
+      databaseURL: "https://v-track-gu999-default-rtdb.firebaseio.com",
+      projectId: "v-track-gu999",
+      storageBucket: "v-track-gu999.appspot.com",
+      messagingSenderId: "1046512747961",
+      appId: "1:1046512747961:web:80df40c48bca3159296268",
+      measurementId: "G-38X29VT1YT"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    /* ---------- LOGIN ANIMATION + LOGIC ---------- */
     const loginContainer = document.getElementById('loginContainer');
     const loginBtn = document.getElementById('loginBtn');
-    const earthWrapper = document.getElementById('earthWrapper');
-    const bubbleLayer = document.getElementById('bubble-layer');
-    const impactLayer = document.getElementById('impact-layer');
     const transitionVideo = document.getElementById('transitionVideo');
     const skipBtn = document.getElementById('skipBtn');
-    let chargeLevel = 0;
 
-    // Target: center of login box
-    function getLoginTarget() {
-      const r = loginContainer.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-    }
-
-    // Source: approx center of Earth
-    function getEarthSource() {
-      const r = earthWrapper.getBoundingClientRect();
-      const fx = parseFloat(earthWrapper.dataset.earthX || '0.72');
-      const fy = parseFloat(earthWrapper.dataset.earthY || '0.50');
-      return { x: r.left + r.width * fx, y: r.top + r.height * fy };
-    }
-
-    // Bubble traveling Earth → Login
-    function releaseBubble() {
-      const { x: startX, y: startY } = getEarthSource();
-      const { x: targetX, y: targetY } = getLoginTarget();
-      const dx = targetX - startX, dy = targetY - startY;
-
-      const bubble = document.createElement('div');
-      bubble.className = 'energy-bubble';
-      const dur = 2500 + Math.random() * 1000;
-      bubble.style.left = startX + 'px';
-      bubble.style.top = startY + 'px';
-      bubble.style.setProperty('--dx', dx + 'px');
-      bubble.style.setProperty('--dy', dy + 'px');
-      bubble.style.setProperty('--dur', dur + 'ms');
-      bubbleLayer.appendChild(bubble);
-
-      setTimeout(() => createImpact(targetX, targetY), dur - 200);
-      setTimeout(() => bubble.remove(), dur + 200);
-    }
-
-    // Glow + charge when bubble absorbed
-    function createImpact(x, y) {
-      const impact = document.createElement('div');
-      impact.className = 'impact';
-      impact.style.left = x + 'px';
-      impact.style.top = y + 'px';
-      impactLayer.appendChild(impact);
-
-      loginContainer.classList.add('charging');
-      setTimeout(() => loginContainer.classList.remove('charging'), 800);
-
-      chargeLevel = Math.min(100, chargeLevel + 5);
-      loginBtn.style.setProperty('--charge-width', chargeLevel + "%");
-
-      if (chargeLevel >= 100) loginBtn.classList.add("charged");
-
-      setTimeout(() => impact.remove(), 200);
-    }
-
-    setInterval(releaseBubble, 2500);
-
-    // Handle login
-    document.getElementById("loginForm").addEventListener("submit", (e) => {
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       if (!email || !password) return alert("Please fill in all fields");
-
-      // Hide login
-      loginContainer.style.opacity = '0';
-
-      // Show video + skip
-      transitionVideo.style.display = "block";
-      skipBtn.style.display = "block";
-      transitionVideo.play();
-
-      // Redirect after video
-      transitionVideo.onended = () => {
-        window.location.href = "user/html/dashboard.html";
-      };
-
-      // Skip handler
-      skipBtn.onclick = () => {
-        transitionVideo.pause();
-        window.location.href = "user/html/dashboard.html";
-      };
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        // Play animation
+        loginContainer.style.opacity = '0';
+        transitionVideo.style.display = "block";
+        skipBtn.style.display = "block";
+        transitionVideo.play();
+        transitionVideo.onended = () => { window.location.href = "./user/html/dashboard.html";};
+        skipBtn.onclick = () => { transitionVideo.pause(); window.location.href = "./user/html/dashboard.html";};
+      } catch (e) {
+        alert(e.message || "Login failed");
+      }
     });
 
-    document.getElementById("resetBtn").addEventListener("click", () => {
-      const email = document.getElementById("email").value.trim();
-      if (!email) return alert("Enter your email first");
-      alert(`Password reset link sent to ${email}`);
-    });
+    /* ---------- FORGOT PASSWORD ---------- */
+    const forgotPwLink = document.getElementById('forgotPwLink');
+    const forgotPwModal = document.getElementById('forgotPwModal');
+    forgotPwLink.onclick = e => { e.preventDefault(); forgotPwModal.style.display = 'flex'; }
+    document.getElementById('forgotPwCancelBtn').onclick = () => forgotPwModal.style.display = 'none';
+    document.getElementById('forgotPwSendBtn').onclick = async () => {
+      const email = document.getElementById('forgotPwEmail').value.trim();
+      const msg = document.getElementById('forgotPwMsg');
+      msg.textContent = '';
+      if (!email) return msg.textContent = "Enter your email!";
+      try {
+        await auth.sendPasswordResetEmail(email);
+        msg.textContent = "Reset link sent! Check your email.";
+        msg.style.color = "#4CAF50";
+      } catch (e) {
+        msg.textContent = e.message || "Failed to send reset link.";
+        msg.style.color = "#f66";
+      }
+    };
+
+    /* ---------- SIGNUP ---------- */
+    const signupLink = document.getElementById('signupLink');
+    const signupModal = document.getElementById('signupModal');
+    signupLink.onclick = e => { e.preventDefault(); signupModal.style.display = 'flex'; }
+    document.getElementById('signupCancelBtn').onclick = () => signupModal.style.display = 'none';
+
+    document.getElementById('signupBtn').onclick = async () => {
+      const name = document.getElementById('signupName').value.trim();
+      const phone = document.getElementById('signupPhone').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      const msg = document.getElementById('signupMsg');
+      msg.textContent = '';
+      if (!name || !phone || !email || !password) return msg.textContent = "Fill in all fields!";
+      msg.textContent = "Creating account...";
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        await db.ref('users/' + cred.user.uid).set({
+          name, phone, email, createdAt: Date.now()
+        });
+        msg.textContent = "Account created successfully!";
+        msg.style.color = "#4CAF50";
+        setTimeout(()=> signupModal.style.display = 'none', 1500);
+      } catch (e) {
+        msg.textContent = e.message || "Signup failed.";
+        msg.style.color = "#f66";
+      }
+    };
   </script>
 </body>
 </html>
